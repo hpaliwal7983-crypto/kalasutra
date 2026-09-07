@@ -1,0 +1,11 @@
+{
+  "name": "kalasutra-hackathon-demo",
+  "version": "1.0.0",
+  "description": "Kala Sutra — artisan-to-buyer marketplace hackathon demo. Zero external dependencies: pure Node.js backend + React loaded from CDN, no build step.",
+  "scripts": {
+    "start": "node server/server.js"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

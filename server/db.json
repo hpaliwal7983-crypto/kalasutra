@@ -1,0 +1,184 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "name": "Radha Devi",
+      "contact": "9876543210",
+      "role": "artisan",
+      "profile": {
+        "craft": "Pottery",
+        "location": "Jaipur, Rajasthan",
+        "bio": "Third-generation potter working with Rajasthani red clay.",
+        "trustScore": 96
+      }
+    },
+    {
+      "id": "u2",
+      "name": "Ananya Rao",
+      "contact": "9123456789",
+      "role": "buyer",
+      "profile": {
+        "location": "Bengaluru"
+      }
+    },
+    {
+      "id": "u5",
+      "name": "Harsh",
+      "contact": "demo",
+      "role": "buyer",
+      "profile": {
+        "location": ""
+      }
+    },
+    {
+      "id": "u6",
+      "name": "Harsh",
+      "contact": "demo",
+      "role": "artisan",
+      "profile": {
+        "craft": "",
+        "location": "",
+        "bio": "",
+        "trustScore": 100
+      }
+    }
+  ],
+  "products": [
+    {
+      "id": "p1",
+      "artisanId": "u1",
+      "title": "Handwoven Cane Dome Pendant Lamp",
+      "description": "A beautifully handwoven natural cane pendant lamp, crafted with traditional weaving techniques to create a warm, elegant glow for modern spaces.",
+      "price": 1499,
+      "category": "Basketry",
+      "image": "assets/user-gallery/real-cane-lamp-dome.jpeg",
+      "verificationStatus": "verified",
+      "availability": true,
+      "craftInfo": {
+        "material": "Natural cane",
+        "region": "India",
+        "days": 2
+      }
+    },
+    {
+      "id": "p2",
+      "artisanId": "u1",
+      "title": "Handwoven Cane Beaded Pendant Lamp",
+      "description": "A handcrafted cane pendant lamp with a delicate woven pattern and natural bead detailing, made to bring a soft earthy character to any room.",
+      "price": 1200,
+      "category": "Basketry",
+      "image": "assets/user-gallery/real-cane-lamp-beaded.jpeg",
+      "verificationStatus": "verified",
+      "availability": true,
+      "craftInfo": {
+        "material": "Natural cane",
+        "region": "India",
+        "days": 2
+      }
+    },
+    {
+      "id": "p3",
+      "artisanId": "u1",
+      "title": "Layered Handwoven Cane Flower Lamp",
+      "description": "An artistic layered cane lamp shaped like a blooming flower, carefully woven by hand for a distinctive handmade statement piece.",
+      "price": 2000,
+      "category": "Basketry",
+      "image": "assets/user-gallery/real-cane-lamp-flower.jpeg",
+      "verificationStatus": "verified",
+      "availability": true,
+      "craftInfo": {
+        "material": "Natural cane",
+        "region": "India",
+        "days": 3
+      }
+    },
+    {
+      "id": "p4",
+      "artisanId": "u1",
+      "title": "Handwoven Cane Lounge Chair",
+      "description": "A sturdy handmade cane chair with a detailed woven back and seat, combining traditional craftsmanship with comfortable everyday design.",
+      "price": 4000,
+      "category": "Furniture",
+      "image": "assets/user-gallery/real-cane-chair.jpeg",
+      "verificationStatus": "verified",
+      "availability": true,
+      "craftInfo": {
+        "material": "Cane and metal frame",
+        "region": "India",
+        "days": 4
+      }
+    }
+  ],
+  "wishlist": [],
+  "cart": [
+    {
+      "userId": "u5",
+      "productId": "p2",
+      "qty": 2
+    },
+    {
+      "userId": "u5",
+      "productId": "p1",
+      "qty": 2
+    }
+  ],
+  "orders": [],
+  "reels": [
+    {
+      "id": "r1",
+      "artisanId": "u1",
+      "productId": "p1",
+      "video": null,
+      "thumbEmoji": "🏺",
+      "caption": "Throwing a surai on the wheel — 6th generation potter",
+      "category": "Pottery",
+      "tags": [
+        "pottery",
+        "handmade",
+        "rajasthan"
+      ],
+      "createdAt": "2026-08-20T10:00:00.000Z",
+      "likes": 2400,
+      "comments": 86
+    },
+    {
+      "id": "r2",
+      "artisanId": "u1",
+      "productId": "p2",
+      "video": null,
+      "thumbEmoji": "🧣",
+      "caption": "14-step Ajrakh block-printing process, start to finish",
+      "category": "Textiles",
+      "tags": [
+        "ajrakh",
+        "blockprint",
+        "gujarat"
+      ],
+      "createdAt": "2026-08-18T10:00:00.000Z",
+      "likes": 1800,
+      "comments": 54
+    },
+    {
+      "id": "r3",
+      "artisanId": "u1",
+      "productId": "p3",
+      "video": "assets/cane-making-reel.mp4",
+      "thumbEmoji": "🪵",
+      "caption": "From natural cane to a handmade pendant lamp — made by hand, one weave at a time.",
+      "category": "Basketry",
+      "tags": [
+        "cane",
+        "basketry",
+        "handmade",
+        "lamp",
+        "artisan"
+      ],
+      "createdAt": "2026-09-06T14:20:00.000Z",
+      "likes": 1260,
+      "comments": 47
+    }
+  ],
+  "_meta": {
+    "nextId": 7
+  }
+}
