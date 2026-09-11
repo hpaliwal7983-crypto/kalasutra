@@ -1,0 +1,77 @@
+const fs = require("fs");
+const path = require("path");
+const https = require("https");
+
+const owner = "hpaliwal7983-crypto";
+const repo = "kalasutra";
+const ref = "37a25f30436694398cacf8ae1d204eb651e80b4d0";
+const target = path.join(__dirname, "..", "public", "assets");
+
+function get(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { "User-Agent": "KalaSutra" } }, res => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return get(res.headers.location).then(resolve).catch(reject);
+      }
+
+      let data = "";
+      res.on("data", chunk => data += chunk);
+      res.on("end", () => {
+        if (res.statusCode !== 200) {
+          reject(new Error(`HTTP ${res.statusCode}`));
+          return;
+        }
+        resolve(data);
+      });
+    }).on("error", reject);
+  });
+}
+
+async function download(url, file) {
+  return new Promise((resolve, reject) => {
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+
+    https.get(url, { headers: { "User-Agent": "KalaSutra" } }, res => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return download(res.headers.location, file).then(resolve).catch(reject);
+      }
+
+      if (res.statusCode !== 200) {
+        reject(new Error(`HTTP ${res.statusCode}`));
+        return;
+      }
+
+      const out = fs.createWriteStream(file);
+      res.pipe(out);
+      out.on("finish", () => out.close(resolve));
+      out.on("error", reject);
+    }).on("error", reject);
+  });
+}
+
+async function walk(dir, prefix = "") {
+  const api = `https://api.github.com/repos/${owner}/${repo}/contents/public/assets/${prefix}?ref=${ref}`;
+  const items = JSON.parse(await get(api));
+
+  for (const item of items) {
+    const relative = prefix ? `${prefix}/${item.name}` : item.name;
+    const local = path.join(target, relative);
+
+    if (item.type === "dir") {
+      await walk(dir, relative);
+    } else if (item.type === "file") {
+      console.log(`Downloading ${relative}`);
+      await download(item.download_url, local);
+    }
+  }
+}
+
+(async () => {
+  try {
+    await walk(target);
+    console.log("KalaSutra original assets ready.");
+  } catch (err) {
+    console.error("Asset download failed:", err.message);
+    process.exit(1);
+  }
+})();
