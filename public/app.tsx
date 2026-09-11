@@ -221,7 +221,7 @@ function PermissionCenter({ onClose }: { onClose: () => void }) {
 // ---------------------------------------------------------------------------
 // AI TALKER — voice-first assistant used across the prototype/demo
 // ---------------------------------------------------------------------------
-function AITalker({ compact = false, embedded = false }: { compact?: boolean; embedded?: boolean }) {
+function AITalker({ compact = false, embedded = false, role = 'buyer', go }: { compact?: boolean; embedded?: boolean; role?: 'buyer' | 'artisan'; go?: (s: string) => void }) {
   const [open, setOpen] = useState(embedded ? true : !compact);
   const [listening, setListening] = useState(false);
   const [message, setMessage] = useState("Namaste! Main aapki kaise madad karoon?");
@@ -288,10 +288,15 @@ function AITalker({ compact = false, embedded = false }: { compact?: boolean; em
         <button className="ai-lang-pill" onClick={() => speak("Hindi selected")}>◎ हिंदी⌄</button>
       </div>
       <div className="ai-embedded-main">
-        <div className="ai-embedded-message"><strong>Namaste! 🙏</strong><br/>Main aapki kaise<br/>madad karoon?<span className="embedded-wave">▮▮▮▮▮▮</span></div>
+        <div className="ai-embedded-message"><strong>Namaste! 🙏</strong><br/>{role === 'artisan' ? 'Main aapki listing aur orders mein madad karoon?' : 'Main aapko handicraft dhoondhne mein madad karoon?'}<span className="embedded-wave">▮▮▮▮▮▮</span></div>
         <div className="ai-embedded-actions">
-          <button onClick={() => speak("Product verification ke liye photo aur making proof clip upload karein.")}><span>⌕</span> Verify<br/>product</button>
-          <button onClick={() => speak("Aap apne handmade product ki making Reel bana sakte hain.")}><span>▣</span> Make<br/>a Reel</button>
+          {role === 'artisan' ? <>
+            <button onClick={() => { speak("Take a photo of your product. Ab Add a Piece kholte hain."); go?.('addProduct'); }}><span>⌕</span> Add<br/>a piece</button>
+            <button onClick={() => { speak("Aapke orders aur earnings yahan milenge."); go?.('orders'); }}><span>▣</span> Orders &amp;<br/>earnings</button>
+          </> : <>
+            <button onClick={() => speak("What kind of handicraft are you looking for?")}><span>⌕</span> Find a<br/>craft</button>
+            <button onClick={() => { speak("Main aapko saved products aur cart tak le ja sakta hoon."); go?.('cart'); }}><span>▣</span> Open<br/>cart</button>
+          </>}
         </div>
       </div>
       <button className="ai-speak-pill" onClick={startListening}>♩&nbsp; Tap to speak</button>
@@ -326,8 +331,13 @@ function AITalker({ compact = false, embedded = false }: { compact?: boolean; em
           <button className="ai-send" onClick={() => speak("Bilkul! Chaliye aapka agla step shuru karte hain.")} aria-label="Send">➤</button>
         </div>
         <div className="ai-quick-row">
-          <button onClick={() => speak("Aap artisan hain to apna handmade product photo se verify kar sakte hain.")}>Verify product</button>
-          <button onClick={() => speak("Aap apne verified product ki Reel bana kar uski kahani buyers tak pahucha sakte hain.")}>Make a Reel</button>
+          {role === 'artisan' ? <>
+            <button onClick={() => { speak("Take a photo of your product. Chaliye Add a Piece shuru karte hain."); go?.('addProduct'); }}>Add a piece</button>
+            <button onClick={() => { speak("Aapke New Orders, Processing, Shipped, Delivered aur Earnings yahan hain."); go?.('orders'); }}>My orders</button>
+          </> : <>
+            <button onClick={() => speak("What kind of handicraft are you looking for?")}>Find a craft</button>
+            <button onClick={() => { speak("Opening your cart."); go?.('cart'); }}>Open cart</button>
+          </>}
         </div>
       </div>
     </div>
@@ -556,9 +566,13 @@ function ArtisanDashboard({ user, go, setToast }: any) {
       <div className="content artisan-content">
         <ErrorBanner message={err} />
         <div className="home-stats">
-          <div><span className="stat-icon pot">▱</span><strong>{products.length}</strong><small>Listings</small></div>
+          <div><span className="stat-icon pot">▱</span><strong>{products.length}</strong><small>Products Listed</small></div>
           <div><span className="stat-icon check">✓</span><strong>{verifiedCount}</strong><small>Verified</small></div>
           <div><span className="stat-icon star">★</span><strong>{user.profile?.trustScore ?? 100}</strong><small>Trust score</small></div>
+        </div>
+        <div className="artisan-growth-card" onClick={() => go('orders')}>
+          <div><span className="field-label">ARTISAN GROWTH DASHBOARD</span><strong>Orders, earnings &amp; business insights</strong><small>Track New Orders → Processing → Shipped → Delivered</small></div><button className="btn secondary" style={{marginTop:10}} onClick={()=>go("reviews")}>🛡️ Safety &amp; Review Center</button>
+          <span className="growth-arrow">→</span>
         </div>
 
         <div className="section-row home-section-row">
@@ -587,7 +601,7 @@ function ArtisanDashboard({ user, go, setToast }: any) {
           <div className="craft-empty"><div className="plus-circle">＋</div><strong>You haven’t added any products yet.</strong><span>Tap “Add” below to list your first piece.</span></div>
         )}
 
-        <AITalker embedded />
+        <AITalker embedded role="artisan" go={go} />
       </div>
     </div>
   );
@@ -696,6 +710,8 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
       setProduct(created); setStepState("scanning");
       await new Promise((r) => setTimeout(r, 900));
       const result = await apiPost("/scan", { productId: created.id });
+      const safety = await apiPost("/risk", { productId: created.id });
+      result.riskScore = safety.riskScore; result.riskLevel = safety.level; result.riskReasons = safety.reasons;
       setVerifyResult(result);
       await new Promise((r) => setTimeout(r, 700));
       setStepState("result"); setLastVerifiedProductId(created.id);
@@ -757,7 +773,7 @@ function MyProductsScreen({ user, go }: any) {
                   <BadgeLabel status={p.verificationStatus} />
                   <span className="emoji">{CATEGORY_EMOJI[p.category] || "🎨"}</span>
                 </div>
-                <div className="info"><div className="t">{p.title}</div><div className="p">₹{p.price.toLocaleString("en-IN")}</div></div>
+                <div className="info"><div className="t">{p.title}</div><div className="p">₹{p.price.toLocaleString("en-IN")}</div><div className="product-id-mini">{p.uniqueProductId || 'KS-ART-000001'}</div></div>
               </div>
             ))}
           </div>
@@ -967,7 +983,7 @@ function MyReelsScreen({ user, go, setToast }: any) {
 // ---------------------------------------------------------------------------
 // ARTISAN: PROFILE
 // ---------------------------------------------------------------------------
-function ArtisanProfileScreen({ user, onLogout }: any) {
+function ArtisanProfileScreen({ user, onLogout, go }: any) {
   return (
     <>
       <div className="content" style={{ paddingTop: 24 }}>
@@ -984,6 +1000,7 @@ function ArtisanProfileScreen({ user, onLogout }: any) {
         </div>
         <div className="field-label">Bio</div>
         <p style={{ fontSize: 12.5, marginTop: 4 }}>{user.profile?.bio || "No bio yet."}</p>
+        <button className="btn" style={{ marginTop: 14 }} onClick={() => go("reviews")}>Safety &amp; Review Center</button>
         <button className="btn secondary" style={{ marginTop: 20 }} onClick={onLogout}>Log out</button>
       </div>
     </>
@@ -1093,7 +1110,7 @@ function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cart
       <div className="floating-cart-wrap">
         {cartCount > 0 && <button className="floating-cart" onClick={() => go("cart")}><span className="mini-cart-icon"><Icon name="cart" /></span><span><strong>View cart</strong><small>{cartCount} item{cartCount > 1 ? "s" : ""}</small></span><b>›</b></button>}
       </div>
-      <AITalker />
+      <AITalker role="buyer" go={go} />
     </>
   );
 }
@@ -1101,11 +1118,15 @@ function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cart
 // ---------------------------------------------------------------------------
 // BUYER: PRODUCT DETAIL
 // ---------------------------------------------------------------------------
-function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWishlist, addToCart }: any) {
+function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWishlist, addToCart, userId }: any) {
   const [product, setProduct] = useState<any>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [reported, setReported] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customRequest, setCustomRequest] = useState('');
+  const [customizing, setCustomizing] = useState(false);
+  const [customId, setCustomId] = useState<string | null>(null);
 
   useEffect(() => {
     apiGet(`/products/${productId}`).then((p) => { setProduct(p); setSelectedImage(p.image || null); }).catch((e) => setErr(e.message));
@@ -1147,6 +1168,23 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
             <div className="product-gallery-note">Tap any photo to view it above.</div>
           </div>
         )}
+        <div className="certificate-card">
+          <div><span className="field-label">DIGITAL PRODUCT ID</span><strong>{product.uniqueProductId || 'KS-ART-000001'}</strong><small>Verified identity linked to this handmade piece</small></div>
+          <div className="certificate-qr"><img alt="Product QR" src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(window.location.origin + '/?certificate=' + (product.uniqueProductId || product.id))}`} /></div>
+        </div>
+        <div className="customize-card">
+          <div><span className="field-label">MAKE IT YOURS</span><strong>Customize this unique piece</strong><small>Personalize with a name, colour, size or small design change.</small></div>
+          <button className="btn secondary" onClick={() => setCustomOpen(v => !v)}>Customize • ₹100</button>
+          {customOpen && <div className="customize-form">
+            <textarea value={customRequest} onChange={e => setCustomRequest(e.target.value)} placeholder="e.g. Add my name 'Harsh' and change the colour to blue" />
+            <button className="btn" disabled={customizing} onClick={async () => {
+              if (!customRequest.trim()) { setToast('Please describe your customization'); return; }
+              setCustomizing(true);
+              try { const c = await apiPost('/customizations', { productId: product.id, buyerId: userId, request: customRequest, charge: 100 }); setCustomId(c.customizationId); setToast(`Customization request ${c.customizationId} created • ₹100`); setCustomRequest(''); } catch (e:any) { setToast(e.message || 'Customization failed'); } finally { setCustomizing(false); }
+            }}>{customizing ? 'Saving…' : 'Request customization • ₹100'}</button>
+            {customId && <div className="location-fill-note">✓ Customization ID: <strong>{customId}</strong> — Product ID remains {product.uniqueProductId}</div>}
+          </div>}
+        </div>
         <div className="impact-bar"><b>{pct}%</b> of what you pay goes straight to the maker.</div>
         <div className="checkout-box">
           <div className="checkout-row"><span>Product price</span><span>₹{product.price.toLocaleString("en-IN")}</span></div>
@@ -1188,7 +1226,7 @@ function WishlistScreen({ user, openProduct, toggleWishlist }: any) {
                   <BadgeLabel status={p.verificationStatus} />
                   <span className="emoji">{CATEGORY_EMOJI[p.category] || "🎨"}</span>
                 </div>
-                <div className="info"><div className="t">{p.title}</div><div className="p">₹{p.price.toLocaleString("en-IN")}</div></div>
+                <div className="info"><div className="t">{p.title}</div><div className="p">₹{p.price.toLocaleString("en-IN")}</div><div className="product-id-mini">{p.uniqueProductId || 'KS-ART-000001'}</div></div>
               </div>
             ))}
           </div>
@@ -1374,25 +1412,52 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
 // ---------------------------------------------------------------------------
 // ORDERS (shared shape, buyer-focused)
 // ---------------------------------------------------------------------------
+function SafetyReviewScreen({ go, setToast }: any) {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  async function load() { setLoading(true); try { setItems(await apiGet('/reviews')); } finally { setLoading(false); } }
+  useEffect(() => { load(); }, []);
+  async function decide(id: string, status: string) {
+    await apiPut(`/reviews/${id}`, { status, note: status === 'approved' ? 'Human reviewer approved after checking evidence.' : 'Human reviewer rejected after checking evidence.' });
+    setToast(status === 'approved' ? 'Listing approved by human review.' : 'Listing rejected by human review.'); load();
+  }
+  return <div className="content">
+    <div className="app-header"><button className="header-back" onClick={() => go('dashboard')}>‹</button><div><h2>Safety &amp; Review Center</h2><div className="sub">AI flags suspicious activity — humans decide</div></div></div>
+    <div className="trust-box" style={{marginBottom:14}}><strong>AI Risk Protection</strong><small style={{display:'block',marginTop:5}}>Risk signals include missing proof, duplicate images and suspicious listing patterns. AI never makes the final decision.</small></div>
+    {loading ? <div className="empty-note">Loading review queue…</div> : items.length === 0 ? <div className="empty-note">🟢 No suspicious listings waiting for review.</div> : items.map((r:any) => <div className="card" key={r.id} style={{marginBottom:12}}>
+      <div className="thumb" style={{backgroundImage:`url(${r.product?.image || ''})`}}></div><div className="info"><div className="t">{r.product?.title || 'Unknown listing'}</div><div className="p">AI Risk Score: {r.riskScore}/100</div><div style={{fontSize:11,color:'#8a2f25',marginTop:5}}>{r.reason}</div><div className="btn-row" style={{marginTop:10}}><button className="btn green" onClick={()=>decide(r.id,'approved')}>Human Approve</button><button className="btn secondary" onClick={()=>decide(r.id,'rejected')}>Reject</button></div></div>
+    </div>)}
+  </div>;
+}
+
 function OrdersScreen({ user }: any) {
   const [orders, setOrders] = useState<any[]>([]);
-  useEffect(() => { apiGet(`/orders?userId=${user.id}`).then(setOrders); }, []);
-  return (
-    <>
-      <div className="app-header"><div><h2>Your Orders</h2></div></div>
-      <div className="content">
-        {orders.length === 0 ? <div className="empty-note">No orders yet.</div> : orders.map((o) => (
-          <div className="order-item" key={o.id}>
-            <div>
-              <strong style={{ fontSize: 12.5 }}>{o.products.map((p: any) => p.title).join(", ")}</strong>
-              <div style={{ fontSize: 11, color: "#6b6055" }}>₹{o.amount.toLocaleString("en-IN")} · {new Date(o.date).toLocaleDateString()}</div>
-            </div>
-            <span className="st">{o.status}</span>
-          </div>
-        ))}
-      </div>
-    </>
-  );
+  const [statusFilter, setStatusFilter] = useState('all');
+  useEffect(() => { apiGet(`/orders?userId=${user.id}`).then(setOrders); }, [user.id]);
+  const isArtisan = user.role === 'artisan';
+  const statusLabel: any = { placed: 'New Orders', processing: 'Processing', shipped: 'Shipped', delivered: 'Delivered', paid: 'New Orders' };
+  const filtered = statusFilter === 'all' ? orders : orders.filter(o => o.status === statusFilter);
+  const earnings = isArtisan ? orders.reduce((sum, o) => sum + (o.artisanItems || []).reduce((s:any, p:any) => s + Number(p.price || 0) * Number(p.qty || 0), 0), 0) : 0;
+  return (<>
+    <div className="app-header"><div><h2>{isArtisan ? 'Orders & Earnings' : 'Your Orders'}</h2><div className="sub">{isArtisan ? 'Manage your artisan business' : 'Track your purchases'}</div></div></div>
+    <div className="content">
+      {isArtisan && <div className="artisan-order-summary">
+        <div><small>EARNINGS</small><strong>₹{earnings.toLocaleString('en-IN')}</strong></div>
+        <div><small>NEW ORDERS</small><strong>{orders.filter(o => ['placed','paid'].includes(o.status)).length}</strong></div>
+        <div><small>DELIVERED</small><strong>{orders.filter(o => o.status === 'delivered').length}</strong></div>
+      </div>}
+      {isArtisan && <div className="order-filter-row">
+        {[['all','All'],['placed','New Orders'],['processing','Processing'],['shipped','Shipped'],['delivered','Delivered']].map(([v,l]) => <button key={v} className={statusFilter===v?'active':''} onClick={()=>setStatusFilter(v)}>{l}</button>)}
+      </div>}
+      {filtered.length === 0 ? <div className="empty-note">{isArtisan ? 'No artisan orders yet. Orders will appear here when buyers purchase your products.' : 'No orders yet.'}</div> : filtered.map((o) => (
+        <div className="order-item" key={o.id}>
+          <div><strong style={{ fontSize: 12.5 }}>{(isArtisan ? o.artisanItems : o.products).map((p: any) => p.title).join(', ')}</strong>
+          <div style={{ fontSize: 11, color: '#6b6055' }}>₹{Number(isArtisan ? (o.artisanItems || []).reduce((s:any,p:any)=>s+p.price*p.qty,0) : o.amount).toLocaleString('en-IN')} · {new Date(o.date).toLocaleDateString()}</div></div>
+          <span className="st">{isArtisan ? (statusLabel[o.status] || o.status) : o.status}</span>
+        </div>
+      ))}
+    </div>
+  </>);
 }
 
 // ---------------------------------------------------------------------------
@@ -1456,10 +1521,45 @@ function ReelsFeedScreen({ openProduct, setToast }: any) {
   );
 }
 
+
+// ---------------------------------------------------------------------------
+// DIGITAL PRODUCT CERTIFICATE — public QR destination
+// ---------------------------------------------------------------------------
+function CertificateScreen({ certificateId }: { certificateId: string }) {
+  const [data, setData] = useState<any>(null);
+  const [err, setErr] = useState<string | null>(null);
+  useEffect(() => { apiGet(`/certificate/${encodeURIComponent(certificateId)}`).then(setData).catch((e) => setErr(e.message)); }, [certificateId]);
+  if (err) return <div className="certificate-public"><img src="/assets/logo.png" className="certificate-public-logo"/><div className="certificate-public-card"><h2>Certificate unavailable</h2><p>{err}</p></div></div>;
+  if (!data) return <div className="certificate-public"><img src="/assets/logo.png" className="certificate-public-logo"/><div className="certificate-public-card"><p>Loading verified product record…</p></div></div>;
+  const p = data.product; const verified = p.verificationStatus === 'verified';
+  return <div className="certificate-public">
+    <img src="/assets/logo.png" className="certificate-public-logo"/>
+    <div className="certificate-public-card">
+      <div className="certificate-public-kicker">KALASUTRA DIGITAL PRODUCT CERTIFICATE</div>
+      <div className="certificate-public-id">{p.uniqueProductId}</div>
+      <div className={`certificate-public-status ${verified ? 'verified' : 'review'}`}>{verified ? '🟢 VERIFIED HANDMADE' : p.verificationStatus === 'rejected' ? '🔴 VERIFICATION REVOKED' : '🟡 UNDER REVIEW'}</div>
+      {p.image && <img className="certificate-public-image" src={p.image} alt={p.title}/>}
+      <h1>{p.title}</h1>
+      <p>{p.description}</p>
+      <div className="certificate-public-grid">
+        <div><small>ARTISAN</small><strong>{p.artisan?.name || 'Verified artisan'}</strong></div>
+        <div><small>CRAFT</small><strong>{p.category}</strong></div>
+        <div><small>TRUST SCORE</small><strong>{p.trustScore || '—'}/100</strong></div>
+        <div><small>VERIFICATION DATE</small><strong>{p.verificationDate ? new Date(p.verificationDate).toLocaleDateString('en-IN') : '—'}</strong></div>
+      </div>
+      <div className="certificate-public-proof"><strong>Making proof</strong><span>🎥 Mandatory making-process proof supplied</span><span>🔍 Originality &amp; image checks recorded</span><span>🧑‍🎨 Artisan ownership declaration recorded</span></div>
+      {p.customizations?.length > 0 && <div className="certificate-public-proof"><strong>Customization history</strong>{p.customizations.slice(0,5).map((c:any)=><span key={c.id}>#{c.customizationId} · {c.request}</span>)}</div>}
+      <p className="certificate-public-note">This QR is a gateway to KalaSutra’s digital product record. Verification is an AI-assisted trust signal and not a legal copyright determination.</p>
+    </div>
+  </div>;
+}
+
 // ---------------------------------------------------------------------------
 // ROOT APP — simple state-based router (no react-router dependency needed)
 // ---------------------------------------------------------------------------
 function App() {
+  const certificateId = new URLSearchParams(window.location.search).get('certificate');
+  if (certificateId) return <CertificateScreen certificateId={certificateId} />;
   // Phone browsers require HTTPS for location and microphone. If someone opens
   // the LAN HTTP URL directly on a phone, automatically move them to the
   // bundled secure server before requesting any permissions. Laptop localhost
@@ -1594,7 +1694,8 @@ function App() {
       {isArtisan && screen === "createReel" && <CreateReelScreen user={user} go={setScreen} setToast={setToast} prefillProductId={lastVerifiedProductId} />}
       {isArtisan && screen === "myReels" && <MyReelsScreen user={user} go={setScreen} setToast={setToast} />}
       {isArtisan && screen === "orders" && <OrdersScreen user={user} />}
-      {isArtisan && screen === "profile" && <ArtisanProfileScreen user={user} onLogout={logout} />}
+      {isArtisan && screen === "reviews" && <SafetyReviewScreen go={setScreen} setToast={setToast} />}
+      {isArtisan && screen === "profile" && <ArtisanProfileScreen user={user} onLogout={logout} go={setScreen} />}
 
       {!isArtisan && screen === "buyerHome" && <BuyerHomeScreen user={user} go={setScreen} openProduct={openProduct} wishlist={wishlist} toggleWishlist={toggleWishlist} cartCount={cartCount} addToCart={addToCart} setToast={setToast} />}
       {!isArtisan && screen === "buyerReels" && <ReelsFeedScreen openProduct={openProduct} setToast={setToast} />}
@@ -1603,7 +1704,7 @@ function App() {
       {!isArtisan && screen === "orders" && <OrdersScreen user={user} />}
       {!isArtisan && screen === "buyerProfile" && <BuyerProfileScreen user={user} onLogout={logout} />}
       {screen === "productDetail" && (
-        <ProductDetailScreen productId={activeProductId} go={setScreen} back={goBack} setToast={setToast} wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} />
+        <ProductDetailScreen productId={activeProductId} go={setScreen} back={goBack} setToast={setToast} wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} userId={user.id} />
       )}
 
       {navBar}
