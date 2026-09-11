@@ -571,7 +571,7 @@ function ArtisanDashboard({ user, go, setToast }: any) {
           <div><span className="stat-icon star">★</span><strong>{user.profile?.trustScore ?? 100}</strong><small>Trust score</small></div>
         </div>
         <div className="artisan-growth-card" onClick={() => go('orders')}>
-          <div><span className="field-label">ARTISAN GROWTH DASHBOARD</span><strong>Orders, earnings &amp; business insights</strong><small>Track New Orders → Processing → Shipped → Delivered</small></div>
+          <div><span className="field-label">ARTISAN GROWTH DASHBOARD</span><strong>Orders, earnings &amp; business insights</strong><small>Track New Orders → Processing → Shipped → Delivered</small></div><button className="btn secondary" style={{marginTop:10}} onClick={()=>go("reviews")}>🛡️ Safety &amp; Review Center</button>
           <span className="growth-arrow">→</span>
         </div>
 
@@ -710,6 +710,8 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
       setProduct(created); setStepState("scanning");
       await new Promise((r) => setTimeout(r, 900));
       const result = await apiPost("/scan", { productId: created.id });
+      const safety = await apiPost("/risk", { productId: created.id });
+      result.riskScore = safety.riskScore; result.riskLevel = safety.level; result.riskReasons = safety.reasons;
       setVerifyResult(result);
       await new Promise((r) => setTimeout(r, 700));
       setStepState("result"); setLastVerifiedProductId(created.id);
@@ -981,7 +983,7 @@ function MyReelsScreen({ user, go, setToast }: any) {
 // ---------------------------------------------------------------------------
 // ARTISAN: PROFILE
 // ---------------------------------------------------------------------------
-function ArtisanProfileScreen({ user, onLogout }: any) {
+function ArtisanProfileScreen({ user, onLogout, go }: any) {
   return (
     <>
       <div className="content" style={{ paddingTop: 24 }}>
@@ -998,6 +1000,7 @@ function ArtisanProfileScreen({ user, onLogout }: any) {
         </div>
         <div className="field-label">Bio</div>
         <p style={{ fontSize: 12.5, marginTop: 4 }}>{user.profile?.bio || "No bio yet."}</p>
+        <button className="btn" style={{ marginTop: 14 }} onClick={() => go("reviews")}>Safety &amp; Review Center</button>
         <button className="btn secondary" style={{ marginTop: 20 }} onClick={onLogout}>Log out</button>
       </div>
     </>
@@ -1409,6 +1412,24 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
 // ---------------------------------------------------------------------------
 // ORDERS (shared shape, buyer-focused)
 // ---------------------------------------------------------------------------
+function SafetyReviewScreen({ go, setToast }: any) {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  async function load() { setLoading(true); try { setItems(await apiGet('/reviews')); } finally { setLoading(false); } }
+  useEffect(() => { load(); }, []);
+  async function decide(id: string, status: string) {
+    await apiPut(`/reviews/${id}`, { status, note: status === 'approved' ? 'Human reviewer approved after checking evidence.' : 'Human reviewer rejected after checking evidence.' });
+    setToast(status === 'approved' ? 'Listing approved by human review.' : 'Listing rejected by human review.'); load();
+  }
+  return <div className="content">
+    <div className="app-header"><button className="header-back" onClick={() => go('dashboard')}>‹</button><div><h2>Safety &amp; Review Center</h2><div className="sub">AI flags suspicious activity — humans decide</div></div></div>
+    <div className="trust-box" style={{marginBottom:14}}><strong>AI Risk Protection</strong><small style={{display:'block',marginTop:5}}>Risk signals include missing proof, duplicate images and suspicious listing patterns. AI never makes the final decision.</small></div>
+    {loading ? <div className="empty-note">Loading review queue…</div> : items.length === 0 ? <div className="empty-note">🟢 No suspicious listings waiting for review.</div> : items.map((r:any) => <div className="card" key={r.id} style={{marginBottom:12}}>
+      <div className="thumb" style={{backgroundImage:`url(${r.product?.image || ''})`}}></div><div className="info"><div className="t">{r.product?.title || 'Unknown listing'}</div><div className="p">AI Risk Score: {r.riskScore}/100</div><div style={{fontSize:11,color:'#8a2f25',marginTop:5}}>{r.reason}</div><div className="btn-row" style={{marginTop:10}}><button className="btn green" onClick={()=>decide(r.id,'approved')}>Human Approve</button><button className="btn secondary" onClick={()=>decide(r.id,'rejected')}>Reject</button></div></div>
+    </div>)}
+  </div>;
+}
+
 function OrdersScreen({ user }: any) {
   const [orders, setOrders] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
@@ -1673,7 +1694,8 @@ function App() {
       {isArtisan && screen === "createReel" && <CreateReelScreen user={user} go={setScreen} setToast={setToast} prefillProductId={lastVerifiedProductId} />}
       {isArtisan && screen === "myReels" && <MyReelsScreen user={user} go={setScreen} setToast={setToast} />}
       {isArtisan && screen === "orders" && <OrdersScreen user={user} />}
-      {isArtisan && screen === "profile" && <ArtisanProfileScreen user={user} onLogout={logout} />}
+      {isArtisan && screen === "reviews" && <SafetyReviewScreen go={setScreen} setToast={setToast} />}
+      {isArtisan && screen === "profile" && <ArtisanProfileScreen user={user} onLogout={logout} go={setScreen} />}
 
       {!isArtisan && screen === "buyerHome" && <BuyerHomeScreen user={user} go={setScreen} openProduct={openProduct} wishlist={wishlist} toggleWishlist={toggleWishlist} cartCount={cartCount} addToCart={addToCart} setToast={setToast} />}
       {!isArtisan && screen === "buyerReels" && <ReelsFeedScreen openProduct={openProduct} setToast={setToast} />}
