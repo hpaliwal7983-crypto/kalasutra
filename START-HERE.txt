@@ -1,0 +1,16 @@
+KALASUTRA — COMPLETE HACKATHON BUILD
+
+IMPORTANT
+This package preserves the KalaSutra app structure and includes the added hackathon features. The original binary assets are fetched automatically from the stable KalaSutra repository snapshot during deployment/start, so you do NOT need to manually add images or videos.
+
+DEPLOY
+1. Upload this ZIP to your deployment service.
+2. Use Node.js.
+3. Build/install: npm install
+4. Start: npm start
+
+The package automatically downloads the original public/assets files before the server starts.
+
+Included features: buyer profile photo, artisan profile/photo, unique product IDs, multi-photo product gallery, product verification, 15–30 sec making proof, back-camera preference, AI verification/trust/risk/process-match demo, duplicate/image-reuse flag, ownership declaration, suspicious listing → human review queue, buyer reviews/star ratings, reel recording/gallery upload, AI Talker voice/microphone, animated order journey with moving truck, KalaSutra login UI, and the existing Node.js + React structure.
+
+No code editing is required for the normal deployment flow.

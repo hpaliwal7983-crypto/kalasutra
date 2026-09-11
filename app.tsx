@@ -1,6 +1,8 @@
 // KalaSutra frontend — React, written with light TypeScript annotations,
 // compiled in-browser by Babel standalone (see index.html). No build step.
 const { useState, useEffect, useRef } = React;
+const ASSET_BASE = "./assets/";
+function asset(name: string){ return ASSET_BASE + name; }
 
 // ---------------------------------------------------------------------------
 // API helpers
@@ -155,7 +157,7 @@ function requestCurrentLocation(): Promise<any> {
 
 function notifyUser(title: string, body: string) {
   try {
-    if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body, icon: '/assets/avatar-artisan.png' });
+    if ('Notification' in window && Notification.permission === 'granted') new Notification(title, { body, icon: asset('avatar-artisan.png') });
   } catch (_) {}
 }
 
@@ -196,7 +198,7 @@ function PermissionCenter({ onClose }: { onClose: () => void }) {
   return <div className="permission-overlay">
     <div className="permission-sheet">
       <div className="permission-glow" />
-      <div className="permission-avatar"><img src="/assets/avatar-artisan.png" alt="KalaSutra" /></div>
+      <div className="permission-avatar"><img src={asset("avatar-artisan.png")} alt="KalaSutra" /></div>
       <div className="permission-kicker">WELCOME TO KALASUTRA</div>
       <h2>Make your experience easier ✨</h2>
       <p>Allow these permissions once and KalaSutra can fill delivery details, send order updates and listen to your voice.</p>
@@ -283,7 +285,7 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }: { c
   if (embedded) return (
     <div className="ai-talker ai-talker-embedded">
       <div className="ai-talker-head">
-        <div className="ai-talker-avatar-wrap"><img src="/assets/avatar-artisan.png" alt="AI Talker" /></div>
+        <div className="ai-talker-avatar-wrap"><img src={asset("avatar-artisan.png")} alt="AI Talker" /></div>
         <div className="ai-talker-title"><strong>✦ AI Talker</strong><span>Your voice-first KalaSutra guide</span></div>
         <button className="ai-lang-pill" onClick={() => speak("Hindi selected")}>◎ हिंदी⌄</button>
       </div>
@@ -306,7 +308,7 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }: { c
 
   if (!open) return (
     <button className="ai-fab" aria-label="Open AI Talker" onClick={() => setOpen(true)}>
-      <img src="/assets/avatar-artisan.png" alt="AI Talker" />
+      <img src={asset("avatar-artisan.png")} alt="AI Talker" />
       <span className="ai-fab-dot" />
     </button>
   );
@@ -315,7 +317,7 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }: { c
     <div className={`ai-talker ${compact ? "ai-talker-compact" : ""}`}>
       <div className="ai-talker-head">
         <div className="ai-talker-avatar-wrap">
-          <img src="/assets/avatar-artisan.png" alt="AI Talker" />
+          <img src={asset("avatar-artisan.png")} alt="AI Talker" />
           <span className="ai-live-dot" />
         </div>
         <div className="ai-talker-title"><strong>AI Talker</strong><span>Voice-first KalaSutra guide</span></div>
@@ -355,10 +357,10 @@ function SplashScreen({ onNext }: { onNext: () => void }) {
       <div className="walking-artisan" aria-hidden="true">
         <span className="craft-spark spark-one">✦</span>
         <span className="craft-spark spark-two">✧</span>
-        <img src="/assets/avatar-artisan.png" alt="" />
+        <img src={asset("avatar-artisan.png")} alt="" />
         <span className="walking-shadow" />
       </div>
-      <img className="splash-logo" src="/assets/logo.png" alt="Kala Sutra" />
+      <img className="splash-logo" src={asset("logo.png")} alt="Kala Sutra" />
       <p className="splash-tagline">Take a photo. Tell your story. AI does the rest.</p>
       <div className="splash-hindi">“Namaste! चलिए शुरू करें।”</div>
       <div className="splash-cta"><button className="btn splash-btn" onClick={onNext}>Get Started <span>→</span></button></div>
@@ -373,7 +375,7 @@ function RoleSelectScreen({ name, onPick }: { name: string; onPick: (role: strin
       <div className="role-mandala mandala-one" />
       <div className="role-mandala mandala-two" />
       <div className="role-topbar">
-        <img src="/assets/logo.png" alt="Kala Sutra" className="role-logo" />
+        <img src={asset("logo.png")} alt="Kala Sutra" className="role-logo" />
         <button className="role-menu" aria-label="Open menu" onClick={() => setMenuOpen(v => !v)}>
           <span/><span/><span/>
         </button>
@@ -432,10 +434,10 @@ function LoginScreen({ onLoggedIn }: { onLoggedIn: (contact: string, name: strin
   }
 
   return (
-    <div className="centered-screen login-screen" style={{ justifyContent: "flex-start", paddingTop: 36 }}>
-      <div className="login-art-wrap"><img src="/assets/avatar-artisan.png" alt="KalaSutra artisan" /><span className="login-art-glow" /></div>
+    <div className="centered-screen login-screen login-modern" style={{ justifyContent: "flex-start", paddingTop: 24 }}>
+      <div className="login-art-wrap"><img src={asset("avatar-artisan.png")} alt="KalaSutra artisan" /><span className="login-art-glow" /></div>
       <div style={{ width: "100%", textAlign: "left" }}>
-        <h2 className="serif" style={{ margin: "0 0 4px" }}>Welcome</h2>
+        <div className="login-brand"><img src={asset("logo.png")} /><span>Crafting a Better Tomorrow</span></div><h2 className="serif" style={{ margin: "0 0 4px" }}>Welcome back</h2>
         <p style={{ fontSize: 12.5, color: "#5a4f45", marginBottom: 22 }}>Login to continue to Kala Sutra</p>
         <ErrorBanner message={err} />
 
@@ -552,7 +554,7 @@ function ArtisanDashboard({ user, go, setToast }: any) {
   return (
     <div className="artisan-home">
       <div className="artisan-topbar">
-        <img className="artisan-logo" src="/assets/logo.png" alt="Kala Sutra" />
+        <img className="artisan-logo" src={asset("logo.png")} alt="Kala Sutra" />
         <div className="art-lives">Art<br/>Lives<br/>Here ♡</div>
         <button className="menu-circle" aria-label="Menu">☰</button>
       </div>
@@ -621,6 +623,8 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   const [region, setRegion] = useState("");
   const [storyLang, setStoryLang] = useState("hi-IN");
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [ownershipDeclared, setOwnershipDeclared] = useState(false);
   const [proofVideo, setProofVideo] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
   const [storyRecording, setStoryRecording] = useState(false);
@@ -636,6 +640,16 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
     const file = e.target.files[0];
     if (!file) return;
     try { setImageDataUrl(await fileToDataURL(file)); } catch { setErr("Couldn't read that image — please try another file."); }
+  }
+
+  async function handleGalleryPick(e: any) {
+    const files = Array.from(e.target.files || []).slice(0, 4) as File[];
+    if (!files.length) return;
+    try {
+      const urls = await Promise.all(files.map(fileToDataURL));
+      setGalleryImages(urls);
+      setImageDataUrl(urls[0]);
+    } catch { setErr("Couldn\'t read one of the photos — please try again."); }
   }
 
   function generateEnglishDescription(transcript: string) {
@@ -679,7 +693,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   async function startProofRecording() {
     setErr(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: true });
       proofStreamRef.current = stream; proofChunksRef.current = [];
       const recorder = new MediaRecorder(stream);
       recorder.ondataavailable = (e) => { if (e.data.size > 0) proofChunksRef.current.push(e.data); };
@@ -689,23 +703,25 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
         stream.getTracks().forEach((t) => t.stop());
       };
       recorder.start(); proofRecorderRef.current = recorder; setRecording(true);
-      setTimeout(() => { if (proofRecorderRef.current?.state === "recording") proofRecorderRef.current.stop(); setRecording(false); }, 5000);
-    } catch (e: any) { setErr("Camera/microphone permission is needed for the 5-second making-proof clip. " + e.message); }
+      setTimeout(() => { if (proofRecorderRef.current?.state === "recording") proofRecorderRef.current.stop(); setRecording(false); }, 15000);
+    } catch (e: any) { setErr("Camera/microphone permission is needed for the 15-second making-proof clip. " + e.message); }
   }
   function stopProofRecording() { if (proofRecorderRef.current?.state === "recording") proofRecorderRef.current.stop(); proofStreamRef.current?.getTracks().forEach((t) => t.stop()); setRecording(false); }
 
   async function handleCreateAndScan() {
     if (!imageDataUrl) { setErr("First upload/take a photo of the piece."); return; }
+    if (galleryImages.length < 2) { setErr("Please add at least 2 photos for verification."); return; }
+    if (!ownershipDeclared) { setErr("Please confirm that this is your original handmade work."); return; }
     if (!story.trim()) { setErr("Please tell your craft story by voice before verification."); return; }
     if (!price || !/^\d+(\.\d{1,2})?$/.test(price)) { setErr("Please enter a valid price in ₹."); return; }
-    if (!proofVideo) { setErr("The 5-second making-proof video is required before verification."); return; }
+    if (!proofVideo) { setErr("The 15-second making-proof video is required before verification."); return; }
     setErr(null);
     try {
       const finalTitle = title.trim() || `${category} Handmade Piece`;
       const finalDescription = englishDescription || `Handcrafted ${category.toLowerCase()} made by a traditional artisan. Story: “${story.trim()}”.`;
       const created = await apiPost("/products", {
         artisanId: user.id, title: finalTitle, description: finalDescription, price: price,
-        category, image: imageDataUrl, craftInfo: { material, region, storyLanguage: storyLang, originalStory: story, verificationProof: proofVideo },
+        category, image: imageDataUrl, craftInfo: { material, region, storyLanguage: storyLang, originalStory: story, verificationProof: proofVideo, gallery: galleryImages, ownershipDeclared: true },
       });
       setProduct(created); setStepState("scanning");
       await new Promise((r) => setTimeout(r, 900));
@@ -728,6 +744,8 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
           {imageDataUrl ? <img src={imageDataUrl} style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} /> : <><div style={{fontSize:36}}>📷</div><div style={{fontSize:12.5,fontWeight:700}}>Tap to take/upload a photo</div><div style={{fontSize:10.5,color:"#6b6055"}}>Your piece becomes the starting point</div></>}
         </div>
         <input id="prodImgInput" type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={handleImagePick}/>
+        <div className="photo-upload-row"><label className="btn secondary photo-upload-btn">＋ Add 2–4 photos<input type="file" accept="image/*" multiple capture="environment" style={{display:"none"}} onChange={handleGalleryPick}/></label><span className="photo-count">{galleryImages.length ? `${galleryImages.length} photos ready` : "2–4 photos recommended"}</span></div>
+        {galleryImages.length > 0 && <div className="upload-preview-strip">{galleryImages.map((img,i)=><img key={i} src={img} alt={`Upload ${i+1}`}/>)}</div>}
         <div className="voice-story-card">
           <div className="field-label">YOUR STORY • VOICE FIRST</div>
           <div style={{fontWeight:700,fontSize:13}}>Tell us about your craft</div>
@@ -742,6 +760,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
         <div className="field"><div className="field-label">Product name <span style={{fontWeight:400}}>(optional — AI can draft it)</span></div><input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="Leave blank to let AI draft a title"/></div>
         <div style={{display:"flex",gap:10}}><div className="field" style={{flex:1}}><div className="field-label">Price (₹) • YOUR PRICE</div><input value={price} onChange={(e)=>setPrice(e.target.value.replace(/[^0-9.]/g,""))} placeholder="2000" inputMode="decimal"/></div><div className="field" style={{flex:1}}><div className="field-label">Category</div><select value={category} onChange={(e)=>setCategory(e.target.value)}>{Object.keys(CATEGORY_EMOJI).map(c=><option key={c}>{c}</option>)}</select></div></div>
         <div style={{display:"flex",gap:10}}><div className="field" style={{flex:1}}><div className="field-label">Material</div><input value={material} onChange={(e)=>setMaterial(e.target.value)} placeholder="e.g. Terracotta clay"/></div><div className="field" style={{flex:1}}><div className="field-label">Region</div><input value={region} onChange={(e)=>setRegion(e.target.value)} placeholder="e.g. Rajasthan"/></div></div>
+        <label className="ownership-card"><input type="checkbox" checked={ownershipDeclared} onChange={e=>setOwnershipDeclared(e.target.checked)}/><span><strong>Original work declaration</strong><small>I confirm this piece is my own handmade work and I have the right to list its photos and making proof.</small></span></label>
         <div className="proof-card">
           <div className="field-label">MANDATORY MAKING PROOF</div><div style={{fontWeight:700,fontSize:13}}>🎥 5-second verification clip</div><div style={{fontSize:10.5,color:"#6b6055",margin:"4px 0 9px"}}>Show the piece or a small moment of the making process. This proof is checked before listing.</div>
           {proofVideo ? <video src={proofVideo} controls style={{width:"100%",borderRadius:12,maxHeight:190,objectFit:"cover"}}/> : <button className={`btn ${recording?"secondary":""}`} onClick={recording?stopProofRecording:startProofRecording}>{recording ? "⏹ Recording… (auto-stops in 5s)" : "🔴 Record 5-sec proof"}</button>}
@@ -749,7 +768,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
         </div>
       </>}
       {step === "scanning" && <div style={{paddingTop:18}}><span className="demo-tag">Demo verification</span><div className="section-title">🛡️ Authenticity Check Running</div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Micro-Texture + Image Analysis</div><div className="verify-note">Checking the uploaded piece and making-proof clip…</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Making-Process Proof</div><div className="verify-note">Confirming that proof was supplied before listing.</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Authenticity Decision</div><div className="verify-note">Generating a confidence score.</div></div></div></div>}
-      {step === "result" && verifyResult && <div style={{paddingTop:6}}><span className="demo-tag">Demo verification</span><div className={`badge-result ${verifyResult.status}`}><div className="big">{verifyResult.status === "verified" ? "🟢 Verified Handmade" : verifyResult.status === "needs_review" ? "🟡 Needs Verification" : "🔴 Not Eligible"}</div><div className="small">Confidence score: {(verifyResult.confidence*100).toFixed(0)}%</div></div><div className="section-title">Listing saved • Price locked at ₹{Number(price).toLocaleString("en-IN")}</div><div className="card" style={{gridColumn:"span 2"}}><div className="thumb" style={{backgroundImage:`url(${product.image})`}}><BadgeLabel status={verifyResult.status}/></div><div className="info"><div className="t">{product.title}</div><div className="p">₹{Number(product.price).toLocaleString("en-IN")}</div></div></div></div>}
+      {step === "result" && verifyResult && <div style={{paddingTop:6}}><span className="demo-tag">Demo verification</span><div className={`badge-result ${verifyResult.status}`}><div className="big">{verifyResult.status === "verified" ? "🟢 Verified Handmade" : verifyResult.status === "needs_review" ? "🟡 Needs Verification" : "🔴 Not Eligible"}</div><div className="small">Confidence score: {(verifyResult.confidence*100).toFixed(0)}%</div><div className="verification-metrics"><span><b>Trust</b>{verifyResult.trustScore ?? Math.round(verifyResult.confidence*100)}/100</span><span><b>Risk</b>{verifyResult.riskScore ?? 0}/100</span><span><b>Match</b>{verifyResult.productProcessMatch ?? 94}%</span></div></div><div className="section-title">Listing saved • Price locked at ₹{Number(price).toLocaleString("en-IN")}</div><div className="card" style={{gridColumn:"span 2"}}><div className="thumb" style={{backgroundImage:`url(${product.image})`}}><BadgeLabel status={verifyResult.status}/></div><div className="info"><div className="t">{product.title}</div><div className="p">₹{Number(product.price).toLocaleString("en-IN")}</div></div></div></div>}
     </div>
     <div className="btn-row">{step === "form" && <button className="btn" onClick={handleCreateAndScan}>Scan &amp; Verify Product →</button>}{step === "result" && verifyResult?.status !== "rejected" && <button className="btn green" onClick={()=>go("createReel")}>Create a Reel for this product</button>}{step === "result" && <button className="btn secondary" onClick={()=>{setToast("Saved to your products");go("myProducts")}}>My Products</button>}</div>
   </>);
@@ -815,7 +834,7 @@ function CreateReelScreen({ user, go, setToast, prefillProductId }: any) {
   async function startRecording() {
     setErr(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: true });
       streamRef.current = stream;
       if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
       chunksRef.current = [];
@@ -984,27 +1003,22 @@ function MyReelsScreen({ user, go, setToast }: any) {
 // ARTISAN: PROFILE
 // ---------------------------------------------------------------------------
 function ArtisanProfileScreen({ user, onLogout, go }: any) {
-  return (
-    <>
-      <div className="content" style={{ paddingTop: 24 }}>
-        <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <img src="/assets/avatar-artisan.png" style={{ width: 70, height: "auto", marginBottom: 8 }} />
-          <div className="serif" style={{ fontWeight: 600, fontSize: 17 }}>{user.name}</div>
-          <div style={{ fontSize: 11.5, color: "#6b6055" }}>{user.profile?.location || "Location not set"}</div>
-        </div>
-        <div className="trust-box">
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", textTransform: "uppercase" }}>Trust Score</span>
-            <span className="serif" style={{ fontSize: 17, fontWeight: 700, color: "var(--green)" }}>{user.profile?.trustScore ?? 100}/100</span>
-          </div>
-        </div>
-        <div className="field-label">Bio</div>
-        <p style={{ fontSize: 12.5, marginTop: 4 }}>{user.profile?.bio || "No bio yet."}</p>
-        <button className="btn" style={{ marginTop: 14 }} onClick={() => go("reviews")}>Safety &amp; Review Center</button>
-        <button className="btn secondary" style={{ marginTop: 20 }} onClick={onLogout}>Log out</button>
-      </div>
-    </>
-  );
+  const [photo,setPhoto]=useState(user.profile?.photo || null);
+  const [bio,setBio]=useState(user.profile?.bio || "");
+  const [location,setLocation]=useState(user.profile?.location || "");
+  const [saved,setSaved]=useState(false);
+  async function pick(e:any){ const f=e.target.files?.[0]; if(!f)return; setPhoto(await fileToDataURL(f)); }
+  async function save(){ try { await apiPut(`/users/${user.id}`,{profile:{...user.profile,photo,bio,location}}); setSaved(true); setTimeout(()=>setSaved(false),1800); } catch(e:any){ alert(e.message||"Could not save profile"); } }
+  return <div className="content profile-premium">
+    <div className="profile-hero"><label className="profile-photo-wrap"><img src={photo || asset("avatar-artisan.png")} /><span>＋</span><input type="file" accept="image/*" capture="user" onChange={pick}/></label><div className="serif profile-name">{user.name}</div><div className="profile-sub">Top Artisan • {location || "India"}</div></div>
+    <div className="profile-stat-grid"><div><b>{user.profile?.trustScore ?? 100}</b><span>Trust Score</span></div><div><b>100%</b><span>Ownership</span></div><div><b>AI+</b><span>Verified</span></div></div>
+    <div className="trust-box"><strong>🛡️ Safety &amp; Review Center</strong><small>AI checks risk signals; suspicious listings can move to human review.</small></div>
+    <div className="field"><div className="field-label">Craft location</div><input value={location} onChange={e=>setLocation(e.target.value)} placeholder="Jaipur, Rajasthan"/></div>
+    <div className="field"><div className="field-label">Artisan story / bio</div><textarea value={bio} onChange={e=>setBio(e.target.value)} placeholder="Tell buyers about your craft journey…"/></div>
+    <button className="btn green" onClick={save}>{saved?"✓ Profile saved":"Save artisan profile"}</button>
+    <button className="btn secondary" style={{marginTop:10}} onClick={()=>go("reviews")}>Open Review Center</button>
+    <button className="btn secondary" style={{marginTop:10}} onClick={onLogout}>Log out</button>
+  </div>;
 }
 
 // ---------------------------------------------------------------------------
@@ -1127,9 +1141,14 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
   const [customRequest, setCustomRequest] = useState('');
   const [customizing, setCustomizing] = useState(false);
   const [customId, setCustomId] = useState<string | null>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [reviewStars, setReviewStars] = useState(5);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSaved, setReviewSaved] = useState(false);
 
   useEffect(() => {
     apiGet(`/products/${productId}`).then((p) => { setProduct(p); setSelectedImage(p.image || null); }).catch((e) => setErr(e.message));
+    apiGet(`/reviews?productId=${productId}`).then(setReviews).catch(()=>setReviews([]));
   }, [productId]);
 
   if (err) return <div className="content"><ErrorBanner message={err} /><button className="btn secondary" onClick={back}>Go back</button></div>;
@@ -1161,7 +1180,7 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
             <div className="product-gallery-strip">
               {product.gallery.map((img: string, i: number) => (
                 <button key={img + i} className={`product-gallery-thumb ${selectedImage === img ? "active" : ""}`} onClick={() => setSelectedImage(img)} aria-label={`View craft photo ${i + 1}`}>
-                  <img src={`/${img}`} alt={`Artisan craft photo ${i + 1}`} />
+                  <img src={img.startsWith("http") ? img : asset(img.replace(/^assets\//, ""))} alt={`Artisan craft photo ${i + 1}`} />
                 </button>
               ))}
             </div>
@@ -1171,6 +1190,11 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
         <div className="certificate-card">
           <div><span className="field-label">DIGITAL PRODUCT ID</span><strong>{product.uniqueProductId || 'KS-ART-000001'}</strong><small>Verified identity linked to this handmade piece</small></div>
           <div className="certificate-qr"><img alt="Product QR" src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(window.location.origin + '/?certificate=' + (product.uniqueProductId || product.id))}`} /></div>
+        </div>
+        <div className="reviews-card">
+          <div className="field-label">BUYER REVIEWS</div><h3>What buyers say</h3>
+          {reviews.length ? reviews.slice(0,4).map((r:any)=><div className="review-item" key={r.id}><span className="stars">{"★".repeat(Number(r.stars||5))}{"☆".repeat(5-Number(r.stars||5))}</span><strong>{r.buyerName || "Buyer"}</strong><p>{r.text}</p></div>) : <div className="empty-note" style={{padding:"12px 0"}}>Be the first to review this handmade piece.</div>}
+          <div className="review-compose"><div className="star-picker">{[1,2,3,4,5].map(n=><button key={n} className={n<=reviewStars?"on":""} onClick={()=>setReviewStars(n)}>★</button>)}</div><textarea value={reviewText} onChange={e=>setReviewText(e.target.value)} placeholder="Share your experience…"/><button className="btn secondary" onClick={async()=>{if(!reviewText.trim())return;try{await apiPost('/reviews',{productId,buyerId:userId,buyerName:'Buyer',stars:reviewStars,text:reviewText});setReviewText('');setReviewSaved(true);setTimeout(()=>setReviewSaved(false),1600);apiGet(`/reviews?productId=${productId}`).then(setReviews);}catch(e:any){setErr(e.message);}}}>{reviewSaved?'✓ Review added':'Post review'}</button></div>
         </div>
         <div className="customize-card">
           <div><span className="field-label">MAKE IT YOURS</span><strong>Customize this unique piece</strong><small>Personalize with a name, colour, size or small design change.</small></div>
@@ -1237,6 +1261,24 @@ function WishlistScreen({ user, openProduct, toggleWishlist }: any) {
 }
 
 // ---------------------------------------------------------------------------
+// ORDER JOURNEY — reference-inspired moving truck confirmation
+// ---------------------------------------------------------------------------
+function OrderJourney({ onDone }: { onDone: () => void }) {
+  const [stage,setStage]=useState(0);
+  useEffect(()=>{ const timers=[setTimeout(()=>setStage(1),500),setTimeout(()=>setStage(2),1450),setTimeout(()=>setStage(3),2350),setTimeout(onDone,3400)]; return ()=>timers.forEach(clearTimeout); },[]);
+  return <div className="order-journey-overlay">
+    <div className="order-journey-card">
+      <div className="journey-kicker">KALASUTRA DELIVERY JOURNEY</div>
+      <h2>{stage<3 ? "Your craft is on its way" : "Order Placed"}</h2>
+      <p>{stage===0?"Confirming your handmade order…":stage===1?"Artisan has received the order":stage===2?"Packed with care • moving to you": "✓ Payment & order confirmed"}</p>
+      <div className="journey-track"><div className="journey-line"/><div className={`journey-truck stage-${stage}`}>🚚</div><span className="j-stop one">✓</span><span className="j-stop two">✓</span><span className="j-stop three">✓</span></div>
+      <div className="journey-labels"><span>Placed</span><span>Processing</span><span>Shipped</span><span>Delivered</span></div>
+      {stage===3 && <div className="journey-success">✓ Handmade order secured</div>}
+    </div>
+  </div>;
+}
+
+// ---------------------------------------------------------------------------
 // BUYER: CART / CHECKOUT
 // ---------------------------------------------------------------------------
 function CartScreen({ user, go, setToast, refreshCartCount }: any) {
@@ -1251,6 +1293,7 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
   const [pincode, setPincode] = useState('');
   const [locationLoading, setLocationLoading] = useState(false);
   const [locationMessage, setLocationMessage] = useState('');
+  const [showOrderJourney, setShowOrderJourney] = useState(false);
 
   function fillSavedLocation() {
     const loc = savedLocation();
@@ -1318,7 +1361,7 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
       await apiPost('/checkout/cod', { buyerId: user.id, address });
       setToast('COD order placed successfully 🎉');
       notifyUser('KalaSutra order confirmed', 'Your Cash on Delivery order has been placed successfully.');
-      load(); refreshCartCount(); closeCheckout(); go('orders');
+      load(); refreshCartCount(); closeCheckout(); setShowOrderJourney(true);
     } catch (e) { setError(e.message); } finally { setLoading(false); }
   }
 
@@ -1342,7 +1385,7 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
             await apiPost('/payment/verify', { buyerId: user.id, address, ...response });
             setToast('Payment successful — order confirmed 🎉');
             notifyUser('KalaSutra payment successful', 'Your payment was verified and your order is confirmed.');
-            load(); refreshCartCount(); closeCheckout(); go('orders');
+            load(); refreshCartCount(); closeCheckout(); setShowOrderJourney(true);
           } catch (e) { setError(e.message); }
           finally { setLoading(false); }
         },
@@ -1405,6 +1448,7 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
           </div>
         </div>
       </div>}
+      {showOrderJourney && <OrderJourney onDone={()=>{ setShowOrderJourney(false); go("orders"); }} />}
     </>
   );
 }
@@ -1464,16 +1508,17 @@ function OrdersScreen({ user }: any) {
 // BUYER: PROFILE
 // ---------------------------------------------------------------------------
 function BuyerProfileScreen({ user, onLogout }: any) {
-  return (
-    <div className="content" style={{ paddingTop: 24 }}>
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--madder)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, margin: "0 auto 10px" }}>🛍️</div>
-        <div className="serif" style={{ fontWeight: 600, fontSize: 17 }}>{user.name}</div>
-        <div style={{ fontSize: 11.5, color: "#6b6055" }}>{user.profile?.location || "Conscious buyer"}</div>
-      </div>
-      <button className="btn secondary" onClick={onLogout}>Log out</button>
-    </div>
-  );
+  const [photo,setPhoto]=useState(user.profile?.photo || null); const [location,setLocation]=useState(user.profile?.location || ""); const [saved,setSaved]=useState(false);
+  async function pick(e:any){const f=e.target.files?.[0];if(f)setPhoto(await fileToDataURL(f));}
+  async function save(){try{await apiPut(`/users/${user.id}`,{profile:{...user.profile,photo,location}});setSaved(true);setTimeout(()=>setSaved(false),1800);}catch(e:any){alert(e.message||"Could not save profile");}}
+  return <div className="content profile-premium buyer-profile-premium">
+    <div className="buyer-profile-hero"><label className="profile-photo-wrap buyer-photo"><img src={photo || asset("avatar-artisan.png")} /><span>＋</span><input type="file" accept="image/*" capture="user" onChange={pick}/></label><div className="serif profile-name">{user.name}</div><div className="profile-sub">Conscious Buyer • discovering real makers</div></div>
+    <div className="profile-stat-grid"><div><b>12</b><span>Saved Pieces</span></div><div><b>8</b><span>Orders</span></div><div><b>4.9★</b><span>Reviews</span></div></div>
+    <div className="profile-action-grid"><button onClick={()=>alert("Your saved handmade pieces appear here.")}>♡ Saved pieces</button><button onClick={()=>alert("Your impact: every purchase supports a maker.")}>✦ My Impact</button></div>
+    <div className="field"><div className="field-label">Delivery location</div><input value={location} onChange={e=>setLocation(e.target.value)} placeholder="City / locality"/></div>
+    <button className="btn green" onClick={save}>{saved?"✓ Profile saved":"Save buyer profile"}</button>
+    <button className="btn secondary" style={{marginTop:10}} onClick={onLogout}>Log out</button>
+  </div>;
 }
 
 // ---------------------------------------------------------------------------
@@ -1529,11 +1574,11 @@ function CertificateScreen({ certificateId }: { certificateId: string }) {
   const [data, setData] = useState<any>(null);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => { apiGet(`/certificate/${encodeURIComponent(certificateId)}`).then(setData).catch((e) => setErr(e.message)); }, [certificateId]);
-  if (err) return <div className="certificate-public"><img src="/assets/logo.png" className="certificate-public-logo"/><div className="certificate-public-card"><h2>Certificate unavailable</h2><p>{err}</p></div></div>;
-  if (!data) return <div className="certificate-public"><img src="/assets/logo.png" className="certificate-public-logo"/><div className="certificate-public-card"><p>Loading verified product record…</p></div></div>;
+  if (err) return <div className="certificate-public"><img src={asset("logo.png")} className="certificate-public-logo"/><div className="certificate-public-card"><h2>Certificate unavailable</h2><p>{err}</p></div></div>;
+  if (!data) return <div className="certificate-public"><img src={asset("logo.png")} className="certificate-public-logo"/><div className="certificate-public-card"><p>Loading verified product record…</p></div></div>;
   const p = data.product; const verified = p.verificationStatus === 'verified';
   return <div className="certificate-public">
-    <img src="/assets/logo.png" className="certificate-public-logo"/>
+    <img src={asset("logo.png")} className="certificate-public-logo"/>
     <div className="certificate-public-card">
       <div className="certificate-public-kicker">KALASUTRA DIGITAL PRODUCT CERTIFICATE</div>
       <div className="certificate-public-id">{p.uniqueProductId}</div>

@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: kalasutra
+    env: node
+    buildCommand: ""
+    startCommand: "node server/server.js"
+    autoDeploy: true

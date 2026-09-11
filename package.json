@@ -1,11 +1,1 @@
-{
-  "name": "kalasutra-hackathon-demo",
-  "version": "1.0.0",
-  "description": "Kala Sutra — artisan-to-buyer marketplace hackathon demo. Zero external dependencies: pure Node.js backend + React loaded from CDN, no build step.",
-  "scripts": {
-    "start": "node server/server.js"
-  },
-  "engines": {
-    "node": ">=16"
-  }
-}
+{"name":"kalasutra","version":"1.0.0","private":true,"scripts":{"start":"node scripts/fetch-assets.js && node server/server.js","postinstall":"node scripts/fetch-assets.js"},"engines":{"node":">=18"}}

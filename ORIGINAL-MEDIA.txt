@@ -1,0 +1,13 @@
+Original KalaSutra media retained by reference from stable project commit 37a25f3:
+ai-talker.png
+avatar-artisan.png
+cane-making-reel.mp4
+cane-pendant-lamp.jpeg
+logo-mini.png
+logo.png
+product-diya.png
+product-elephant.png
+product-stole.png
+product-surai.png
+
+The frontend uses the stable asset base URL for these originals when deployed with internet access.
