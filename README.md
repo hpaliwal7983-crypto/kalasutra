@@ -202,3 +202,18 @@ Browser GPS permission requires a secure context in many browsers (HTTPS, or `lo
 ## Phone permissions (location / microphone / notifications)
 For laptop use, continue to open `http://localhost:3000`.
 For a phone, the browser must use HTTPS before it can grant location and microphone permissions. The included `START-PHONE-SECURE.cmd` starts the server and opens a secure HTTPS tunnel. Keep the window open and use the `https://...loca.lt` link it prints on the phone. On iPhone, notifications require adding KalaSutra to the Home Screen first; location and microphone work from the secure link.
+
+## Next-round features included
+- Trust & Originality: image checks, mandatory making-proof verification, product-process match, trust score and review statuses.
+- AI Artisan Empowerment: voice-first listing, fair-price guidance and artisan growth/order insights.
+- Safety & Fraud Protection: suspicious listing/repeated upload/image theft signals, buyer reports and review workflow.
+- Digital Product Certificate & QR: permanent IDs such as `KS-ART-000001`, public QR certificate pages, verification record and customization history.
+- Customization: buyers can request optional personalization for ₹100; the original Product ID stays permanent and each request gets a simple 4-digit Customization ID such as `0001`.
+- Artisan Order & Earnings: New Orders, Processing, Shipped, Delivered and Earnings dashboard.
+- AI Talker: voice-first navigation and accessibility guidance for artisans and buyers.
+
+### Hosted deployment note
+The server uses `process.env.PORT` when provided (for services such as Render) and binds normally through Node's server listener. Local phone HTTPS remains available on port 3443 when running without a hosted `PORT`.
+
+### Security
+Keep `.env` private. Never commit or share Razorpay secrets. Use Razorpay TEST keys for hackathon demonstrations.
