@@ -532,138 +532,29 @@ function ArtisanNav({ screen, go }: { screen: string; go: (s: string) => void })
 }
 
 // ---------------------------------------------------------------------------
-// ARTISAN GROWTH HUB — seven problem-solving modules
+// ARTISAN IMPACT HUB — seven problem → solution modules
 // ---------------------------------------------------------------------------
-function ArtisanGrowthHub({ user, featured, products, setToast }: any) {
-  const [open, setOpen] = useState<string | null>(null);
-  const [materialCost, setMaterialCost] = useState("450");
-  const [hours, setHours] = useState("6");
-  const [hourlyRate, setHourlyRate] = useState("180");
-  const [overhead, setOverhead] = useState("150");
-  const [capitalNeed, setCapitalNeed] = useState("25000");
-  const [materialJoin, setMaterialJoin] = useState<Record<string, boolean>>({});
-  const [designCraft, setDesignCraft] = useState("Pottery");
-  const [passportMade, setPassportMade] = useState(false);
-  const [lessonSaved, setLessonSaved] = useState<Record<string, boolean>>({});
-
-  const fairBase = Number(materialCost || 0) + Number(hours || 0) * Number(hourlyRate || 0) + Number(overhead || 0);
-  const fairPrice = Math.round(fairBase * 1.20);
-  const productTitle = featured?.title || "Your handmade piece";
-  const productPrice = Number(featured?.price || fairPrice || 0);
-
-  const modules = [
-    { id:"price", icon:"₹", title:"Fair Price AI", problem:"Low margins", desc:"Estimate a fair maker price from real time, material and overhead.", accent:"money" },
-    { id:"capital", icon:"◈", title:"Craft Capital", problem:"Limited capital", desc:"Prepare an order-ready funding plan without relying on informal lenders.", accent:"capital" },
-    { id:"material", icon:"✦", title:"Material Hub", problem:"Raw material scarcity", desc:"See collective-buy opportunities for silk, clay, wood, dyes and more.", accent:"material" },
-    { id:"design", icon:"✺", title:"Design Lab", problem:"Outdated designs", desc:"Turn traditional skills into contemporary, market-ready product directions.", accent:"design" },
-    { id:"passport", icon:"▣", title:"Craft Passport", problem:"Factory-copy competition", desc:"Create a traceable identity for the artisan, process and handmade origin.", accent:"passport" },
-    { id:"market", icon:"↗", title:"Direct Market Match", problem:"Middlemen & isolation", desc:"Match your craft with buyer needs so demand can reach the maker directly.", accent:"market" },
-    { id:"gurukul", icon:"⌘", title:"Craft Gurukul", problem:"Youth brain drain", desc:"Preserve techniques and pass practical craft knowledge to the next generation.", accent:"gurukul" },
-  ];
-
-  const materials = [
-    ["Natural dyes","18 artisans","62% funded"],
-    ["Terracotta clay","31 artisans","78% funded"],
-    ["Eri silk yarn","12 artisans","45% funded"]
-  ];
-  const designs: Record<string,string[]> = {
-    Pottery:["Stackable serving set for modern kitchens","Minimal terracotta planter with regional motif","Giftable chai + snack set with artisan story"],
-    Weaving:["Lightweight everyday stole with heritage border","Contemporary cushion series using traditional weave","Small-batch table runner for premium homes"],
-    Woodcraft:["Modular desk organiser with local carving","Modern wall accent with traditional geometry","Compact gifting box with maker mark"],
-    "Metal Craft":["Minimal statement diya set","Modern table centrepiece with traditional form","Collector's mini decor series"]
-  };
-  const demand = [
-    ["Boutique home stores","Pottery & tableware","92% match"],
-    ["Conscious gifting brands","Small handcrafted sets","86% match"],
-    ["Hotels & cafés","Regional decor pieces","79% match"]
-  ];
-  const lessons = [
-    ["01","Record a technique","Capture one signature step before it is lost."],
-    ["02","Teach a family member","Create a simple repeatable learning lesson."],
-    ["03","Build a craft archive","Save stories, tools and process notes with each piece."]
-  ];
-
-  function toggle(id:string){ setOpen(open === id ? null : id); }
-
+function ArtisanGrowthHub({ user, featured, setToast }: any) {
+  const [open,setOpen]=useState<string|null>(null);
+  const [materialCost,setMaterialCost]=useState("450"),[hours,setHours]=useState("6"),[rate,setRate]=useState("180"),[overhead,setOverhead]=useState("150");
+  const [capital,setCapital]=useState("25000"),[craft,setCraft]=useState("Pottery"),[joined,setJoined]=useState<Record<string,boolean>>({});
+  const fair=Math.round((Number(materialCost||0)+Number(hours||0)*Number(rate||0)+Number(overhead||0))*1.2);
+  const modules=[["price","₹","LOW MARGINS","Fair Price AI","Fair maker benchmark from material, time and overhead.","money"],["capital","◈","LIMITED CAPITAL","Craft Capital","Working-capital planning for the next order.","capital"],["material","✦","RAW MATERIAL SCARCITY","Material Hub","Collective-buy opportunities for quality craft materials.","material"],["design","✺","OUTDATED DESIGNS","Design Lab","Refresh traditional skills into contemporary directions.","design"],["passport","▣","FACTORY-COPY COMPETITION","Craft Passport","Traceable artisan, origin and process identity.","passport"],["market","↗","MIDDLEMEN & ISOLATION","Direct Market Match","Connect your craft with buyer demand.","market"],["gurukul","⌘","YOUTH BRAIN DRAIN","Craft Gurukul","Preserve techniques and pass practical knowledge forward.","gurukul"]];
+  const ideas:any={Pottery:["Stackable serving set for modern kitchens","Minimal terracotta planter with regional motif","Giftable chai + snack set with artisan story"],Weaving:["Lightweight everyday stole with heritage border","Contemporary cushion series using traditional weave","Small-batch table runner for premium homes"],Woodcraft:["Modular desk organiser with local carving","Modern wall accent with traditional geometry","Compact gifting box with maker mark"],"Metal Craft":["Minimal statement diya set","Modern table centrepiece with traditional form","Collector's mini decor series"]};
+  const demand=[["Boutique home stores","Pottery & tableware","92% match"],["Conscious gifting brands","Small handcrafted sets","86% match"],["Hotels & cafés","Regional decor pieces","79% match"]];
   return <section className="artisan-growth-hub">
-    <div className="growth-hub-heading">
-      <div>
-        <span className="field-label">KALASUTRA • ARTISAN IMPACT HUB</span>
-        <h3>We solve the system around the artisan.</h3>
-        <p>Not just a storefront — tools for fair pricing, materials, capital, demand and craft legacy.</p>
-      </div>
-      <span className="growth-hub-pill">7 challenges → 7 solutions</span>
-    </div>
-
-    <div className="problem-solution-strip">
-      <span>Middlemen → Direct market</span><span>Low margins → Fair price</span><span>Raw materials → Collective buy</span><span>Youth loss → Craft Gurukul</span>
-    </div>
-
-    <div className="growth-module-grid">
-      {modules.map(m => <button key={m.id} className={`growth-module-card ${m.accent} ${open===m.id?'open':''}`} onClick={() => toggle(m.id)}>
-        <span className="growth-module-icon">{m.icon}</span>
-        <span className="growth-module-copy"><small>{m.problem}</small><strong>{m.title}</strong><em>{m.desc}</em></span>
-        <span className="growth-module-arrow">{open===m.id?'⌃':'→'}</span>
-      </button>)}
-    </div>
-
-    {open === "price" && <div className="growth-module-panel">
-      <div className="panel-kicker">FAIR PRICE AI</div><h4>Price the craft, not just the material.</h4>
-      <div className="growth-form-grid">
-        <label>Material cost ₹<input value={materialCost} onChange={e=>setMaterialCost(e.target.value.replace(/\D/g,""))}/></label>
-        <label>Making hours<input value={hours} onChange={e=>setHours(e.target.value.replace(/\D/g,""))}/></label>
-        <label>Fair hourly rate ₹<input value={hourlyRate} onChange={e=>setHourlyRate(e.target.value.replace(/\D/g,""))}/></label>
-        <label>Overhead ₹<input value={overhead} onChange={e=>setOverhead(e.target.value.replace(/\D/g,""))}/></label>
-      </div>
-      <div className="growth-result-card"><span>Suggested fair maker price</span><strong>₹{fairPrice.toLocaleString("en-IN")}</strong><small>Includes a 20% craft-value buffer over direct cost. Use it as a planning benchmark.</small></div>
-      <button className="growth-action" onClick={()=>setToast(`Fair price benchmark saved: ₹${fairPrice.toLocaleString("en-IN")}`)}>Use this price benchmark →</button>
-    </div>}
-
-    {open === "capital" && <div className="growth-module-panel">
-      <div className="panel-kicker">CRAFT CAPITAL</div><h4>Prepare for the next order.</h4>
-      <p className="panel-copy">Build a simple working-capital plan for materials and production. KalaSutra does not promise or issue a loan here.</p>
-      <label className="wide-field">Working capital needed ₹<input value={capitalNeed} onChange={e=>setCapitalNeed(e.target.value.replace(/\D/g,""))}/></label>
-      <div className="capital-readiness"><span>Order readiness <b>78%</b></span><div><i style={{width:"78%"}} /></div><small>Strong product proof + artisan profile + verified craft can improve finance-readiness.</small></div>
-      <button className="growth-action" onClick={()=>setToast(`Capital plan prepared for ₹${Number(capitalNeed||0).toLocaleString("en-IN")}`)}>Prepare capital plan →</button>
-    </div>}
-
-    {open === "material" && <div className="growth-module-panel">
-      <div className="panel-kicker">MATERIAL HUB</div><h4>Buy better together.</h4>
-      <p className="panel-copy">Collective demand can make quality raw materials more accessible to rural makers.</p>
-      <div className="material-list">{materials.map(([name,people,progress]) => <div className="material-row" key={name}><div><strong>{name}</strong><small>{people} already interested</small></div><span>{progress}</span><button onClick={()=>setMaterialJoin(p=>({...p,[name]:!p[name]}))}>{materialJoin[name]?"Joined ✓":"Join"}</button></div>)}</div>
-    </div>}
-
-    {open === "design" && <div className="growth-module-panel">
-      <div className="panel-kicker">DESIGN LAB</div><h4>Keep the tradition. Refresh the use.</h4>
-      <div className="design-tabs">{Object.keys(designs).map(c=><button key={c} className={designCraft===c?"active":""} onClick={()=>setDesignCraft(c)}>{c}</button>)}</div>
-      <div className="design-suggestions">{designs[designCraft].map((d,i)=><div key={d}><span>0{i+1}</span><strong>{d}</strong><small>Built around your existing {designCraft.toLowerCase()} skill.</small></div>)}</div>
-      <button className="growth-action" onClick={()=>setToast(`${designCraft} design directions saved for your next collection`)}>Save collection ideas →</button>
-    </div>}
-
-    {open === "passport" && <div className="growth-module-panel">
-      <div className="panel-kicker">CRAFT PASSPORT</div><h4>Give every piece a traceable story.</h4>
-      <div className="passport-mini">
-        <div className="passport-code">{passportMade?"KS✓":"KS"}</div>
-        <div><small>KALASUTRA CRAFT PASSPORT</small><strong>{productTitle}</strong><span>{user.name} • {featured?.category || "Traditional craft"} • {featured?.region || "India"}</span></div>
-      </div>
-      <div className="passport-points"><span>✓ Artisan identity</span><span>✓ Material & origin</span><span>✓ Making process</span><span>✓ Verification status</span></div>
-      <button className="growth-action" onClick={()=>{setPassportMade(true);setToast("Digital Craft Passport prepared for this piece");}}>Generate Craft Passport →</button>
-    </div>}
-
-    {open === "market" && <div className="growth-module-panel">
-      <div className="panel-kicker">DIRECT MARKET MATCH</div><h4>Find buyers who need your craft.</h4>
-      <div className="demand-list">{demand.map(([who,need,match])=><div className="demand-row" key={who}><div><strong>{who}</strong><small>{need}</small></div><b>{match}</b><button onClick={()=>setToast(`Interest signal sent to ${who}`)}>Match</button></div>)}</div>
-      <div className="panel-note">Buyer matches are presented as prototype demand signals; no buyer commitment is implied until an order is confirmed.</div>
-    </div>}
-
-    {open === "gurukul" && <div className="growth-module-panel">
-      <div className="panel-kicker">CRAFT GURUKUL</div><h4>Make your knowledge outlive you.</h4>
-      <div className="lesson-list">{lessons.map(([n,title,desc])=><div className="lesson-row" key={n}><span>{n}</span><div><strong>{title}</strong><small>{desc}</small></div><button onClick={()=>setLessonSaved(p=>({...p,[n]:!p[n]}))}>{lessonSaved[n]?"Saved ✓":"Start"}</button></div>)}</div>
-      <button className="growth-action" onClick={()=>setToast("Your craft legacy workspace is ready")}>Open craft legacy →</button>
-    </div>}
-  </section>
+    <div className="growth-hub-heading"><div><span className="field-label">KALASUTRA • ARTISAN IMPACT HUB</span><h3>We solve the system around the artisan.</h3><p>Tools for fair pricing, materials, capital, demand and craft legacy — not just a storefront.</p></div><span className="growth-hub-pill">7 challenges → 7 solutions</span></div>
+    <div className="problem-solution-strip"><span>Middlemen → Direct market</span><span>Low margins → Fair price</span><span>Raw materials → Collective buy</span><span>Youth loss → Craft Gurukul</span></div>
+    <div className="growth-module-grid">{modules.map(([id,icon,problem,title,desc,accent])=><button key={id} className={`growth-module-card ${accent} ${open===id?"open":""}`} onClick={()=>setOpen(open===id?null:id)}><span className="growth-module-icon">{icon}</span><span className="growth-module-copy"><small>{problem}</small><strong>{title}</strong><em>{desc}</em></span><span className="growth-module-arrow">{open===id?"⌃":"→"}</span></button>)}</div>
+    {open==="price"&&<div className="growth-module-panel"><div className="panel-kicker">FAIR PRICE AI</div><h4>Price the craft, not just the material.</h4><div className="growth-form-grid"><label>Material cost ₹<input value={materialCost} onChange={e=>setMaterialCost(e.target.value.replace(/\D/g,""))}/></label><label>Making hours<input value={hours} onChange={e=>setHours(e.target.value.replace(/\D/g,""))}/></label><label>Fair hourly rate ₹<input value={rate} onChange={e=>setRate(e.target.value.replace(/\D/g,""))}/></label><label>Overhead ₹<input value={overhead} onChange={e=>setOverhead(e.target.value.replace(/\D/g,""))}/></label></div><div className="growth-result-card"><span>Suggested fair maker price</span><strong>₹{fair.toLocaleString("en-IN")}</strong><small>Planning benchmark with a 20% craft-value buffer.</small></div><button className="growth-action" onClick={()=>setToast(`Fair price benchmark saved: ₹${fair.toLocaleString("en-IN")}`)}>Use this price benchmark →</button></div>}
+    {open==="capital"&&<div className="growth-module-panel"><div className="panel-kicker">CRAFT CAPITAL</div><h4>Prepare for the next order.</h4><p className="panel-copy">Plan working capital for materials and production. KalaSutra does not promise or issue a loan here.</p><label className="wide-field">Working capital needed ₹<input value={capital} onChange={e=>setCapital(e.target.value.replace(/\D/g,""))}/></label><div className="capital-readiness"><span>Order readiness <b>78%</b></span><div><i style={{width:"78%"}}/></div><small>Product proof + artisan profile + verified craft can improve finance-readiness.</small></div><button className="growth-action" onClick={()=>setToast("Capital plan prepared")}>Prepare capital plan →</button></div>}
+    {open==="material"&&<div className="growth-module-panel"><div className="panel-kicker">MATERIAL HUB</div><h4>Buy better together.</h4><p className="panel-copy">Collective demand can make quality raw materials more accessible.</p><div className="material-list">{[["Natural dyes","18 artisans","62% funded"],["Terracotta clay","31 artisans","78% funded"],["Eri silk yarn","12 artisans","45% funded"]].map(([n,p,pr])=><div className="material-row" key={n}><div><strong>{n}</strong><small>{p} already interested</small></div><span>{pr}</span><button onClick={()=>setJoined(x=>({...x,[n]:!x[n]}))}>{joined[n]?"Joined ✓":"Join"}</button></div>)}</div></div>}
+    {open==="design"&&<div className="growth-module-panel"><div className="panel-kicker">DESIGN LAB</div><h4>Keep the tradition. Refresh the use.</h4><div className="design-tabs">{Object.keys(ideas).map(c=><button key={c} className={craft===c?"active":""} onClick={()=>setCraft(c)}>{c}</button>)}</div><div className="design-suggestions">{ideas[craft].map((d:string,i:number)=><div key={d}><span>0{i+1}</span><strong>{d}</strong><small>Built around your existing {craft.toLowerCase()} skill.</small></div>)}</div><button className="growth-action" onClick={()=>setToast("Collection ideas saved")}>Save collection ideas →</button></div>}
+    {open==="passport"&&<div className="growth-module-panel"><div className="panel-kicker">CRAFT PASSPORT</div><h4>Give every piece a traceable story.</h4><div className="passport-mini"><div className="passport-code">KS✓</div><div><small>KALASUTRA CRAFT PASSPORT</small><strong>{featured?.title||"Your handmade piece"}</strong><span>{user.name} • {featured?.category||"Traditional craft"} • {featured?.craftInfo?.region||"India"}</span></div></div><div className="passport-points"><span>✓ Artisan identity</span><span>✓ Material & origin</span><span>✓ Making process</span><span>✓ Verification</span></div><button className="growth-action" onClick={()=>setToast("Digital Craft Passport prepared")}>Generate Craft Passport →</button></div>}
+    {open==="market"&&<div className="growth-module-panel"><div className="panel-kicker">DIRECT MARKET MATCH</div><h4>Find buyers who need your craft.</h4><div className="demand-list">{demand.map(([who,need,match])=><div className="demand-row" key={who}><div><strong>{who}</strong><small>{need}</small></div><b>{match}</b><button onClick={()=>setToast(`Interest signal sent to ${who}`)}>Match</button></div>)}</div><div className="panel-note">Prototype demand signals only; no buyer commitment is implied until an order is confirmed.</div></div>}
+    {open==="gurukul"&&<div className="growth-module-panel"><div className="panel-kicker">CRAFT GURUKUL</div><h4>Make your knowledge outlive you.</h4><div className="lesson-list">{[["01","Record a technique","Capture one signature step before it is lost."],["02","Teach a family member","Create a simple repeatable learning lesson."],["03","Build a craft archive","Save stories, tools and process notes with each piece."]].map(([n,t,d])=><div className="lesson-row" key={n}><span>{n}</span><div><strong>{t}</strong><small>{d}</small></div><button onClick={()=>setToast("Lesson saved")}>Start</button></div>)}</div><button className="growth-action" onClick={()=>setToast("Craft legacy workspace ready")}>Open craft legacy →</button></div>}
+  </section>;
 }
-
 // ---------------------------------------------------------------------------
 // ARTISAN: DASHBOARD
 // ---------------------------------------------------------------------------
@@ -707,7 +598,7 @@ function ArtisanDashboard({ user, go, setToast }: any) {
           <div><span className="field-label">ARTISAN GROWTH DASHBOARD</span><strong>Orders, earnings &amp; business insights</strong><small>Track New Orders → Processing → Shipped → Delivered</small></div><button className="btn secondary" style={{marginTop:10}} onClick={()=>go("reviews")}>🛡️ Safety &amp; Review Center</button>
           <span className="growth-arrow">→</span>
         </div>
-        <ArtisanGrowthHub user={user} featured={featured} products={products} setToast={setToast} />
+        <ArtisanGrowthHub user={user} featured={featured} setToast={setToast} />
 
         <div className="section-row home-section-row">
           <div className="section-title">Your craft, on the grid</div>
@@ -1166,14 +1057,92 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
 // BUYER: HOME / EXPLORE
 // ---------------------------------------------------------------------------
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }: any) {
- const [products,setProducts]=useState<any[]>([]),[query,setQuery]=useState(""),[err,setErr]=useState<string|null>(null),[listening,setListening]=useState(false),[recentIds,setRecentIds]=useState<string[]>([]);
- const recentKey=`kalasutra_recent_products_${user.id}`,loadRecent=()=>{try{setRecentIds(JSON.parse(localStorage.getItem(recentKey)||"[]"))}catch(_){setRecentIds([])}};
- useEffect(()=>{apiGet(`/products`).then(setProducts).catch(e=>setErr(e.message));loadRecent();const f=()=>loadRecent();window.addEventListener("kalasutra:recent-product",f);return()=>window.removeEventListener("kalasutra:recent-product",f)},[user.id]);
- const filtered=products.filter(p=>!query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>`${p.title} ${p.category} ${p.craftInfo?.material||""} ${p.craftInfo?.region||""}`.toLowerCase().includes(w))),recent=recentIds.map(id=>products.find(p=>String(p.id)===String(id))).filter(Boolean).slice(0,4);
- const viewProduct=(id:string)=>{const next=[String(id),...recentIds.filter(x=>String(x)!==String(id))].slice(0,8);localStorage.setItem(recentKey,JSON.stringify(next));setRecentIds(next);openProduct(id)};
- async function voiceSearch(){const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR){setErr("Voice search is not supported in this browser.");return}const ok=await requestVoicePermission();if(!ok){setErr("Please allow microphone access for voice search.");return}const r=new SR();r.lang="hi-IN";r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>setListening(true);r.onend=()=>setListening(false);r.onerror=()=>{setListening(false);setErr("Voice search could not start. Please try again.")};r.onresult=(e:any)=>setQuery(e.results[0][0].transcript);try{r.start()}catch(_){}}
- return <><div className="buyer-hero-header"><div><div className="buyer-kicker">KALASUTRA MARKETPLACE</div><h2>Hello, {user.name} <span className="hello-dot">✦</span></h2><div className="sub">Discover stories behind every handmade piece.</div></div><button className="buyer-wishlist-head" onClick={()=>go("wishlist")} aria-label="Saved pieces"><Icon name="heart"/>{wishlist.length>0&&<b>{wishlist.length}</b>}</button></div><div className="content buyer-content"><ErrorBanner message={err}/><div className="smart-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…"/><button className={listening?"voice-search listening":"voice-search"} onClick={voiceSearch}>🎙</button></div><div className="buyer-shortcuts"><button onClick={()=>go("wishlist")}><Icon name="heart"/> Saved {wishlist.length?`(${wishlist.length})`:""}</button><button onClick={()=>go("buyerReels")}><Icon name="reels"/> Maker Reels</button><button onClick={()=>go("cart")}><Icon name="cart"/> Cart {cartCount?`(${cartCount})`:""}</button></div><div className="section-row"><div className="section-title" style={{margin:0}}>{query?`Results for "${query}"`:"For you"}</div><span className="view-all" onClick={()=>go("buyerReels")}>Explore Reels →</span></div>{filtered.length===0?<div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>:<div className="grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>viewProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>{wishlist.includes(p.id)?"❤️":"🤍"}</button></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{p.price.toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={e=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️")}}>＋ Add to cart</button></div></div></div>)}</div>}{recent.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>viewProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}</div><div className="floating-cart-wrap">{cartCount>0&&<button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{cartCount} item{cartCount>1?"s":""}</small></span><b>›</b></button>}</div></>;
+  const [products, setProducts] = useState<any[]>([]);
+  const [query, setQuery] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
+  const [recentIds,setRecentIds]=useState<string[]>([]);
+  const recentKey=`kalasutra_recent_products_${user.id}`;
+  useEffect(()=>{try{setRecentIds(JSON.parse(localStorage.getItem(recentKey)||"[]"))}catch(_){setRecentIds([])}},[recentKey]);
+  const rememberProduct=(id:string)=>{const next=[String(id),...recentIds.filter(x=>String(x)!==String(id))].slice(0,8);localStorage.setItem(recentKey,JSON.stringify(next));setRecentIds(next);openProduct(id)};
+
+  useEffect(() => { apiGet(`/products`).then(setProducts).catch((e) => setErr(e.message)); }, []);
+
+  const filtered = products.filter((p) => {
+    if (!query.trim()) return true;
+    const hay = `${p.title} ${p.category} ${p.craftInfo?.material || ""} ${p.craftInfo?.region || ""}`.toLowerCase();
+    return query.toLowerCase().split(" ").filter(Boolean).every((w) => hay.includes(w));
+  });
+
+  async function voiceSearch() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { setErr('Voice search is not supported in this browser.'); return; }
+    const ok = await requestVoicePermission();
+    if (!ok) { setErr('Please allow microphone access for voice search.'); return; }
+    const r = new SR(); r.lang = "hi-IN"; r.interimResults = false; r.maxAlternatives = 1;
+    r.onstart = () => setListening(true);
+    r.onend = () => setListening(false);
+    r.onerror = () => { setListening(false); setErr('Voice search could not start. Please try again.'); };
+    r.onresult = (e: any) => setQuery(e.results[0][0].transcript);
+    try { r.start(); } catch (_) {}
+  }
+
+  return (
+    <>
+      <div className="buyer-hero-header">
+        <div>
+          <div className="buyer-kicker">KALASUTRA MARKETPLACE</div>
+          <h2>Hello, {user.name} <span className="hello-dot">✦</span></h2>
+          <div className="sub">Discover stories behind every handmade piece.</div>
+        </div>
+        <button className="buyer-wishlist-head" onClick={() => go("wishlist")} aria-label="Saved pieces">
+          <Icon name="heart" />{wishlist.length > 0 && <b>{wishlist.length}</b>}
+        </button>
+      </div>
+      <div className="content buyer-content">
+        <ErrorBanner message={err} />
+        <div className="smart-search">
+          <Icon name="search" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…" />
+          <button className={listening ? "voice-search listening" : "voice-search"} onClick={voiceSearch} aria-label="Voice search">🎙</button>
+        </div>
+        <div className="buyer-shortcuts">
+          <button onClick={() => go("wishlist")}><Icon name="heart" /> Saved {wishlist.length ? `(${wishlist.length})` : ""}</button>
+          <button onClick={() => go("buyerReels")}><Icon name="reels" /> Maker Reels</button>
+          <button onClick={() => go("cart")}><Icon name="cart" /> Cart {cartCount ? `(${cartCount})` : ""}</button>
+        </div>
+        <div className="section-row"><div className="section-title" style={{ margin: 0 }}>{query ? `Results for "${query}"` : "For you"}</div><span className="view-all" onClick={() => go("buyerReels")}>Explore Reels →</span></div>
+        {filtered.length === 0 ? (
+          <div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>
+        ) : (
+          <div className="grid">
+            {filtered.map((p) => (
+              <div key={p.id} data-featured={p.id === "p5" ? "true" : undefined} className="card buyer-product-card" onClick={() => rememberProduct(p.id)}>
+                <div className="thumb" style={{ backgroundImage: `url(${p.image})` }}>
+                  <BadgeLabel status={p.verificationStatus} />
+                  <button className="card-icon-btn card-heart" onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }}>{wishlist.includes(p.id) ? "❤️" : "🤍"}</button>
+                </div>
+                <div className="info">
+                  <div className="t">{p.title}</div>
+                  <div className="buyer-card-bottom">
+                    <div className="p">₹{p.price.toLocaleString("en-IN")}</div>
+                    <button className="quick-cart-btn" onClick={(e) => { e.stopPropagation(); addToCart(p.id); setToast("Added to cart 🛍️"); }}>＋ Add to cart</button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {recentIds.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recentIds.map(id=>products.find((p:any)=>String(p.id)===String(id))).filter(Boolean).slice(0,4).map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>rememberProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}
+      </div>
+      <div className="floating-cart-wrap">
+        {cartCount > 0 && <button className="floating-cart" onClick={() => go("cart")}><span className="mini-cart-icon"><Icon name="cart" /></span><span><strong>View cart</strong><small>{cartCount} item{cartCount > 1 ? "s" : ""}</small></span><b>›</b></button>}
+      </div>
+      <AITalker role="buyer" go={go} />
+    </>
+  );
 }
+
 // ---------------------------------------------------------------------------
 // BUYER: PRODUCT DETAIL
 // ---------------------------------------------------------------------------
@@ -1188,15 +1157,8 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
   const [customId, setCustomId] = useState<string | null>(null);
 
   useEffect(() => {
-    apiGet(`/products/${productId}`).then((p) => {
-      setProduct(p); setSelectedImage(p.image || null);
-      try {
-        const key=`kalasutra_recent_products_${userId}`, prev=JSON.parse(localStorage.getItem(key)||"[]");
-        const next=[String(p.id),...prev.filter((x:any)=>String(x)!==String(p.id))].slice(0,8);
-        localStorage.setItem(key,JSON.stringify(next)); window.dispatchEvent(new Event("kalasutra:recent-product"));
-      } catch (_) {}
-    }).catch((e) => setErr(e.message));
-  }, [productId, userId]);
+    apiGet(`/products/${productId}`).then((p) => { setProduct(p); setSelectedImage(p.image || null); }).catch((e) => setErr(e.message));
+  }, [productId]);
 
   if (err) return <div className="content"><ErrorBanner message={err} /><button className="btn secondary" onClick={back}>Go back</button></div>;
   if (!product) return <div className="content"><div className="empty-note">Loading…</div></div>;
@@ -1309,7 +1271,8 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [method, setMethod] = useState<'razorpay' | 'cod'>('razorpay');
   const [orderType, setOrderType] = useState<'retail' | 'bulk'>('retail');
-  const [bulkQty, setBulkQty] = useState<Record<string, number>>({});
+  const [bulkQty, setBulkQty] = useState<Record<string,number>>({});
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phone, setPhone] = useState(user.contact || '');
@@ -1358,18 +1321,8 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  async function load() {
-    try {
-      const next = await apiGet(`/cart?userId=${user.id}`);
-      setItems(next);
-      const initial: Record<string, number> = {};
-      next.forEach((i: any, index: number) => {
-        initial[String(i.productId)] = i.qty + (index === 0 ? Math.max(0, 20 - i.qty) : 0);
-      });
-      setBulkQty(initial);
-    } catch (e: any) { setError(e.message); }
-  }
-  useEffect(() => { load(); }, []);
+  function load() { apiGet(`/cart?userId=${user.id}`).then(setItems).catch(e => setError(e.message)); }
+  useEffect(load, []);
 
   async function remove(productId: string) {
     await apiDelete('/cart', { userId: user.id, productId });
@@ -1377,14 +1330,22 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
   }
 
   const total = items.reduce((s, i) => s + (i.product?.price || 0) * i.qty, 0);
-  const retailQty = items.reduce((s, i) => s + i.qty, 0);
-  const bulkTotalQty = items.reduce((s, i) => s + Math.max(1, Number(bulkQty[String(i.productId)] || i.qty || 1)), 0);
-  const bulkSubtotal = items.reduce((s, i) => s + (i.product?.price || 0) * Math.max(1, Number(bulkQty[String(i.productId)] || i.qty || 1)), 0);
-  const bulkDiscountRate = bulkTotalQty >= 100 ? 0.20 : bulkTotalQty >= 50 ? 0.15 : bulkTotalQty >= 20 ? 0.10 : 0;
-  const bulkDiscount = Math.round(bulkSubtotal * bulkDiscountRate);
-  const bulkTotal = bulkSubtotal - bulkDiscount;
-  const bulkUnitAverage = bulkTotalQty ? Math.round(bulkTotal / bulkTotalQty) : 0;
   const address = { phone, area, city, pincode };
+  const bulkPieces = items.reduce((s,i)=>s+Math.max(1,Number(bulkQty[String(i.productId)]||i.qty||1)),0);
+  const bulkSubtotal = items.reduce((s,i)=>s+Number(i.product?.price||0)*Math.max(1,Number(bulkQty[String(i.productId)]||i.qty||1)),0);
+  const bulkRate = bulkPieces>=100?.20:bulkPieces>=50?.15:bulkPieces>=20?.10:0;
+  const bulkTotal = Math.round(bulkSubtotal*(1-bulkRate));
+  function changeBulkQty(id:string,d:number){setBulkQty(p=>({...p,[String(id)]:Math.max(1,Number(p[String(id)]||1)+d)}));}
+  function requestBulkOrder(){
+    if(!validateAddress()) return;
+    if(bulkPieces<20){setError('Bulk / B2B orders start at 20 pieces. Increase the quantity to continue.');return;}
+    const req={id:`BULK-${Date.now().toString(36).toUpperCase()}`,buyerId:user.id,address,pieces:bulkPieces,subtotal:bulkSubtotal,discountRate:bulkRate,estimatedTotal:bulkTotal,status:'quote_requested',createdAt:new Date().toISOString(),items:items.map(i=>({productId:i.productId,title:i.product?.title,quantity:Math.max(1,Number(bulkQty[String(i.productId)]||i.qty||1)),unitPrice:i.product?.price||0}))};
+    localStorage.setItem('kalasutra_last_bulk_request',JSON.stringify(req));
+    setToast(`Bulk request ${req.id} saved • ${bulkPieces} pieces`);
+    notifyUser('KalaSutra bulk request received',`Your ${bulkPieces}-piece B2B request is saved for follow-up.`);
+    closeCheckout();
+  }
+
 
   function validateAddress() {
     if (!phone.trim() || !area.trim() || !city.trim() || !pincode.trim()) {
@@ -1393,50 +1354,6 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
     if (!/^\d{10}$/.test(phone.replace(/\D/g, ''))) { setError('Please enter a valid 10-digit phone number'); return false; }
     if (!/^\d{6}$/.test(pincode.trim())) { setError('Please enter a valid 6-digit pincode'); return false; }
     return true;
-  }
-
-  function updateBulkQuantity(productId: string, delta: number) {
-    setBulkQty(prev => {
-      const current = Math.max(1, Number(prev[String(productId)] || 1));
-      return { ...prev, [String(productId)]: Math.max(1, current + delta) };
-    });
-  }
-
-  function chooseBulkTier(min: number) {
-    if (!items.length) return;
-    const firstId = String(items[0].productId);
-    setBulkQty(prev => ({ ...prev, [firstId]: Math.max(min, Number(prev[firstId] || 1)) }));
-  }
-
-  function requestBulkOrder() {
-    setError(null);
-    if (!validateAddress()) return;
-    if (bulkTotalQty < 20) {
-      setError('Bulk / B2B orders start at 20 pieces. Increase the quantity to continue.');
-      return;
-    }
-    const request = {
-      id: `BULK-${Date.now().toString(36).toUpperCase()}`,
-      buyerId: user.id,
-      buyerName: user.name,
-      address,
-      items: items.map(i => ({
-        productId: i.productId,
-        title: i.product?.title,
-        quantity: Math.max(1, Number(bulkQty[String(i.productId)] || i.qty || 1)),
-        unitPrice: i.product?.price || 0
-      })),
-      pieces: bulkTotalQty,
-      subtotal: bulkSubtotal,
-      discountRate: bulkDiscountRate,
-      estimatedTotal: bulkTotal,
-      createdAt: new Date().toISOString(),
-      status: 'quote_requested'
-    };
-    localStorage.setItem('kalasutra_last_bulk_request', JSON.stringify(request));
-    setToast(`Bulk request ${request.id} saved • ${bulkTotalQty} pieces`);
-    notifyUser('KalaSutra bulk request received', `Your ${bulkTotalQty}-piece B2B request is saved for follow-up.`);
-    closeCheckout();
   }
 
   async function placeCOD() {
@@ -1501,13 +1418,12 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
       </div>
 
       {checkoutOpen && <div className="payment-overlay">
-        <div className="payment-sheet bulk-checkout-sheet">
+        <div className="payment-sheet">
           <div className="payment-topbar">
             <button onClick={closeCheckout} aria-label="Back">‹</button>
             <div><small>SECURE CHECKOUT</small><h2>Delivery and payment</h2></div>
             <button onClick={closeCheckout} aria-label="Close">×</button>
           </div>
-
           <div className="payment-body">
             <div className="payment-section-title">Delivery details</div>
             <div className="payment-field"><span>☎</span><input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,'').slice(0,10))} placeholder="10-digit mobile number" /></div>
@@ -1518,88 +1434,34 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
             {locationMessage && <div className="location-fill-note">{locationMessage}</div>}
 
             <div className="bulk-order-card">
-              <div className="bulk-order-head">
-                <div className="bulk-order-icon">▦</div>
-                <div>
-                  <div className="bulk-order-kicker">ORDER TYPE</div>
-                  <h3>How do you want to order?</h3>
-                  <p>For shops, studios, hotels and larger craft collections.</p>
-                </div>
-              </div>
+              <div className="bulk-order-head"><div className="bulk-order-icon">▦</div><div><div className="bulk-order-kicker">ORDER TYPE</div><h3>Retail or Bulk / B2B?</h3><p>Choose the right path for your handmade purchase.</p></div></div>
               <div className="bulk-order-tabs">
-                <button className={orderType === 'retail' ? 'active' : ''} onClick={() => setOrderType('retail')}>
-                  <span>Retail</span><small>Regular purchase</small>
-                </button>
-                <button className={orderType === 'bulk' ? 'active' : ''} onClick={() => setOrderType('bulk')}>
-                  <span>Bulk / B2B</span><small>20+ pieces</small>
-                </button>
+                <button className={orderType==='retail'?'active':''} onClick={()=>setOrderType('retail')}><span>Retail</span><small>Regular purchase</small></button>
+                <button className={orderType==='bulk'?'active':''} onClick={()=>setOrderType('bulk')}><span>Bulk / B2B</span><small>20+ pieces</small></button>
               </div>
-
-              {orderType === 'bulk' ? (
-                <div className="bulk-order-panel">
-                  <div className="bulk-benefit-row">
-                    <span>🧵 Direct artisan sourcing</span>
-                    <span>📦 Volume pricing</span>
-                  </div>
-                  <div className="bulk-tier-row">
-                    <button onClick={() => chooseBulkTier(20)} className={bulkTotalQty >= 20 ? 'chosen' : ''}><b>20+</b><small>10% off</small></button>
-                    <button onClick={() => chooseBulkTier(50)} className={bulkTotalQty >= 50 ? 'chosen' : ''}><b>50+</b><small>15% off</small></button>
-                    <button onClick={() => chooseBulkTier(100)} className={bulkTotalQty >= 100 ? 'chosen' : ''}><b>100+</b><small>20% off</small></button>
-                  </div>
-
-                  <div className="bulk-items-list">
-                    {items.map(i => {
-                      const q = Math.max(1, Number(bulkQty[String(i.productId)] || i.qty || 1));
-                      return <div className="bulk-item-row" key={`bulk-${i.productId}`}>
-                        <div><strong>{i.product?.title}</strong><small>₹{Number(i.product?.price || 0).toLocaleString('en-IN')} / piece</small></div>
-                        <div className="bulk-qty-control">
-                          <button onClick={() => updateBulkQuantity(i.productId, -1)} aria-label="Decrease quantity">−</button>
-                          <b>{q}</b>
-                          <button onClick={() => updateBulkQuantity(i.productId, 1)} aria-label="Increase quantity">+</button>
-                        </div>
-                      </div>;
-                    })}
-                  </div>
-
-                  <div className="bulk-price-box">
-                    <div><span>Total pieces</span><strong>{bulkTotalQty}</strong></div>
-                    <div><span>Volume discount</span><strong>{Math.round(bulkDiscountRate * 100)}%</strong></div>
-                    <div className="bulk-final-price"><span>Estimated total</span><strong>₹{bulkTotal.toLocaleString('en-IN')}</strong></div>
-                    <small>Approx. ₹{bulkUnitAverage.toLocaleString('en-IN')} per piece after volume discount.</small>
-                  </div>
-                  <div className="bulk-note">Bulk requests are reviewed with the artisan so larger orders can be confirmed at a fair, direct-to-maker price.</div>
-                </div>
-              ) : (
-                <div className="bulk-retail-note">Regular checkout for individual purchases. Switch to <b>Bulk / B2B</b> when you need 20+ pieces.</div>
-              )}
+              {orderType==='bulk'&&<div className="bulk-order-panel">
+                <div className="bulk-benefit-row"><span>🧵 Direct artisan sourcing</span><span>📦 Volume pricing</span></div>
+                <div className="bulk-tier-row"><button onClick={()=>setBulkQty(p=>({...p,[String(items[0]?.productId)]:Math.max(20,Number(p[String(items[0]?.productId)]||1))}))} className={bulkPieces>=20?'chosen':''}><b>20+</b><small>10% off</small></button><button onClick={()=>setBulkQty(p=>({...p,[String(items[0]?.productId)]:Math.max(50,Number(p[String(items[0]?.productId)]||1))}))} className={bulkPieces>=50?'chosen':''}><b>50+</b><small>15% off</small></button><button onClick={()=>setBulkQty(p=>({...p,[String(items[0]?.productId)]:Math.max(100,Number(p[String(items[0]?.productId)]||1))}))} className={bulkPieces>=100?'chosen':''}><b>100+</b><small>20% off</small></button></div>
+                <div className="bulk-items-list">{items.map(i=>{const q=Math.max(1,Number(bulkQty[String(i.productId)]||i.qty||1));return <div className="bulk-item-row" key={`bulk-${i.productId}`}><div><strong>{i.product?.title}</strong><small>₹{Number(i.product?.price||0).toLocaleString('en-IN')} / piece</small></div><div className="bulk-qty-control"><button onClick={()=>changeBulkQty(i.productId,-1)}>−</button><b>{q}</b><button onClick={()=>changeBulkQty(i.productId,1)}>+</button></div></div>})}</div>
+                <div className="bulk-price-box"><div><span>Total pieces</span><strong>{bulkPieces}</strong></div><div><span>Volume discount</span><strong>{Math.round(bulkRate*100)}%</strong></div><div className="bulk-final-price"><span>Estimated total</span><strong>₹{bulkTotal.toLocaleString('en-IN')}</strong></div><small>Bulk pricing is an estimate until the artisan confirms the request.</small></div>
+                <button className="bulk-request-btn" onClick={requestBulkOrder} disabled={bulkPieces<20}>Request bulk order • {bulkPieces} pieces</button>
+              </div>}
             </div>
 
-            {orderType === 'retail' && <>
-              <div className="payment-section-title payment-method-title">Payment method</div>
-              <button className={`payment-method-card ${method === 'razorpay' ? 'selected' : ''}`} onClick={() => setMethod('razorpay')}>
-                <span className="payment-method-icon">▣</span><span><strong>Razorpay secure payment</strong><small>Google Pay, PhonePe, UPI, cards and netbanking</small></span><i>{method === 'razorpay' ? '●' : '○'}</i>
-              </button>
-              <button className={`payment-method-card ${method === 'cod' ? 'selected' : ''}`} onClick={() => setMethod('cod')}>
-                <span className="payment-method-icon">▤</span><span><strong>Cash on delivery</strong><small>Pay when your order arrives</small></span><i>{method === 'cod' ? '●' : '○'}</i>
-              </button>
-              <div className="payment-trust">✓ {method === 'razorpay' ? 'Payment is completed on Razorpay and verified before your order is created.' : 'Your order is confirmed now. Pay in cash when the artisan order arrives.'}</div>
-            </>}
+            <div className="payment-section-title payment-method-title">Payment method</div>
+            <button className={`payment-method-card ${method === 'razorpay' ? 'selected' : ''}`} onClick={() => setMethod('razorpay')}>
+              <span className="payment-method-icon">▣</span><span><strong>Razorpay secure payment</strong><small>Google Pay, PhonePe, UPI, cards and netbanking</small></span><i>{method === 'razorpay' ? '●' : '○'}</i>
+            </button>
+            <button className={`payment-method-card ${method === 'cod' ? 'selected' : ''}`} onClick={() => setMethod('cod')}>
+              <span className="payment-method-icon">▤</span><span><strong>Cash on delivery</strong><small>Pay when your order arrives</small></span><i>{method === 'cod' ? '●' : '○'}</i>
+            </button>
 
+            <div className="payment-trust">✓ {method === 'razorpay' ? 'Payment is completed on Razorpay and verified before your order is created.' : 'Your order is confirmed now. Pay in cash when the artisan order arrives.'}</div>
             {error && <div className="payment-error">{error}</div>}
 
-            {orderType === 'bulk' ? (
-              <div className="payment-summary bulk-summary">
-                <span><small>{bulkTotalQty} pieces • {Math.round(bulkDiscountRate * 100)}% volume discount</small><strong>₹{bulkTotal.toLocaleString('en-IN')}</strong></span>
-                <button onClick={requestBulkOrder} disabled={loading || bulkTotalQty < 20}>
-                  {loading ? 'Saving…' : `Request bulk order • ${bulkTotalQty} pieces`}
-                </button>
-              </div>
-            ) : (
-              <div className="payment-summary">
-                <span><small>{retailQty} items</small><strong>₹{total.toLocaleString('en-IN')}</strong></span>
-                <button onClick={method === 'razorpay' ? payOnline : placeCOD} disabled={loading}>{loading ? 'Processing…' : method === 'razorpay' ? `Pay ₹${total.toLocaleString('en-IN')} securely` : `Place COD order • ₹${total.toLocaleString('en-IN')}`}</button>
-              </div>
-            )}
+            <div className="payment-summary"><span><small>{items.reduce((s,i)=>s+i.qty,0)} items</small><strong>₹{total.toLocaleString('en-IN')}</strong></span>
+              <button onClick={method === 'razorpay' ? payOnline : placeCOD} disabled={loading}>{loading ? 'Processing…' : method === 'razorpay' ? `Pay ₹${total.toLocaleString('en-IN')} securely` : `Place COD order • ₹${total.toLocaleString('en-IN')}`}</button>
+            </div>
           </div>
         </div>
       </div>}
@@ -1678,14 +1540,16 @@ function BuyerProfileScreen({ user, onLogout }: any) {
 // BUYER: REELS FEED
 // ---------------------------------------------------------------------------
 function ReelsFeedScreen({ openProduct, setToast }: any) {
- const [reels,setReels]=useState<any[]>([]),[liked,setLiked]=useState<Record<string,boolean>>({}),[saved,setSaved]=useState<Record<string,boolean>>({}),[counts,setCounts]=useState<Record<string,number>>({}),[comments,setComments]=useState<Record<string,string[]>>({}),[commentOpen,setCommentOpen]=useState<string|null>(null),[commentText,setCommentText]=useState("");
- useEffect(()=>{apiGet(`/reels`).then(data=>{setReels(data);try{const l=JSON.parse(localStorage.getItem("kalasutra_reel_likes")||"{}"),s=JSON.parse(localStorage.getItem("kalasutra_reel_saves")||"{}"),c=JSON.parse(localStorage.getItem("kalasutra_reel_comments")||"{}"),n:any={};data.forEach((r:any)=>n[String(r.id)]=Number(r.likes||0));Object.keys(l).forEach(id=>{if(l[id])n[id]=(n[id]||0)+1});setLiked(l);setSaved(s);setComments(c);setCounts(n)}catch(_){}}).catch(()=>setReels([]))},[]);
- const like=(id:string)=>{const k=String(id),v=!liked[k],l={...liked,[k]:v},n={...counts,[k]:Math.max(0,(counts[k]||0)+(v?1:-1))};setLiked(l);setCounts(n);localStorage.setItem("kalasutra_reel_likes",JSON.stringify(l));setToast(v?"Liked ❤️":"Like removed")};
- const save=(id:string)=>{const k=String(id),v=!saved[k],s={...saved,[k]:v};setSaved(s);localStorage.setItem("kalasutra_reel_saves",JSON.stringify(s));setToast(v?"Reel saved 🔖":"Removed from saved")};
- async function share(r:any){const url=window.location.href.split("#")[0]+`?reel=${encodeURIComponent(r.id)}`;try{if(navigator.share)await navigator.share({title:"KalaSutra Maker Reel",text:r.caption||"See this handmade craft story on KalaSutra",url});else{await navigator.clipboard.writeText(url);setToast("Reel link copied ↗")}}catch(_){}}
- const comment=(id:string)=>{const v=commentText.trim();if(!v)return;const k=String(id),next=[...(comments[k]||[]),v],all={...comments,[k]:next};setComments(all);setCommentText("");localStorage.setItem("kalasutra_reel_comments",JSON.stringify(all));setToast("Comment added 💬")};
- return <div className="reels-wrap">{reels.length===0&&<div className="empty-note" style={{paddingTop:100}}>No Reels yet — check back soon.</div>}{reels.map(r=>{const k=String(r.id),list=comments[k]||[],num=counts[k]??Number(r.likes||0);return <div className="reel" key={r.id}>{r.video?<video src={r.video} className="reel-visual" style={{objectFit:"cover",fontSize:0}} autoPlay loop muted playsInline/>:<div className="reel-visual" style={{background:"#8a5a3a"}}>{r.thumbEmoji}</div>}<div className="reel-gradient"/><div className="reel-overlay"><div className="reel-info"><strong>@{r.artisan?.name?.toLowerCase().replace(/\s+/g,".")||"artisan"}</strong><span>{r.caption}</span>{r.product&&<div><span className="badge-inline" style={{background:"#e2f0e4",color:"var(--green)"}}><BadgeLabel status={r.product.verificationStatus}/></span><div className="view-btn" onClick={()=>openProduct(r.product.id)}>🛍️ View Product</div></div>}</div><div className="reel-actions"><button className={`act ${liked[k]?"active":""}`} onClick={()=>like(k)}><span className="ic">{liked[k]?"❤️":"♡"}</span>{num}</button><button className={`act ${commentOpen===k?"active":""}`} onClick={()=>setCommentOpen(commentOpen===k?null:k)}><span className="ic">💬</span>{Number(r.comments||0)+list.length}</button><button className={`act ${saved[k]?"active":""}`} onClick={()=>save(k)}><span className="ic">{saved[k]?"🔖":"◇"}</span>{saved[k]?"Saved":"Save"}</button><button className="act" onClick={()=>share(r)}><span className="ic">↗</span>Share</button></div>{commentOpen===k&&<div className="reel-comments-sheet"><div className="reel-comments-title"><strong>Comments</strong><button onClick={()=>setCommentOpen(null)}>×</button></div><div className="reel-comments-list">{list.length===0?<small>No comments yet. Start the conversation.</small>:list.map((x,i)=><div key={i}><b>You</b><span>{x}</span></div>)}</div><div className="reel-comment-input"><input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")comment(k)}} placeholder="Write a comment…"/><button onClick={()=>comment(k)}>Post</button></div></div>}</div></div>})}</div>;
+  const [reels,setReels]=useState<any[]>([]),[liked,setLiked]=useState<Record<string,boolean>>({}),[saved,setSaved]=useState<Record<string,boolean>>({}),[comments,setComments]=useState<Record<string,string[]>>({}),[draft,setDraft]=useState<Record<string,string>>({}),[openComments,setOpenComments]=useState<Record<string,boolean>>({});
+  useEffect(()=>{apiGet(`/reels`).then((d)=>{setReels(d||[]);try{setLiked(JSON.parse(localStorage.getItem("kalasutra_reel_likes")||"{}"));setSaved(JSON.parse(localStorage.getItem("kalasutra_reel_saves")||"{}"));setComments(JSON.parse(localStorage.getItem("kalasutra_reel_comments")||"{}"))}catch(_){}}).catch(()=>setReels([]))},[]);
+  const like=(id:string)=>setLiked(p=>{const n={...p,[id]:!p[id]};localStorage.setItem("kalasutra_reel_likes",JSON.stringify(n));return n});
+  const save=(id:string)=>setSaved(p=>{const n={...p,[id]:!p[id]};localStorage.setItem("kalasutra_reel_saves",JSON.stringify(n));setToast(n[id]?"Reel saved ✓":"Removed from saved reels");return n});
+  const comment=(id:string)=>{const v=(draft[id]||"").trim();if(!v){setToast("Write a comment first");return}setComments(p=>{const n={...p,[id]:[...(p[id]||[]),v]};localStorage.setItem("kalasutra_reel_comments",JSON.stringify(n));return n});setDraft(p=>({...p,[id]:""}));setToast("Comment posted ✓")};
+  const share=async(r:any)=>{const url=`${location.origin}/?reel=${encodeURIComponent(r.id)}`;try{if(navigator.share)await navigator.share({title:"KalaSutra Maker Reel",text:r.caption||"Handmade craft story",url});else{await navigator.clipboard.writeText(url);setToast("Reel link copied ✓")}}catch(_){}};
+  const colors=["#8a5a3a","#3d5c73","#6b4423","#7a5c1e","#5c6b3a","#7a3a5c"];
+  return <div className="reels-wrap">{reels.length===0&&<div className="empty-note" style={{paddingTop:100}}>No Reels yet — check back soon.</div>}{reels.map((r,i)=>{const id=String(r.id),cs=comments[id]||[];return <div className="reel" key={r.id}>{r.video?<video src={r.video} className="reel-visual" autoPlay loop muted playsInline/>:<div className="reel-visual" style={{background:colors[i%colors.length]}}>{r.thumbEmoji}</div>}<div className="reel-gradient"/><div className="reel-overlay"><div className="reel-info"><strong>@{r.artisan?.name?.toLowerCase().replace(/\s+/g,".")||"artisan"}</strong><span>{r.caption}</span>{r.product&&<div><span className="badge-inline"><BadgeLabel status={r.product.verificationStatus}/></span><div className="view-btn" onClick={()=>openProduct(r.product.id)}>🛍️ View Product</div></div>}{openComments[id]&&<div className="reel-comment-box"><div className="reel-comment-list">{cs.map((c,j)=><div key={j}>💬 {c}</div>)}</div><div className="reel-comment-input"><input value={draft[id]||""} onChange={e=>setDraft(p=>({...p,[id]:e.target.value}))} onKeyDown={e=>{if(e.key==="Enter")comment(id)}} placeholder="Write a comment…"/><button onClick={()=>comment(id)}>Post</button></div></div>}</div><div className="reel-actions"><button className={`act ${liked[id]?"active":""}`} onClick={()=>like(id)}><span className="ic">{liked[id]?"❤️":"♡"}</span>{Number(r.likes||0)+(liked[id]?1:0)}</button><button className="act" onClick={()=>setOpenComments(p=>({...p,[id]:!p[id]}))}><span className="ic">💬</span>{Number(r.comments||0)+cs.length}</button><button className={`act ${saved[id]?"active":""}`} onClick={()=>save(id)}><span className="ic">{saved[id]?"🔖":"🏷️"}</span>{saved[id]?"Saved":"Save"}</button><button className="act" onClick={()=>share(r)}><span className="ic">↗</span>Share</button></div></div></div>})}</div>;
 }
+
 // ---------------------------------------------------------------------------
 // DIGITAL PRODUCT CERTIFICATE — public QR destination
 // ---------------------------------------------------------------------------
