@@ -532,6 +532,139 @@ function ArtisanNav({ screen, go }: { screen: string; go: (s: string) => void })
 }
 
 // ---------------------------------------------------------------------------
+// ARTISAN GROWTH HUB — seven problem-solving modules
+// ---------------------------------------------------------------------------
+function ArtisanGrowthHub({ user, featured, products, setToast }: any) {
+  const [open, setOpen] = useState<string | null>(null);
+  const [materialCost, setMaterialCost] = useState("450");
+  const [hours, setHours] = useState("6");
+  const [hourlyRate, setHourlyRate] = useState("180");
+  const [overhead, setOverhead] = useState("150");
+  const [capitalNeed, setCapitalNeed] = useState("25000");
+  const [materialJoin, setMaterialJoin] = useState<Record<string, boolean>>({});
+  const [designCraft, setDesignCraft] = useState("Pottery");
+  const [passportMade, setPassportMade] = useState(false);
+  const [lessonSaved, setLessonSaved] = useState<Record<string, boolean>>({});
+
+  const fairBase = Number(materialCost || 0) + Number(hours || 0) * Number(hourlyRate || 0) + Number(overhead || 0);
+  const fairPrice = Math.round(fairBase * 1.20);
+  const productTitle = featured?.title || "Your handmade piece";
+  const productPrice = Number(featured?.price || fairPrice || 0);
+
+  const modules = [
+    { id:"price", icon:"₹", title:"Fair Price AI", problem:"Low margins", desc:"Estimate a fair maker price from real time, material and overhead.", accent:"money" },
+    { id:"capital", icon:"◈", title:"Craft Capital", problem:"Limited capital", desc:"Prepare an order-ready funding plan without relying on informal lenders.", accent:"capital" },
+    { id:"material", icon:"✦", title:"Material Hub", problem:"Raw material scarcity", desc:"See collective-buy opportunities for silk, clay, wood, dyes and more.", accent:"material" },
+    { id:"design", icon:"✺", title:"Design Lab", problem:"Outdated designs", desc:"Turn traditional skills into contemporary, market-ready product directions.", accent:"design" },
+    { id:"passport", icon:"▣", title:"Craft Passport", problem:"Factory-copy competition", desc:"Create a traceable identity for the artisan, process and handmade origin.", accent:"passport" },
+    { id:"market", icon:"↗", title:"Direct Market Match", problem:"Middlemen & isolation", desc:"Match your craft with buyer needs so demand can reach the maker directly.", accent:"market" },
+    { id:"gurukul", icon:"⌘", title:"Craft Gurukul", problem:"Youth brain drain", desc:"Preserve techniques and pass practical craft knowledge to the next generation.", accent:"gurukul" },
+  ];
+
+  const materials = [
+    ["Natural dyes","18 artisans","62% funded"],
+    ["Terracotta clay","31 artisans","78% funded"],
+    ["Eri silk yarn","12 artisans","45% funded"]
+  ];
+  const designs: Record<string,string[]> = {
+    Pottery:["Stackable serving set for modern kitchens","Minimal terracotta planter with regional motif","Giftable chai + snack set with artisan story"],
+    Weaving:["Lightweight everyday stole with heritage border","Contemporary cushion series using traditional weave","Small-batch table runner for premium homes"],
+    Woodcraft:["Modular desk organiser with local carving","Modern wall accent with traditional geometry","Compact gifting box with maker mark"],
+    "Metal Craft":["Minimal statement diya set","Modern table centrepiece with traditional form","Collector's mini decor series"]
+  };
+  const demand = [
+    ["Boutique home stores","Pottery & tableware","92% match"],
+    ["Conscious gifting brands","Small handcrafted sets","86% match"],
+    ["Hotels & cafés","Regional decor pieces","79% match"]
+  ];
+  const lessons = [
+    ["01","Record a technique","Capture one signature step before it is lost."],
+    ["02","Teach a family member","Create a simple repeatable learning lesson."],
+    ["03","Build a craft archive","Save stories, tools and process notes with each piece."]
+  ];
+
+  function toggle(id:string){ setOpen(open === id ? null : id); }
+
+  return <section className="artisan-growth-hub">
+    <div className="growth-hub-heading">
+      <div>
+        <span className="field-label">KALASUTRA • ARTISAN IMPACT HUB</span>
+        <h3>We solve the system around the artisan.</h3>
+        <p>Not just a storefront — tools for fair pricing, materials, capital, demand and craft legacy.</p>
+      </div>
+      <span className="growth-hub-pill">7 challenges → 7 solutions</span>
+    </div>
+
+    <div className="problem-solution-strip">
+      <span>Middlemen → Direct market</span><span>Low margins → Fair price</span><span>Raw materials → Collective buy</span><span>Youth loss → Craft Gurukul</span>
+    </div>
+
+    <div className="growth-module-grid">
+      {modules.map(m => <button key={m.id} className={`growth-module-card ${m.accent} ${open===m.id?'open':''}`} onClick={() => toggle(m.id)}>
+        <span className="growth-module-icon">{m.icon}</span>
+        <span className="growth-module-copy"><small>{m.problem}</small><strong>{m.title}</strong><em>{m.desc}</em></span>
+        <span className="growth-module-arrow">{open===m.id?'⌃':'→'}</span>
+      </button>)}
+    </div>
+
+    {open === "price" && <div className="growth-module-panel">
+      <div className="panel-kicker">FAIR PRICE AI</div><h4>Price the craft, not just the material.</h4>
+      <div className="growth-form-grid">
+        <label>Material cost ₹<input value={materialCost} onChange={e=>setMaterialCost(e.target.value.replace(/\D/g,""))}/></label>
+        <label>Making hours<input value={hours} onChange={e=>setHours(e.target.value.replace(/\D/g,""))}/></label>
+        <label>Fair hourly rate ₹<input value={hourlyRate} onChange={e=>setHourlyRate(e.target.value.replace(/\D/g,""))}/></label>
+        <label>Overhead ₹<input value={overhead} onChange={e=>setOverhead(e.target.value.replace(/\D/g,""))}/></label>
+      </div>
+      <div className="growth-result-card"><span>Suggested fair maker price</span><strong>₹{fairPrice.toLocaleString("en-IN")}</strong><small>Includes a 20% craft-value buffer over direct cost. Use it as a planning benchmark.</small></div>
+      <button className="growth-action" onClick={()=>setToast(`Fair price benchmark saved: ₹${fairPrice.toLocaleString("en-IN")}`)}>Use this price benchmark →</button>
+    </div>}
+
+    {open === "capital" && <div className="growth-module-panel">
+      <div className="panel-kicker">CRAFT CAPITAL</div><h4>Prepare for the next order.</h4>
+      <p className="panel-copy">Build a simple working-capital plan for materials and production. KalaSutra does not promise or issue a loan here.</p>
+      <label className="wide-field">Working capital needed ₹<input value={capitalNeed} onChange={e=>setCapitalNeed(e.target.value.replace(/\D/g,""))}/></label>
+      <div className="capital-readiness"><span>Order readiness <b>78%</b></span><div><i style={{width:"78%"}} /></div><small>Strong product proof + artisan profile + verified craft can improve finance-readiness.</small></div>
+      <button className="growth-action" onClick={()=>setToast(`Capital plan prepared for ₹${Number(capitalNeed||0).toLocaleString("en-IN")}`)}>Prepare capital plan →</button>
+    </div>}
+
+    {open === "material" && <div className="growth-module-panel">
+      <div className="panel-kicker">MATERIAL HUB</div><h4>Buy better together.</h4>
+      <p className="panel-copy">Collective demand can make quality raw materials more accessible to rural makers.</p>
+      <div className="material-list">{materials.map(([name,people,progress]) => <div className="material-row" key={name}><div><strong>{name}</strong><small>{people} already interested</small></div><span>{progress}</span><button onClick={()=>setMaterialJoin(p=>({...p,[name]:!p[name]}))}>{materialJoin[name]?"Joined ✓":"Join"}</button></div>)}</div>
+    </div>}
+
+    {open === "design" && <div className="growth-module-panel">
+      <div className="panel-kicker">DESIGN LAB</div><h4>Keep the tradition. Refresh the use.</h4>
+      <div className="design-tabs">{Object.keys(designs).map(c=><button key={c} className={designCraft===c?"active":""} onClick={()=>setDesignCraft(c)}>{c}</button>)}</div>
+      <div className="design-suggestions">{designs[designCraft].map((d,i)=><div key={d}><span>0{i+1}</span><strong>{d}</strong><small>Built around your existing {designCraft.toLowerCase()} skill.</small></div>)}</div>
+      <button className="growth-action" onClick={()=>setToast(`${designCraft} design directions saved for your next collection`)}>Save collection ideas →</button>
+    </div>}
+
+    {open === "passport" && <div className="growth-module-panel">
+      <div className="panel-kicker">CRAFT PASSPORT</div><h4>Give every piece a traceable story.</h4>
+      <div className="passport-mini">
+        <div className="passport-code">{passportMade?"KS✓":"KS"}</div>
+        <div><small>KALASUTRA CRAFT PASSPORT</small><strong>{productTitle}</strong><span>{user.name} • {featured?.category || "Traditional craft"} • {featured?.region || "India"}</span></div>
+      </div>
+      <div className="passport-points"><span>✓ Artisan identity</span><span>✓ Material & origin</span><span>✓ Making process</span><span>✓ Verification status</span></div>
+      <button className="growth-action" onClick={()=>{setPassportMade(true);setToast("Digital Craft Passport prepared for this piece");}}>Generate Craft Passport →</button>
+    </div>}
+
+    {open === "market" && <div className="growth-module-panel">
+      <div className="panel-kicker">DIRECT MARKET MATCH</div><h4>Find buyers who need your craft.</h4>
+      <div className="demand-list">{demand.map(([who,need,match])=><div className="demand-row" key={who}><div><strong>{who}</strong><small>{need}</small></div><b>{match}</b><button onClick={()=>setToast(`Interest signal sent to ${who}`)}>Match</button></div>)}</div>
+      <div className="panel-note">Buyer matches are presented as prototype demand signals; no buyer commitment is implied until an order is confirmed.</div>
+    </div>}
+
+    {open === "gurukul" && <div className="growth-module-panel">
+      <div className="panel-kicker">CRAFT GURUKUL</div><h4>Make your knowledge outlive you.</h4>
+      <div className="lesson-list">{lessons.map(([n,title,desc])=><div className="lesson-row" key={n}><span>{n}</span><div><strong>{title}</strong><small>{desc}</small></div><button onClick={()=>setLessonSaved(p=>({...p,[n]:!p[n]}))}>{lessonSaved[n]?"Saved ✓":"Start"}</button></div>)}</div>
+      <button className="growth-action" onClick={()=>setToast("Your craft legacy workspace is ready")}>Open craft legacy →</button>
+    </div>}
+  </section>
+}
+
+// ---------------------------------------------------------------------------
 // ARTISAN: DASHBOARD
 // ---------------------------------------------------------------------------
 function ArtisanDashboard({ user, go, setToast }: any) {
@@ -574,6 +707,7 @@ function ArtisanDashboard({ user, go, setToast }: any) {
           <div><span className="field-label">ARTISAN GROWTH DASHBOARD</span><strong>Orders, earnings &amp; business insights</strong><small>Track New Orders → Processing → Shipped → Delivered</small></div><button className="btn secondary" style={{marginTop:10}} onClick={()=>go("reviews")}>🛡️ Safety &amp; Review Center</button>
           <span className="growth-arrow">→</span>
         </div>
+        <ArtisanGrowthHub user={user} featured={featured} products={products} setToast={setToast} />
 
         <div className="section-row home-section-row">
           <div className="section-title">Your craft, on the grid</div>
@@ -611,7 +745,7 @@ function ArtisanDashboard({ user, go, setToast }: any) {
 // ARTISAN: ADD PRODUCT  →  SCAN/VERIFY
 // ---------------------------------------------------------------------------
 function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any) {
-  const [step, setStepState] = useState("form");
+  const [step, setStepState] = useState("form"); // form -> proof -> scanning -> result
   const [title, setTitle] = useState("");
   const [story, setStory] = useState("");
   const [englishDescription, setEnglishDescription] = useState("");
@@ -620,7 +754,6 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   const [material, setMaterial] = useState("");
   const [region, setRegion] = useState("");
   const [storyLang, setStoryLang] = useState("hi-IN");
-  const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [proofVideo, setProofVideo] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
@@ -634,22 +767,9 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   const storyRecognitionRef = useRef<any>(null);
 
   async function handleImagePick(e: any) {
-    const files = Array.from(e.target.files || []) as File[];
-    if (!files.length) return;
-    try {
-      const urls = await Promise.all(files.slice(0, 6).map(fileToDataURL));
-      setGalleryImages(prev => [...prev, ...urls].slice(0, 6));
-      setImageDataUrl(prev => prev || urls[0]);
-      setErr(null);
-    } catch { setErr("Couldn't read that image — please try another file."); }
-    e.target.value = "";
-  }
-  function removeImage(index: number) {
-    setGalleryImages(prev => {
-      const next = prev.filter((_, i) => i !== index);
-      setImageDataUrl(next[0] || null);
-      return next;
-    });
+    const file = e.target.files[0];
+    if (!file) return;
+    try { setImageDataUrl(await fileToDataURL(file)); } catch { setErr("Couldn't read that image — please try another file."); }
   }
 
   function generateEnglishDescription(transcript: string) {
@@ -671,7 +791,19 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
       rec.onerror = () => { setStoryRecording(false); setErr("I couldn't hear the story. Please try again."); };
       rec.onresult = (event: any) => {
         const heard = event.results?.[0]?.[0]?.transcript || "";
-        if (heard) { setStory(heard); generateEnglishDescription(heard); }
+        if (heard) {
+          setStory(heard);
+          generateEnglishDescription(heard);
+          try {
+            if (window.speechSynthesis) {
+              window.speechSynthesis.cancel();
+              const u = new SpeechSynthesisUtterance("Aapki story save ho gayi hai. Ab verification ke liye making proof record karein.");
+              u.lang = "hi-IN";
+              u.rate = 0.95;
+              window.speechSynthesis.speak(u);
+            }
+          } catch (_) {}
+        }
       };
       storyRecognitionRef.current = rec; rec.start();
     } catch (e: any) { setErr(e.message || "Voice story could not start."); }
@@ -696,13 +828,6 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   }
   function stopProofRecording() { if (proofRecorderRef.current?.state === "recording") proofRecorderRef.current.stop(); proofStreamRef.current?.getTracks().forEach((t) => t.stop()); setRecording(false); }
 
-  async function handleProofUpload(e: any) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try { setProofVideo(await fileToDataURL(file)); setErr(null); } catch { setErr("Couldn't read that video. Please try another clip."); }
-    e.target.value = "";
-  }
-
   async function handleCreateAndScan() {
     if (!imageDataUrl) { setErr("First upload/take a photo of the piece."); return; }
     if (!story.trim()) { setErr("Please tell your craft story by voice before verification."); return; }
@@ -714,7 +839,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
       const finalDescription = englishDescription || `Handcrafted ${category.toLowerCase()} made by a traditional artisan. Story: “${story.trim()}”.`;
       const created = await apiPost("/products", {
         artisanId: user.id, title: finalTitle, description: finalDescription, price: price,
-        category, image: imageDataUrl, craftInfo: { material, region, storyLanguage: storyLang, originalStory: story, verificationProof: proofVideo, gallery: galleryImages },
+        category, image: imageDataUrl, craftInfo: { material, region, storyLanguage: storyLang, originalStory: story, verificationProof: proofVideo },
       });
       setProduct(created); setStepState("scanning");
       await new Promise((r) => setTimeout(r, 900));
@@ -730,61 +855,37 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   useEffect(() => () => { try { storyRecognitionRef.current?.stop(); } catch (_) {} proofStreamRef.current?.getTracks().forEach((t) => t.stop()); }, []);
 
   return (<>
-    <div className="addpiece-page">
-      <header className="addpiece-topbar">
-        <button className="addpiece-back" onClick={() => go("dashboard")} aria-label="Back">‹</button>
-        <img src="/assets/logo.png" className="addpiece-logo" alt="KalaSutra" />
-        <button className="addpiece-switch" onClick={() => go("buyerHome")}>Switch to Buyer</button>
-      </header>
-
-      <div className="addpiece-content"><ErrorBanner message={err} />
-        {step === "form" && <>
-          <section className="addpiece-heading"><span className="addpiece-eyebrow">FOR ARTISANS</span><h1>Add a New Piece</h1><p>Take a photo. Tell your story. <b>AI does the rest.</b></p></section>
-          <div className="addpiece-steps"><div className="active"><span>1</span><b>Capture</b></div><i></i><div><span>2</span><b>Add Details</b></div><i></i><div><span>3</span><b>Verify</b></div><i></i><div><span>4</span><b>Publish</b></div></div>
-
-          <section className="addpiece-card capture-card">
-            <div className="addpiece-section-head"><div><span className="addpiece-num">01</span><div><h2>Show us your piece</h2><p>Upload clear photos and a short making proof.</p></div></div><span>📷</span></div>
-            <div className="photo-grid">
-              {galleryImages.map((src, i) => <div className="photo-tile" key={i}><img src={src} alt={`Piece ${i+1}`} /><button onClick={() => removeImage(i)} aria-label="Remove photo">×</button></div>)}
-              {galleryImages.length < 6 && <label className="photo-add"><input id="prodImgInput" type="file" accept="image/*" capture="environment" multiple onChange={handleImagePick} /><span>＋</span><b>Add Photo</b><small>{galleryImages.length}/6 added</small></label>}
-              <label className="proof-upload-tile"><input type="file" accept="video/*" capture="environment" onChange={handleProofUpload} /><span>🎥</span><b>{proofVideo ? "Proof Added" : "Add Making Video"}</b><small>{proofVideo ? "Tap to replace" : "5-sec clip"}</small></label>
-            </div>
-            {proofVideo && <video src={proofVideo} controls className="proof-preview" />}
-            <div className="capture-actions"><button className={`record-proof-btn ${recording ? "recording" : ""}`} onClick={recording ? stopProofRecording : startProofRecording}>{recording ? "⏹ Recording… auto-stops in 5s" : "🔴 Record 5-sec Making Proof"}</button></div>
-          </section>
-
-          <section className="addpiece-card story-card-new">
-            <div className="addpiece-section-head"><div><span className="addpiece-num">02</span><div><h2>Tell Your Story</h2><p>Voice first — speak naturally in your language.</p></div></div><span>🎙️</span></div>
-            <div className="story-controls"><select value={storyLang} onChange={(e)=>setStoryLang(e.target.value)}><option value="hi-IN">Hindi</option><option value="mr-IN">Marathi</option><option value="ta-IN">Tamil</option><option value="bn-IN">Bangla</option><option value="en-IN">English</option></select><button className={`story-big-mic ${storyRecording ? "recording" : ""}`} onClick={storyRecording ? stopStoryRecording : startStoryRecording}>{storyRecording ? "■ Stop listening" : "🎙 Start speaking"}</button></div>
-            <textarea className="story-box-new" value={story} onChange={(e)=>setStory(e.target.value)} placeholder="Or type your story here…" />
-            {englishDescription && <div className="ai-draft-new"><b>✨ AI buyer description</b><span>{englishDescription}</span></div>}
-          </section>
-
-          <section className="addpiece-card details-card-new">
-            <div className="addpiece-section-head"><div><span className="addpiece-num">03</span><div><h2>Product Details</h2><p>Simple details help buyers discover your craft.</p></div></div><span>🧵</span></div>
-            <div className="detail-grid-new">
-              <label>Product Name<input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="e.g. Blue Pottery Vase" /></label>
-              <label>Category<select value={category} onChange={(e)=>setCategory(e.target.value)}>{Object.keys(CATEGORY_EMOJI).map(c=><option key={c}>{c}</option>)}</select></label>
-              <label>Price (₹)<input value={price} onChange={(e)=>setPrice(e.target.value.replace(/[^0-9.]/g,""))} placeholder="2000" inputMode="decimal" /></label>
-              <label>Material<input value={material} onChange={(e)=>setMaterial(e.target.value)} placeholder="Terracotta clay" /></label>
-              <label>Region<input value={region} onChange={(e)=>setRegion(e.target.value)} placeholder="Rajasthan" /></label>
-              <label>Tags<input placeholder="Handmade, traditional, sustainable" /></label>
-            </div>
-          </section>
-
-          <section className="addpiece-card verification-card-new">
-            <div className="addpiece-section-head"><div><span className="addpiece-num">04</span><div><h2>Verification</h2><p>Your piece is checked before it goes live.</p></div></div><span>🛡️</span></div>
-            <div className="verification-points"><span>✓</span><div><b>Authenticity &amp; safety check</b><small>Photo + making proof + craft story are reviewed by KalaSutra's verification flow.</small></div></div>
-            <div className="verification-points"><span>✓</span><div><b>Your price stays yours</b><small>No middleman markup is added to your artisan listing.</small></div></div>
-          </section>
-          <button className="addpiece-main-btn" onClick={handleCreateAndScan}>Add Piece &amp; Start Verification <span>→</span></button>
-        </>}
-
-        {step === "scanning" && <div className="addpiece-result-wrap"><span className="demo-tag">Demo verification</span><div className="section-title">🛡️ Authenticity Check Running</div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Micro-Texture + Image Analysis</div><div className="verify-note">Checking the uploaded piece and making-proof clip…</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Making-Process Proof</div><div className="verify-note">Confirming that proof was supplied before listing.</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Authenticity Decision</div><div className="verify-note">Generating a confidence score.</div></div></div></div>}
-        {step === "result" && verifyResult && <div className="addpiece-result-wrap"><span className="demo-tag">Demo verification</span><div className={`badge-result ${verifyResult.status}`}><div className="big">{verifyResult.status === "verified" ? "🟢 Verified Handmade" : verifyResult.status === "needs_review" ? "🟡 Needs Verification" : "🔴 Not Eligible"}</div><div className="small">Confidence score: {(verifyResult.confidence*100).toFixed(0)}%</div></div><div className="section-title">Listing saved • Price locked at ₹{Number(price).toLocaleString("en-IN")}</div><div className="card"><div className="thumb" style={{backgroundImage:`url(${product.image})`}}><BadgeLabel status={verifyResult.status}/></div><div className="info"><div className="t">{product.title}</div><div className="p">₹{Number(product.price).toLocaleString("en-IN")}</div></div></div></div>}
-      </div>
-      <div className="addpiece-bottom-actions">{step === "result" && verifyResult?.status !== "rejected" && <button className="btn green" onClick={()=>go("createReel")}>Create a Reel for this product</button>}{step === "result" && <button className="btn secondary" onClick={()=>{setToast("Saved to your products");go("myProducts")}}>My Products</button>}</div>
+    <div className="app-header add-piece-header"><button className="header-back" aria-label="Back to Home" onClick={() => go("dashboard")}>‹</button><div><h2>Add a piece</h2><div className="sub">Photo → Voice Story → Proof → Verify</div></div></div>
+    <div className="content"><ErrorBanner message={err} />
+      {step === "form" && <>
+        <div className="scan-box" style={{ marginBottom: 14, position: "relative" }} onClick={() => (document.getElementById("prodImgInput") as HTMLInputElement)?.click()}>
+          {imageDataUrl ? <img src={imageDataUrl} style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} /> : <><div style={{fontSize:36}}>📷</div><div style={{fontSize:12.5,fontWeight:700}}>Tap to take/upload a photo</div><div style={{fontSize:10.5,color:"#6b6055"}}>Your piece becomes the starting point</div></>}
+        </div>
+        <input id="prodImgInput" type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={handleImagePick}/>
+        <div className="voice-story-card">
+          <div className="field-label">YOUR STORY • VOICE FIRST</div>
+          <div style={{fontWeight:700,fontSize:13}}>Tell us about your craft</div>
+          <div style={{fontSize:10.5,color:"#6b6055",margin:"4px 0 9px"}}>Speak in your language — AI prepares the English buyer description.</div>
+          <div style={{display:"flex",gap:7,alignItems:"center"}}>
+            <select value={storyLang} onChange={(e)=>setStoryLang(e.target.value)} style={{flex:1}}><option value="hi-IN">Hindi</option><option value="mr-IN">Marathi</option><option value="ta-IN">Tamil</option><option value="bn-IN">Bangla</option><option value="en-IN">English</option></select>
+            <button className={`story-mic ${storyRecording ? "recording" : ""}`} onClick={storyRecording ? stopStoryRecording : startStoryRecording}>{storyRecording ? "■ Stop" : "🎙 Start"}</button>
+          </div>
+          {story && <div className="story-transcript"><b>Heard:</b> {story}</div>}
+          {englishDescription && <div className="ai-draft"><b>AI English draft:</b> {englishDescription}</div>}
+        </div>
+        <div className="field"><div className="field-label">Product name <span style={{fontWeight:400}}>(optional — AI can draft it)</span></div><input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="Leave blank to let AI draft a title"/></div>
+        <div style={{display:"flex",gap:10}}><div className="field" style={{flex:1}}><div className="field-label">Price (₹) • YOUR PRICE</div><input value={price} onChange={(e)=>setPrice(e.target.value.replace(/[^0-9.]/g,""))} placeholder="2000" inputMode="decimal"/></div><div className="field" style={{flex:1}}><div className="field-label">Category</div><select value={category} onChange={(e)=>setCategory(e.target.value)}>{Object.keys(CATEGORY_EMOJI).map(c=><option key={c}>{c}</option>)}</select></div></div>
+        <div style={{display:"flex",gap:10}}><div className="field" style={{flex:1}}><div className="field-label">Material</div><input value={material} onChange={(e)=>setMaterial(e.target.value)} placeholder="e.g. Terracotta clay"/></div><div className="field" style={{flex:1}}><div className="field-label">Region</div><input value={region} onChange={(e)=>setRegion(e.target.value)} placeholder="e.g. Rajasthan"/></div></div>
+        <div className="proof-card">
+          <div className="field-label">MANDATORY MAKING PROOF</div><div style={{fontWeight:700,fontSize:13}}>🎥 5-second verification clip</div><div style={{fontSize:10.5,color:"#6b6055",margin:"4px 0 9px"}}>Show the piece or a small moment of the making process. This proof is checked before listing.</div>
+          {proofVideo ? <video src={proofVideo} controls style={{width:"100%",borderRadius:12,maxHeight:190,objectFit:"cover"}}/> : <button className={`btn ${recording?"secondary":""}`} onClick={recording?stopProofRecording:startProofRecording}>{recording ? "⏹ Recording… (auto-stops in 5s)" : "🔴 Record 5-sec proof"}</button>}
+          {proofVideo && <button className="btn secondary" style={{marginTop:8}} onClick={()=>setProofVideo(null)}>Retake proof</button>}
+        </div>
+      </>}
+      {step === "scanning" && <div style={{paddingTop:18}}><span className="demo-tag">Demo verification</span><div className="section-title">🛡️ Authenticity Check Running</div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Micro-Texture + Image Analysis</div><div className="verify-note">Checking the uploaded piece and making-proof clip…</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Making-Process Proof</div><div className="verify-note">Confirming that proof was supplied before listing.</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Authenticity Decision</div><div className="verify-note">Generating a confidence score.</div></div></div></div>}
+      {step === "result" && verifyResult && <div style={{paddingTop:6}}><span className="demo-tag">Demo verification</span><div className={`badge-result ${verifyResult.status}`}><div className="big">{verifyResult.status === "verified" ? "🟢 Verified Handmade" : verifyResult.status === "needs_review" ? "🟡 Needs Verification" : "🔴 Not Eligible"}</div><div className="small">Confidence score: {(verifyResult.confidence*100).toFixed(0)}%</div></div><div className="section-title">Listing saved • Price locked at ₹{Number(price).toLocaleString("en-IN")}</div><div className="card" style={{gridColumn:"span 2"}}><div className="thumb" style={{backgroundImage:`url(${product.image})`}}><BadgeLabel status={verifyResult.status}/></div><div className="info"><div className="t">{product.title}</div><div className="p">₹{Number(product.price).toLocaleString("en-IN")}</div></div></div></div>}
     </div>
+    <div className="btn-row">{step === "form" && <button className="btn" onClick={handleCreateAndScan}>Scan &amp; Verify Product →</button>}{step === "result" && verifyResult?.status !== "rejected" && <button className="btn green" onClick={()=>go("createReel")}>Create a Reel for this product</button>}{step === "result" && <button className="btn secondary" onClick={()=>{setToast("Saved to your products");go("myProducts")}}>My Products</button>}</div>
   </>);
 }
 
@@ -804,7 +905,6 @@ function MyProductsScreen({ user, go }: any) {
               <div key={p.id} className="card">
                 <div className="thumb" style={{ backgroundImage: `url(${p.image})` }}>
                   <BadgeLabel status={p.verificationStatus} />
-                  <span className="emoji">{CATEGORY_EMOJI[p.category] || "🎨"}</span>
                 </div>
                 <div className="info"><div className="t">{p.title}</div><div className="p">₹{p.price.toLocaleString("en-IN")}</div><div className="product-id-mini">{p.uniqueProductId || 'KS-ART-000001'}</div></div>
               </div>
@@ -820,68 +920,135 @@ function MyProductsScreen({ user, go }: any) {
 // ARTISAN: CREATE REEL  (record via camera OR upload from gallery)
 // ---------------------------------------------------------------------------
 function CreateReelScreen({ user, go, setToast, prefillProductId }: any) {
-  const [products,setProducts]=useState<any[]>([]);
-  const [productId,setProductId]=useState(prefillProductId||"");
-  const [caption,setCaption]=useState("");
-  const [category,setCategory]=useState("Pottery");
-  const [tags,setTags]=useState("");
-  const [videoDataUrl,setVideoDataUrl]=useState<string|null>(null);
-  const [mode,setMode]=useState<"idle"|"recording">("idle");
-  const [err,setErr]=useState<string|null>(null);
-  const videoRef=useRef<HTMLVideoElement>(null);
-  const streamRef=useRef<MediaStream|null>(null);
-  const recorderRef=useRef<MediaRecorder|null>(null);
-  const chunksRef=useRef<Blob[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [productId, setProductId] = useState<string>(prefillProductId || "");
+  const [caption, setCaption] = useState("");
+  const [category, setCategory] = useState("Pottery");
+  const [tags, setTags] = useState("");
+  const [videoDataUrl, setVideoDataUrl] = useState<string | null>(null);
+  const [mode, setMode] = useState<"idle" | "recording">("idle");
+  const [err, setErr] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
-  useEffect(()=>{apiGet("/products").then((all)=>{const mine=all.filter((p:any)=>p.artisanId===user.id&&p.verificationStatus!=="rejected");setProducts(mine);const p=prefillProductId?mine.find((x:any)=>x.id===prefillProductId):mine[0];if(p){setProductId(p.id);setCategory(p.category);setCaption(`Making of: ${p.title}`)}}).catch((e)=>setErr(e.message));return()=>streamRef.current?.getTracks().forEach(t=>t.stop())},[]);
+  useEffect(() => {
+    apiGet(`/products`).then((all) => {
+      const mine = all.filter((p: any) => p.artisanId === user.id && p.verificationStatus !== "rejected");
+      setProducts(mine);
+      if (prefillProductId) {
+        const p = mine.find((x: any) => x.id === prefillProductId);
+        if (p) { setCategory(p.category); setCaption(`Making of: ${p.title}`); }
+      }
+    });
+    return () => { streamRef.current?.getTracks().forEach((t) => t.stop()); };
+  }, []);
 
-  async function startRecording(){
+  async function startRecording() {
     setErr(null);
-    try{
-      const stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
-      streamRef.current=stream; if(videoRef.current){videoRef.current.srcObject=stream;await videoRef.current.play()}
-      chunksRef.current=[];const rec=new MediaRecorder(stream);
-      rec.ondataavailable=e=>{if(e.data.size)chunksRef.current.push(e.data)};
-      rec.onstop=()=>{const blob=new Blob(chunksRef.current,{type:"video/webm"});const r=new FileReader();r.onload=()=>setVideoDataUrl(r.result as string);r.readAsDataURL(blob);stream.getTracks().forEach(t=>t.stop())};
-      rec.start();recorderRef.current=rec;setMode("recording");
-    }catch(e:any){setErr("Camera/microphone permission is needed to record your craft story. "+(e.message||""))}
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      streamRef.current = stream;
+      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
+      chunksRef.current = [];
+      const recorder = new MediaRecorder(stream);
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      recorder.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: "video/webm" });
+        const reader = new FileReader();
+        reader.onload = () => setVideoDataUrl(reader.result as string);
+        reader.readAsDataURL(blob);
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      recorder.start();
+      recorderRef.current = recorder;
+      setMode("recording");
+      // Auto-stop at 20s so the demo clip (and its base64 payload) stays small.
+      setTimeout(() => { if (recorderRef.current?.state === "recording") recorderRef.current.stop(); setMode("idle"); }, 20000);
+    } catch (e: any) {
+      setErr("Couldn't access your camera/microphone — you can upload a clip from your gallery instead. (" + e.message + ")");
+    }
   }
-  function stopRecording(){if(recorderRef.current?.state==="recording")recorderRef.current.stop();streamRef.current?.getTracks().forEach(t=>t.stop());setMode("idle")}
-  async function handleUpload(e:any){const f=e.target.files?.[0];if(!f)return;try{setVideoDataUrl(await fileToDataURL(f));setMode("idle")}catch(_){setErr("Could not load that video.")}}
-  async function postReel(){
-    if(!videoDataUrl){setErr("Record or upload a Reel first.");return}
-    try{await apiPost("/reels",{artisanId:user.id,productId:productId||null,caption:caption||"Stories behind my handmade craft",category,tags,video:videoDataUrl});setToast("Reel posted successfully ✨");go("myReels")}catch(e:any){setErr(e.message||"Could not post Reel.")}
+  function stopRecording() {
+    recorderRef.current?.stop();
+    setMode("idle");
+  }
+  async function handleGalleryPick(e: any) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try { setVideoDataUrl(await fileToDataURL(file)); } catch { setErr("Couldn't read that video file."); }
+  }
+
+  async function handlePost() {
+    if (!caption.trim()) { setErr("Please add a short caption."); return; }
+    const product = products.find((p) => p.id === productId);
+    try {
+      await apiPost("/reels", {
+        artisanId: user.id,
+        productId: productId || null,
+        video: videoDataUrl,
+        thumbEmoji: product ? CATEGORY_EMOJI[product.category] : CATEGORY_EMOJI[category] || "🎨",
+        caption, category,
+        tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
+      });
+      setToast("Reel posted 🎬");
+      go("myReels");
+    } catch (e: any) {
+      setErr(e.message);
+    }
   }
 
   return (
-    <div className="reel-create-page">
-      <header className="reel-create-topbar"><button onClick={()=>go("dashboard")}>‹</button><img src="/assets/logo.png" alt="KalaSutra"/><div><b>KalaSutra</b><span>Artisans to the World</span></div><button>⚡</button><button>◉</button><button onClick={()=>setToast("Draft saved")}>Save Draft</button></header>
-      <div className="reel-create-layout">
-        <section className="reel-camera-panel">
-          <div className="reel-viewfinder">
-            {videoDataUrl?<video src={videoDataUrl} controls playsInline className="reel-preview"/>:<><video ref={videoRef} className="reel-preview" muted playsInline /><div className="reel-empty-visual"><div className="reel-caption-art">Capture<br/>Your Craft<br/>Share Your Story ♡</div><div className="reel-placeholder">Your craft video appears here</div></div></>}
-            <div className="viewfinder-corners" />
-            <div className="reel-side-tools"><button>♫<small>Music</small></button><button>◷<small>Timer</small></button><button>1×<small>Speed</small></button><button>✦<small>Filters</small></button><button>♧<small>Beautify</small></button></div>
-            <div className="reel-mode-toggle"><button className={mode!=="recording"?"active":""}>Video</button><button>Photo</button></div>
-            <button className={`record-button ${mode==="recording"?"recording":""}`} onClick={mode==="recording"?stopRecording:startRecording}>{mode==="recording"?"■":"●"}</button><span className="record-hint">{mode==="recording"?"Tap to stop":"Tap to record"}<small>Hold for video</small></span>
-            <label className="gallery-upload"><span>▧</span><small>Gallery</small><input type="file" accept="video/*" onChange={handleUpload}/></label><button className="effects-btn">✧<small>Effects</small></button>
-          </div>
-          <div className="reel-bottom-tools"><span>♧<b>Tips</b></span><span>▣<b>Inspiration</b></span><span>▤<b>Guidelines</b></span></div>
-        </section>
+    <>
+      <div className="app-header"><div><h2>Create a Reel</h2><div className="sub">Show the making process — 30 sec or less</div></div><button className="mode-pill" onClick={() => go("myReels")}>Cancel</button></div>
+      <div className="content">
+        <ErrorBanner message={err} />
+        <div className="scan-box" style={{ aspectRatio: "9/12", marginBottom: 14 }}>
+          {videoDataUrl ? (
+            <video src={videoDataUrl} controls style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : mode === "recording" ? (
+            <video ref={videoRef} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          ) : (
+            <>
+              <div style={{ fontSize: 36 }}>🎥</div>
+              <div style={{ fontSize: 12.5, fontWeight: 700 }}>No clip yet</div>
+              <div style={{ fontSize: 10.5, color: "#6b6055", textAlign: "center", padding: "0 20px" }}>Record with your camera, or upload one from your gallery</div>
+            </>
+          )}
+        </div>
+        <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+          {mode === "idle" ? (
+            <button className="btn" style={{ flex: 1 }} onClick={startRecording}>🔴 Record</button>
+          ) : (
+            <button className="btn" style={{ flex: 1, background: "var(--madder)", borderColor: "var(--madder)" }} onClick={stopRecording}>⏹ Stop</button>
+          )}
+          <label className="btn secondary" style={{ flex: 1, textAlign: "center" }}>
+            ⬆ Upload
+            <input type="file" accept="video/*" style={{ display: "none" }} onChange={handleGalleryPick} />
+          </label>
+        </div>
 
-        <section className="reel-details-panel">
-          <div className="reel-panel-title"><div><h1>Almost Ready!</h1><p>Add a few details and let the world see your creation</p></div><span>♧</span></div>
-          <div className="reel-story-card">{videoDataUrl?<video src={videoDataUrl} controls playsInline/>:<div className="no-clip"><span>◉</span><b>No clip yet</b><small>Record with your camera, or upload one from your gallery</small></div>}<div><em>Stories<br/>Behind<br/>Handmade<br/>Matter ♡</em></div></div>
-          {err&&<ErrorBanner message={err}/>}
-          <label className="reel-field"><b>✎ Caption</b><textarea value={caption} maxLength={300} onChange={e=>setCaption(e.target.value)} placeholder="e.g. Making this piece takes days of hard work, patience and love. This is not just pottery, it's a part of my culture. ❤️"/></label>
-          <label className="reel-field"><b>▣ Attach Product <small>(Optional)</small></b><select value={productId} onChange={e=>setProductId(e.target.value)}><option value="">No product — just my process</option>{products.map((p:any)=><option key={p.id} value={p.id}>{p.title} · ₹{p.price}</option>)}</select></label>
-          <label className="reel-field"><b>♢ Category</b><select value={category} onChange={e=>setCategory(e.target.value)}>{["Pottery","Textiles","Woodwork","Metalwork","Basketry","Other"].map(x=><option key={x}>{x}</option>)}</select></label>
-          <label className="reel-field"><b># Tags <small>(comma separated)</small></b><input value={tags} onChange={e=>setTags(e.target.value)} placeholder="pottery, handmade, rajasthan, traditional"/></label>
-          <button className="post-reel-btn" onClick={postReel}>☁ &nbsp; Post Reel</button><div className="reel-footer-note">Show the world your craft ✨</div>
-          <div className="reel-bottom-quote">“Every craft has a story. Tell yours.” ♥</div>
-        </section>
+        <div className="field"><div className="field-label">Caption</div><textarea value={caption} onChange={(e) => setCaption(e.target.value)} placeholder="e.g. Throwing a surai on the wheel — 6th generation potter" /></div>
+        <div className="field">
+          <div className="field-label">Attach a verified product (optional)</div>
+          <select value={productId} onChange={(e) => setProductId(e.target.value)}>
+            <option value="">No product — just my process</option>
+            {products.map((p) => <option key={p.id} value={p.id}>{p.title} {p.verificationStatus === "verified" ? "🟢" : "🟡"}</option>)}
+          </select>
+        </div>
+        <div style={{ display: "flex", gap: 10 }}>
+          <div className="field" style={{ flex: 1 }}>
+            <div className="field-label">Category</div>
+            <select value={category} onChange={(e) => setCategory(e.target.value)}>
+              {Object.keys(CATEGORY_EMOJI).map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+          <div className="field" style={{ flex: 1 }}><div className="field-label">Tags (comma separated)</div><input value={tags} onChange={(e) => setTags(e.target.value)} placeholder="pottery, handmade" /></div>
+        </div>
       </div>
-    </div>
+      <div className="btn-row"><button className="btn" onClick={handlePost}>Post Reel</button></div>
+    </>
   );
 }
 
@@ -950,97 +1117,26 @@ function MyReelsScreen({ user, go, setToast }: any) {
 // ARTISAN: PROFILE
 // ---------------------------------------------------------------------------
 function ArtisanProfileScreen({ user, onLogout, go }: any) {
-  const profile = user.profile || {};
-  const [editing, setEditing] = useState(false);
-  const [location, setLocation] = useState(profile.location || "Jaipur, Rajasthan");
-  const [bio, setBio] = useState(profile.bio || "Keeping our traditions alive, one creation at a time.");
-  const [avatar, setAvatar] = useState(() => localStorage.getItem(`kalasutra_avatar_${user.id}`) || profile.avatar || "/assets/avatar-artisan.png");
-
-  async function handleAvatarPick(e: any) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try { const data = await fileToDataURL(file); setAvatar(data); localStorage.setItem(`kalasutra_avatar_${user.id}`, data); } catch (_) {}
-    e.target.value = "";
-  }
-  function saveProfile() { setEditing(false); }
-
   return (
-    <div className="profile-page artisan-profile-page">
-      <header className="profile-topbar">
-        <img src="/assets/logo.png" className="profile-logo" alt="KalaSutra" />
-        <div className="profile-top-actions">
-          <button aria-label="Search"><Icon name="search" /></button>
-          <button aria-label="Notifications"><Icon name="bell" /><span className="notification-dot" /></button>
-          <button aria-label="Settings">⚙</button>
-          <span className="profile-top-slogan">Handmade<br/>Stories<br/>Brighter Tomorrows ♡</span>
+    <>
+      <div className="content" style={{ paddingTop: 24 }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <img src="/assets/avatar-artisan.png" style={{ width: 70, height: "auto", marginBottom: 8 }} />
+          <div className="serif" style={{ fontWeight: 600, fontSize: 17 }}>{user.name}</div>
+          <div style={{ fontSize: 11.5, color: "#6b6055" }}>{user.profile?.location || "Location not set"}</div>
         </div>
-      </header>
-
-      <main className="profile-container">
-        <section className="profile-hero artisan-hero">
-          <div className="profile-avatar-wrap">
-            <img src={avatar} className="profile-avatar" alt="Artisan profile" />
-            <input id="artisanAvatarInput" className="avatar-file-input" type="file" accept="image/*" capture="user" onChange={handleAvatarPick} />
-            <label htmlFor="artisanAvatarInput" className="avatar-camera" title="Upload profile photo">⌾</label>
+        <div className="trust-box">
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "var(--green)", textTransform: "uppercase" }}>Trust Score</span>
+            <span className="serif" style={{ fontSize: 17, fontWeight: 700, color: "var(--green)" }}>{user.profile?.trustScore ?? 100}/100</span>
           </div>
-          <div className="profile-identity">
-            <h1>{user.name} <span className="verified-check">✓</span></h1>
-            <h3>Master Artisan</h3>
-            <p className="profile-location">⌖ {location}</p>
-            <p className="profile-quote">“{bio}”</p>
-            <div className="profile-tags">
-              <span>◉ Handcrafted</span><span>♟ Traditional</span><span>◉ Sustainable</span>
-            </div>
-          </div>
-          <div className="profile-hero-art">
-            <div className="handmade-script">Crafting<br/>A Better<br/>Tomorrow ♡</div>
-            <div className="hero-craft-image" />
-          </div>
-          <button className="profile-edit-btn" onClick={() => setEditing(v => !v)}>✎ {editing ? "Close" : "Edit Profile"}</button>
-        </section>
-
-        {editing && (
-          <section className="profile-edit-panel">
-            <label>Craft location<input value={location} onChange={e => setLocation(e.target.value)} /></label>
-            <label>Artisan story / bio<textarea value={bio} onChange={e => setBio(e.target.value)} /></label>
-            <button className="profile-primary-btn" onClick={saveProfile}>Save artisan profile</button>
-          </section>
-        )}
-
-        <section className="trust-row">
-          <div className="trust-score-card">
-            <div><b>TRUST SCORE</b><small>Build trust. Reach the world.</small></div>
-            <div className="trust-progress"><span style={{width:`${Math.min(100, Number(profile.trustScore ?? 100))}%`}} /></div>
-            <strong>{profile.trustScore ?? 100}/100</strong><span className="trust-crown">♛</span>
-          </div>
-          <div className="trust-side"><span className="trust-icon">♛</span><div><b>Top Artisan</b><small>Keep creating magic!</small></div><span>›</span></div>
-        </section>
-
-        <section className="profile-stat-grid artisan-stats">
-          <div><b>12</b><span>Products Listed</span></div>
-          <div><b>248</b><span>Profile Views</span></div>
-          <div><b>36</b><span>Orders Received</span></div>
-          <div><b>4.9</b><span>Buyer Rating</span></div>
-          <div className="impact-stat"><b>🌿</b><div><strong>You are making an impact!</strong><span>Your art supports culture, communities and a sustainable future.</span></div><span>›</span></div>
-        </section>
-
-        <button className="safety-center" onClick={() => go("reviews")}><span>✓</span><div><strong>Safety &amp; Review Center</strong><small>Your safety and trust matter to us. View guidelines, report issues and read reviews.</small></div><b>›</b></button>
-
-        <div className="profile-switch-row">
-          <button onClick={() => apiPost("/users", { name: user.name, contact: user.contact || "demo", role: "buyer" }).then(() => window.location.reload())}>⇄ &nbsp;Switch to Buyer View</button>
-          <button onClick={onLogout}>⇥ &nbsp;Log out</button>
         </div>
-
-        <div className="quick-heading"><h2>Quick Actions</h2><span>Create<br/>Share<br/>Grow ♡</span></div>
-        <section className="quick-actions artisan-quick-actions">
-          <button onClick={() => go("addProduct")}><span>＋</span><b>Add a Piece</b><small>Take a photo,<br/>tell your story</small></button>
-          <button onClick={() => go("createReel")}><span>▣</span><b>Upload Reel</b><small>Show your craft<br/>to the world</small></button>
-          <button onClick={() => go("myProducts")}><span>▥</span><b>My Portfolio</b><small>Manage your<br/>creations</small></button>
-          <button onClick={() => go("orders")}><span>▤</span><b>Orders</b><small>Track &amp; manage<br/>orders</small></button>
-          <div className="quick-banner artisan-banner"><div><em>Your Craft<br/>Inspires the World</em><small>Keep creating.<br/>We'll handle the rest.</small><button onClick={() => go("myProducts")}>View My Creations →</button></div></div>
-        </section>
-      </main>
-    </div>
+        <div className="field-label">Bio</div>
+        <p style={{ fontSize: 12.5, marginTop: 4 }}>{user.profile?.bio || "No bio yet."}</p>
+        <button className="btn" style={{ marginTop: 14 }} onClick={() => go("reviews")}>Safety &amp; Review Center</button>
+        <button className="btn secondary" style={{ marginTop: 20 }} onClick={onLogout}>Log out</button>
+      </div>
+    </>
   );
 }
 
@@ -1070,88 +1166,14 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
 // BUYER: HOME / EXPLORE
 // ---------------------------------------------------------------------------
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }: any) {
-  const [products, setProducts] = useState<any[]>([]);
-  const [query, setQuery] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-  const [listening, setListening] = useState(false);
-
-  useEffect(() => { apiGet(`/products`).then(setProducts).catch((e) => setErr(e.message)); }, []);
-
-  const filtered = products.filter((p) => {
-    if (!query.trim()) return true;
-    const hay = `${p.title} ${p.category} ${p.craftInfo?.material || ""} ${p.craftInfo?.region || ""}`.toLowerCase();
-    return query.toLowerCase().split(" ").filter(Boolean).every((w) => hay.includes(w));
-  });
-
-  async function voiceSearch() {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { setErr('Voice search is not supported in this browser.'); return; }
-    const ok = await requestVoicePermission();
-    if (!ok) { setErr('Please allow microphone access for voice search.'); return; }
-    const r = new SR(); r.lang = "hi-IN"; r.interimResults = false; r.maxAlternatives = 1;
-    r.onstart = () => setListening(true);
-    r.onend = () => setListening(false);
-    r.onerror = () => { setListening(false); setErr('Voice search could not start. Please try again.'); };
-    r.onresult = (e: any) => setQuery(e.results[0][0].transcript);
-    try { r.start(); } catch (_) {}
-  }
-
-  return (
-    <>
-      <div className="buyer-hero-header">
-        <div>
-          <div className="buyer-kicker">KALASUTRA MARKETPLACE</div>
-          <h2>Hello, {user.name} <span className="hello-dot">✦</span></h2>
-          <div className="sub">Discover stories behind every handmade piece.</div>
-        </div>
-        <button className="buyer-wishlist-head" onClick={() => go("wishlist")} aria-label="Saved pieces">
-          <Icon name="heart" />{wishlist.length > 0 && <b>{wishlist.length}</b>}
-        </button>
-      </div>
-      <div className="content buyer-content">
-        <ErrorBanner message={err} />
-        <div className="smart-search">
-          <Icon name="search" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…" />
-          <button className={listening ? "voice-search listening" : "voice-search"} onClick={voiceSearch} aria-label="Voice search">🎙</button>
-        </div>
-        <div className="buyer-shortcuts">
-          <button onClick={() => go("wishlist")}><Icon name="heart" /> Saved {wishlist.length ? `(${wishlist.length})` : ""}</button>
-          <button onClick={() => go("buyerReels")}><Icon name="reels" /> Maker Reels</button>
-          <button onClick={() => go("cart")}><Icon name="cart" /> Cart {cartCount ? `(${cartCount})` : ""}</button>
-        </div>
-        <div className="section-row"><div className="section-title" style={{ margin: 0 }}>{query ? `Results for "${query}"` : "For you"}</div><span className="view-all" onClick={() => go("buyerReels")}>Explore Reels →</span></div>
-        {filtered.length === 0 ? (
-          <div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>
-        ) : (
-          <div className="grid">
-            {filtered.map((p) => (
-              <div key={p.id} data-featured={p.id === "p5" ? "true" : undefined} className="card buyer-product-card" onClick={() => openProduct(p.id)}>
-                <div className="thumb" style={{ backgroundImage: `url(${p.image})` }}>
-                  <BadgeLabel status={p.verificationStatus} />
-                  <button className="card-icon-btn card-heart" onClick={(e) => { e.stopPropagation(); toggleWishlist(p.id); }}>{wishlist.includes(p.id) ? "❤️" : "🤍"}</button>
-                  <span className="emoji">{CATEGORY_EMOJI[p.category] || "🎨"}</span>
-                </div>
-                <div className="info">
-                  <div className="t">{p.title}</div>
-                  <div className="buyer-card-bottom">
-                    <div className="p">₹{p.price.toLocaleString("en-IN")}</div>
-                    <button className="quick-cart-btn" onClick={(e) => { e.stopPropagation(); addToCart(p.id); setToast("Added to cart 🛍️"); }}>＋ Add to cart</button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="floating-cart-wrap">
-        {cartCount > 0 && <button className="floating-cart" onClick={() => go("cart")}><span className="mini-cart-icon"><Icon name="cart" /></span><span><strong>View cart</strong><small>{cartCount} item{cartCount > 1 ? "s" : ""}</small></span><b>›</b></button>}
-      </div>
-      <AITalker role="buyer" go={go} />
-    </>
-  );
+ const [products,setProducts]=useState<any[]>([]),[query,setQuery]=useState(""),[err,setErr]=useState<string|null>(null),[listening,setListening]=useState(false),[recentIds,setRecentIds]=useState<string[]>([]);
+ const recentKey=`kalasutra_recent_products_${user.id}`,loadRecent=()=>{try{setRecentIds(JSON.parse(localStorage.getItem(recentKey)||"[]"))}catch(_){setRecentIds([])}};
+ useEffect(()=>{apiGet(`/products`).then(setProducts).catch(e=>setErr(e.message));loadRecent();const f=()=>loadRecent();window.addEventListener("kalasutra:recent-product",f);return()=>window.removeEventListener("kalasutra:recent-product",f)},[user.id]);
+ const filtered=products.filter(p=>!query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>`${p.title} ${p.category} ${p.craftInfo?.material||""} ${p.craftInfo?.region||""}`.toLowerCase().includes(w))),recent=recentIds.map(id=>products.find(p=>String(p.id)===String(id))).filter(Boolean).slice(0,4);
+ const viewProduct=(id:string)=>{const next=[String(id),...recentIds.filter(x=>String(x)!==String(id))].slice(0,8);localStorage.setItem(recentKey,JSON.stringify(next));setRecentIds(next);openProduct(id)};
+ async function voiceSearch(){const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR){setErr("Voice search is not supported in this browser.");return}const ok=await requestVoicePermission();if(!ok){setErr("Please allow microphone access for voice search.");return}const r=new SR();r.lang="hi-IN";r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>setListening(true);r.onend=()=>setListening(false);r.onerror=()=>{setListening(false);setErr("Voice search could not start. Please try again.")};r.onresult=(e:any)=>setQuery(e.results[0][0].transcript);try{r.start()}catch(_){}}
+ return <><div className="buyer-hero-header"><div><div className="buyer-kicker">KALASUTRA MARKETPLACE</div><h2>Hello, {user.name} <span className="hello-dot">✦</span></h2><div className="sub">Discover stories behind every handmade piece.</div></div><button className="buyer-wishlist-head" onClick={()=>go("wishlist")} aria-label="Saved pieces"><Icon name="heart"/>{wishlist.length>0&&<b>{wishlist.length}</b>}</button></div><div className="content buyer-content"><ErrorBanner message={err}/><div className="smart-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…"/><button className={listening?"voice-search listening":"voice-search"} onClick={voiceSearch}>🎙</button></div><div className="buyer-shortcuts"><button onClick={()=>go("wishlist")}><Icon name="heart"/> Saved {wishlist.length?`(${wishlist.length})`:""}</button><button onClick={()=>go("buyerReels")}><Icon name="reels"/> Maker Reels</button><button onClick={()=>go("cart")}><Icon name="cart"/> Cart {cartCount?`(${cartCount})`:""}</button></div><div className="section-row"><div className="section-title" style={{margin:0}}>{query?`Results for "${query}"`:"For you"}</div><span className="view-all" onClick={()=>go("buyerReels")}>Explore Reels →</span></div>{filtered.length===0?<div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>:<div className="grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>viewProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>{wishlist.includes(p.id)?"❤️":"🤍"}</button></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{p.price.toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={e=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️")}}>＋ Add to cart</button></div></div></div>)}</div>}{recent.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>viewProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}</div><div className="floating-cart-wrap">{cartCount>0&&<button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{cartCount} item{cartCount>1?"s":""}</small></span><b>›</b></button>}</div></>;
 }
-
 // ---------------------------------------------------------------------------
 // BUYER: PRODUCT DETAIL
 // ---------------------------------------------------------------------------
@@ -1161,72 +1183,94 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
   const [err, setErr] = useState<string | null>(null);
   const [reported, setReported] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
-  const [customRequest, setCustomRequest] = useState("");
-  const [customId, setCustomId] = useState("");
+  const [customRequest, setCustomRequest] = useState('');
   const [customizing, setCustomizing] = useState(false);
+  const [customId, setCustomId] = useState<string | null>(null);
 
   useEffect(() => {
-    apiGet(`/products/${productId}`).then((p) => { setProduct(p); setSelectedImage(p.image || null); }).catch((e) => setErr(e.message));
-  }, [productId]);
+    apiGet(`/products/${productId}`).then((p) => {
+      setProduct(p); setSelectedImage(p.image || null);
+      try {
+        const key=`kalasutra_recent_products_${userId}`, prev=JSON.parse(localStorage.getItem(key)||"[]");
+        const next=[String(p.id),...prev.filter((x:any)=>String(x)!==String(p.id))].slice(0,8);
+        localStorage.setItem(key,JSON.stringify(next)); window.dispatchEvent(new Event("kalasutra:recent-product"));
+      } catch (_) {}
+    }).catch((e) => setErr(e.message));
+  }, [productId, userId]);
 
   if (err) return <div className="content"><ErrorBanner message={err} /><button className="btn secondary" onClick={back}>Go back</button></div>;
   if (!product) return <div className="content"><div className="empty-note">Loading…</div></div>;
 
-  const gallery = Array.isArray(product.gallery) && product.gallery.length ? product.gallery : [product.image];
-  const mediaSrc = (img: string) => img ? (img.startsWith("http") || img.startsWith("data:") || img.startsWith("/") ? img : `/${img}`) : "";
-  const delivery = 99;
-  const total = Number(product.price) + delivery;
-  const makerPct = 74;
+  const delivery = 120;
+  const total = product.price + delivery;
+  const pct = Math.round(((product.price * 0.81) / total) * 100);
 
   return (
-    <div className="product-page">
-      <header className="product-topbar">
-        <div className="product-brand"><img src="/assets/logo.png" alt="KalaSutra" /><span>Handmade. Heartfelt. Home.</span></div>
-        <div className="product-search"><Icon name="search" /><input placeholder="Search for handmade, artisans, home decor…" /></div>
-        <nav><button onClick={() => go("buyerHome")}>Explore</button><button onClick={() => go("buyerReels")}>Artisans</button><button onClick={() => go("orders")}>Orders</button><button onClick={() => go("cart")}>Cart <b>{/* live badge lives in bottom nav */}</b></button><button>♙</button></nav>
-      </header>
-
-      <main className="product-container">
-        <div className="breadcrumb">Home　›　Home Decor　›　Lighting　›　Handwoven Cane Beaded Pendant Lamp</div>
-        <div className="product-main">
-          <section className="product-gallery-main">
-            <div className="product-thumbs">
-              {gallery.slice(0,5).map((img:string,i:number) => <button key={img+i} className={selectedImage===img?"active":""} onClick={() => setSelectedImage(img)}><img src={mediaSrc(img)} alt={`Craft ${i+1}`} /></button>)}
-            </div>
-            <div className="product-hero-image" style={{backgroundImage:`url(${selectedImage || product.image})`}}>
-              <span className="photo-badge">🌿 Handcrafted</span><span className="eco-badge">◉ Eco-Friendly</span>
-              <button className="gallery-arrow left" onClick={() => setSelectedImage(gallery[Math.max(0,gallery.indexOf(selectedImage||gallery[0])-1)])}>‹</button>
-              <button className="gallery-arrow right" onClick={() => setSelectedImage(gallery[Math.min(gallery.length-1,gallery.indexOf(selectedImage||gallery[0])+1)])}>›</button>
-              <span className="light-story">Light<br/>Stories<br/>from ♡<br/>Indian Hands ♡</span>
-            </div>
-            <div className="gallery-dots">{gallery.slice(0,5).map((_,i)=><i key={i} className={gallery[i]===selectedImage?"active":""}/>)}</div>
-            <div className="story-card"><em>“Every weave tells a story<br/>of tradition, creativity and a brighter tomorrow.”</em><b>– {product.artisan?.name || "Radha Devi"}</b><div className="story-benefits"><span>⌁<b>Eco-Friendly</b></span><span>♧<b>Empowers Artisans</b></span><span>♢<b>Adds Warmth to<br/>Your Space</b></span></div></div>
-          </section>
-
-          <section className="product-info-panel">
-            <div className="artisan-line"><div className="mini-artisan">🧵</div><div><b>{product.artisan?.name || "Radha Devi"}</b><span>⌖ {product.artisan?.profile?.location || "Jaipur, Rajasthan"}</span></div><span className="verified-pill">✓ Verified Artisan</span></div>
-            <h1>{product.title || "Handwoven Cane Beaded Pendant Lamp"}</h1>
-            <div className="rating-line"><strong>★★★★★</strong> <b>4.8</b> <span>(120 reviews)</span> <i>289 sold</i> <em>♥ Handmade with love</em></div>
-            <p className="product-description">{product.description || "A handcrafted cane pendant lamp with a delicate woven pattern and natural bead detailing, made to bring a soft earthy character to any room."}</p>
-
-            <div className="certificate-card large-certificate"><div className="qr-big"><img alt="Product QR" src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(window.location.origin + '/?certificate=' + (product.uniqueProductId || product.id))}`} /></div><div><span className="field-label">DIGITAL PRODUCT ID</span><strong>{product.uniqueProductId || "KS-ART-000001"}</strong><small>✓ Verified identity linked to this handmade piece</small><button onClick={() => setToast("Certificate story opened")}>◫ Scan to know the artisan’s story ›</button></div></div>
-
-            <div className="customize-card product-custom-card"><div><span className="field-label">MAKE IT YOURS</span><strong>Customize this unique piece</strong><small>Personalize with a name, colour, size or small design change.</small></div><button className="customize-price" onClick={() => setCustomOpen(v=>!v)}>Customize for ₹100 →</button>
-              {customOpen && <div className="customize-form"><textarea value={customRequest} onChange={e=>setCustomRequest(e.target.value)} placeholder="e.g. Add my name and change the colour to blue" /><button className="btn" disabled={customizing} onClick={async()=>{if(!customRequest.trim()){setToast("Please describe your customization");return;}setCustomizing(true);try{const c=await apiPost("/customizations",{productId:product.id,buyerId:userId,request:customRequest,charge:100});setCustomId(c.customizationId);setToast(`Customization ${c.customizationId} created • ₹100`);setCustomRequest("");}catch(e:any){setToast(e.message||"Customization failed")}finally{setCustomizing(false)}}}>{customizing?"Saving…":"Request customization • ₹100"}</button>{customId&&<small>✓ {customId}</small>}</div>}
-            </div>
-
-            <div className="feature-strip"><span>⌁<b>Sustainable<br/>Materials</b></span><span>♧<b>100%<br/>Handmade</b></span><span>▱<b>Supports<br/>Rural Artisans</b></span><span>♡<b>{makerPct}% Goes<br/>to the Maker</b></span></div>
-            <div className="checkout-box product-checkout"><div className="checkout-row"><span>Product price</span><b>₹{Number(product.price).toLocaleString("en-IN")}</b></div><div className="checkout-row"><span>Delivery charge</span><b>₹{delivery}</b></div><div className="checkout-row total"><span>Final price</span><b>₹{total.toLocaleString("en-IN")}</b></div></div>
-            <button className="product-add-btn" onClick={()=>{addToCart(product.id);setToast("Added to cart 🛍️")}}>🛒 Add to Cart</button>
-            <div className="product-secondary-actions"><button>🎁 Buy as Gift</button><button onClick={()=>toggleWishlist(product.id)}>♡ Save for Later</button></div>
-            <div className="report-link" onClick={()=>{if(!reported){setReported(true);setToast("Reported — our trust & safety team will review this listing")}}}>{reported?"✓ Reported — under review":"🚩 Report Product: Not Handmade"}</div>
-          </section>
+    <>
+      <div className="detail-photo real-photo-hero" style={{ backgroundImage: `url(${selectedImage || product.image})` }}>
+        <button className="close-btn" onClick={back}>✕</button>
+        {!selectedImage && <span style={{ position: "relative", zIndex: 1 }}>{CATEGORY_EMOJI[product.category] || "🎨"}</span>}
+      </div>
+      <div className="content" style={{ paddingTop: 0 }}>
+        <div style={{ borderBottom: "1px solid var(--line)", margin: "0 -18px", padding: "14px 18px", display: "flex", alignItems: "center", gap: 10 }}>
+          <div className="av" style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--indigo)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>🧵</div>
+          <div><div style={{ fontSize: 12.5, fontWeight: 700 }}>{product.artisan?.name}</div><div style={{ fontSize: 10.5, color: "#6b6055" }}>{product.artisan?.profile?.location}</div></div>
         </div>
-
-        <section className="buyer-reviews"><span className="field-label">BUYER REVIEWS</span><h2>What buyers say</h2><div className="review-item"><strong>★★★★★　 Ananya</strong><p>Beautifully made and the craft story made the purchase feel personal.</p></div><div className="review-write"><div>★★★★★</div><textarea placeholder="Share your experience…" /><button onClick={()=>setToast("Review posted")}>Post review</button></div></section>
-        <section className="you-may-like"><h2>You May Also Like</h2><div>{gallery.concat(gallery).slice(0,6).map((img:string,i:number)=><button key={i}><img src={mediaSrc(img)} alt="" /><span>♡</span></button>)}</div></section>
-      </main>
-    </div>
+        <div style={{ marginTop: 14 }}>
+          <BadgeLabel status={product.verificationStatus} />
+          <h2 className="serif" style={{ fontSize: 19, margin: "8px 0 6px" }}>{product.title}</h2>
+          <p style={{ fontSize: 13 }}>{product.description}</p>
+        </div>
+        {Array.isArray(product.gallery) && product.gallery.length > 0 && (
+          <div className="product-gallery">
+            <div className="product-gallery-title">Real artisan photo gallery</div>
+            <div className="product-gallery-strip">
+              {product.gallery.map((img: string, i: number) => (
+                <button key={img + i} className={`product-gallery-thumb ${selectedImage === img ? "active" : ""}`} onClick={() => setSelectedImage(img)} aria-label={`View craft photo ${i + 1}`}>
+                  <img src={`/${img}`} alt={`Artisan craft photo ${i + 1}`} />
+                </button>
+              ))}
+            </div>
+            <div className="product-gallery-note">Tap any photo to view it above.</div>
+          </div>
+        )}
+        <div className="certificate-card">
+          <div><span className="field-label">DIGITAL PRODUCT ID</span><strong>{product.uniqueProductId || 'KS-ART-000001'}</strong><small>Verified identity linked to this handmade piece</small></div>
+          <div className="certificate-qr"><img alt="Product QR" src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(window.location.origin + '/?certificate=' + (product.uniqueProductId || product.id))}`} /></div>
+        </div>
+        <div className="customize-card">
+          <div><span className="field-label">MAKE IT YOURS</span><strong>Customize this unique piece</strong><small>Personalize with a name, colour, size or small design change.</small></div>
+          <button className="btn secondary" onClick={() => setCustomOpen(v => !v)}>Customize • ₹100</button>
+          {customOpen && <div className="customize-form">
+            <textarea value={customRequest} onChange={e => setCustomRequest(e.target.value)} placeholder="e.g. Add my name 'Harsh' and change the colour to blue" />
+            <button className="btn" disabled={customizing} onClick={async () => {
+              if (!customRequest.trim()) { setToast('Please describe your customization'); return; }
+              setCustomizing(true);
+              try { const c = await apiPost('/customizations', { productId: product.id, buyerId: userId, request: customRequest, charge: 100 }); setCustomId(c.customizationId); setToast(`Customization request ${c.customizationId} created • ₹100`); setCustomRequest(''); } catch (e:any) { setToast(e.message || 'Customization failed'); } finally { setCustomizing(false); }
+            }}>{customizing ? 'Saving…' : 'Request customization • ₹100'}</button>
+            {customId && <div className="location-fill-note">✓ Customization ID: <strong>{customId}</strong> — Product ID remains {product.uniqueProductId}</div>}
+          </div>}
+        </div>
+        <div className="impact-bar"><b>{pct}%</b> of what you pay goes straight to the maker.</div>
+        <div className="checkout-box">
+          <div className="checkout-row"><span>Product price</span><span>₹{product.price.toLocaleString("en-IN")}</span></div>
+          <div className="checkout-row"><span>Delivery charge</span><span>₹{delivery}</span></div>
+          <div className="checkout-row total"><span>Final price</span><span>₹{total.toLocaleString("en-IN")}</span></div>
+        </div>
+        <div style={{ display: "flex", gap: 10, margin: "0 0 10px" }}>
+          <button className="btn" style={{ flex: 1 }} onClick={() => { addToCart(product.id); setToast("Added to cart"); }}>Add to Cart</button>
+          <button className="btn secondary" style={{ width: 52, flex: "0 0 auto" }} onClick={() => toggleWishlist(product.id)}>{wishlist.includes(product.id) ? "❤️" : "🤍"}</button>
+        </div>
+        <div style={{ textAlign: "center" }}>
+          <span
+            style={{ fontSize: 11, color: reported ? "var(--madder)" : "#8a7d6e", textDecoration: "underline", cursor: reported ? "default" : "pointer" }}
+            onClick={() => { if (!reported) { setReported(true); setToast("Reported — our trust & safety team will review this listing"); } }}
+          >
+            {reported ? "✓ Reported — under review" : "🚩 Report Product: Not Handmade"}
+          </span>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -1246,7 +1290,6 @@ function WishlistScreen({ user, openProduct, toggleWishlist }: any) {
               <div key={p.id} className="card" onClick={() => openProduct(p.id)}>
                 <div className="thumb" style={{ backgroundImage: `url(${p.image})` }}>
                   <BadgeLabel status={p.verificationStatus} />
-                  <span className="emoji">{CATEGORY_EMOJI[p.category] || "🎨"}</span>
                 </div>
                 <div className="info"><div className="t">{p.title}</div><div className="p">₹{p.price.toLocaleString("en-IN")}</div><div className="product-id-mini">{p.uniqueProductId || 'KS-ART-000001'}</div></div>
               </div>
@@ -1265,6 +1308,8 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
   const [items, setItems] = useState<any[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [method, setMethod] = useState<'razorpay' | 'cod'>('razorpay');
+  const [orderType, setOrderType] = useState<'retail' | 'bulk'>('retail');
+  const [bulkQty, setBulkQty] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phone, setPhone] = useState(user.contact || '');
@@ -1313,8 +1358,18 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  function load() { apiGet(`/cart?userId=${user.id}`).then(setItems).catch(e => setError(e.message)); }
-  useEffect(load, []);
+  async function load() {
+    try {
+      const next = await apiGet(`/cart?userId=${user.id}`);
+      setItems(next);
+      const initial: Record<string, number> = {};
+      next.forEach((i: any, index: number) => {
+        initial[String(i.productId)] = i.qty + (index === 0 ? Math.max(0, 20 - i.qty) : 0);
+      });
+      setBulkQty(initial);
+    } catch (e: any) { setError(e.message); }
+  }
+  useEffect(() => { load(); }, []);
 
   async function remove(productId: string) {
     await apiDelete('/cart', { userId: user.id, productId });
@@ -1322,6 +1377,13 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
   }
 
   const total = items.reduce((s, i) => s + (i.product?.price || 0) * i.qty, 0);
+  const retailQty = items.reduce((s, i) => s + i.qty, 0);
+  const bulkTotalQty = items.reduce((s, i) => s + Math.max(1, Number(bulkQty[String(i.productId)] || i.qty || 1)), 0);
+  const bulkSubtotal = items.reduce((s, i) => s + (i.product?.price || 0) * Math.max(1, Number(bulkQty[String(i.productId)] || i.qty || 1)), 0);
+  const bulkDiscountRate = bulkTotalQty >= 100 ? 0.20 : bulkTotalQty >= 50 ? 0.15 : bulkTotalQty >= 20 ? 0.10 : 0;
+  const bulkDiscount = Math.round(bulkSubtotal * bulkDiscountRate);
+  const bulkTotal = bulkSubtotal - bulkDiscount;
+  const bulkUnitAverage = bulkTotalQty ? Math.round(bulkTotal / bulkTotalQty) : 0;
   const address = { phone, area, city, pincode };
 
   function validateAddress() {
@@ -1331,6 +1393,50 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
     if (!/^\d{10}$/.test(phone.replace(/\D/g, ''))) { setError('Please enter a valid 10-digit phone number'); return false; }
     if (!/^\d{6}$/.test(pincode.trim())) { setError('Please enter a valid 6-digit pincode'); return false; }
     return true;
+  }
+
+  function updateBulkQuantity(productId: string, delta: number) {
+    setBulkQty(prev => {
+      const current = Math.max(1, Number(prev[String(productId)] || 1));
+      return { ...prev, [String(productId)]: Math.max(1, current + delta) };
+    });
+  }
+
+  function chooseBulkTier(min: number) {
+    if (!items.length) return;
+    const firstId = String(items[0].productId);
+    setBulkQty(prev => ({ ...prev, [firstId]: Math.max(min, Number(prev[firstId] || 1)) }));
+  }
+
+  function requestBulkOrder() {
+    setError(null);
+    if (!validateAddress()) return;
+    if (bulkTotalQty < 20) {
+      setError('Bulk / B2B orders start at 20 pieces. Increase the quantity to continue.');
+      return;
+    }
+    const request = {
+      id: `BULK-${Date.now().toString(36).toUpperCase()}`,
+      buyerId: user.id,
+      buyerName: user.name,
+      address,
+      items: items.map(i => ({
+        productId: i.productId,
+        title: i.product?.title,
+        quantity: Math.max(1, Number(bulkQty[String(i.productId)] || i.qty || 1)),
+        unitPrice: i.product?.price || 0
+      })),
+      pieces: bulkTotalQty,
+      subtotal: bulkSubtotal,
+      discountRate: bulkDiscountRate,
+      estimatedTotal: bulkTotal,
+      createdAt: new Date().toISOString(),
+      status: 'quote_requested'
+    };
+    localStorage.setItem('kalasutra_last_bulk_request', JSON.stringify(request));
+    setToast(`Bulk request ${request.id} saved • ${bulkTotalQty} pieces`);
+    notifyUser('KalaSutra bulk request received', `Your ${bulkTotalQty}-piece B2B request is saved for follow-up.`);
+    closeCheckout();
   }
 
   async function placeCOD() {
@@ -1395,12 +1501,13 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
       </div>
 
       {checkoutOpen && <div className="payment-overlay">
-        <div className="payment-sheet">
+        <div className="payment-sheet bulk-checkout-sheet">
           <div className="payment-topbar">
             <button onClick={closeCheckout} aria-label="Back">‹</button>
             <div><small>SECURE CHECKOUT</small><h2>Delivery and payment</h2></div>
             <button onClick={closeCheckout} aria-label="Close">×</button>
           </div>
+
           <div className="payment-body">
             <div className="payment-section-title">Delivery details</div>
             <div className="payment-field"><span>☎</span><input value={phone} onChange={e => setPhone(e.target.value.replace(/\D/g,'').slice(0,10))} placeholder="10-digit mobile number" /></div>
@@ -1410,20 +1517,89 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
             <button className="location-fill-btn" onClick={useMyLocation} disabled={locationLoading}>⌖ {locationLoading ? 'Detecting your location…' : 'Use my current location & auto-fill'}</button>
             {locationMessage && <div className="location-fill-note">{locationMessage}</div>}
 
-            <div className="payment-section-title payment-method-title">Payment method</div>
-            <button className={`payment-method-card ${method === 'razorpay' ? 'selected' : ''}`} onClick={() => setMethod('razorpay')}>
-              <span className="payment-method-icon">▣</span><span><strong>Razorpay secure payment</strong><small>Google Pay, PhonePe, UPI, cards and netbanking</small></span><i>{method === 'razorpay' ? '●' : '○'}</i>
-            </button>
-            <button className={`payment-method-card ${method === 'cod' ? 'selected' : ''}`} onClick={() => setMethod('cod')}>
-              <span className="payment-method-icon">▤</span><span><strong>Cash on delivery</strong><small>Pay when your order arrives</small></span><i>{method === 'cod' ? '●' : '○'}</i>
-            </button>
+            <div className="bulk-order-card">
+              <div className="bulk-order-head">
+                <div className="bulk-order-icon">▦</div>
+                <div>
+                  <div className="bulk-order-kicker">ORDER TYPE</div>
+                  <h3>How do you want to order?</h3>
+                  <p>For shops, studios, hotels and larger craft collections.</p>
+                </div>
+              </div>
+              <div className="bulk-order-tabs">
+                <button className={orderType === 'retail' ? 'active' : ''} onClick={() => setOrderType('retail')}>
+                  <span>Retail</span><small>Regular purchase</small>
+                </button>
+                <button className={orderType === 'bulk' ? 'active' : ''} onClick={() => setOrderType('bulk')}>
+                  <span>Bulk / B2B</span><small>20+ pieces</small>
+                </button>
+              </div>
 
-            <div className="payment-trust">✓ {method === 'razorpay' ? 'Payment is completed on Razorpay and verified before your order is created.' : 'Your order is confirmed now. Pay in cash when the artisan order arrives.'}</div>
+              {orderType === 'bulk' ? (
+                <div className="bulk-order-panel">
+                  <div className="bulk-benefit-row">
+                    <span>🧵 Direct artisan sourcing</span>
+                    <span>📦 Volume pricing</span>
+                  </div>
+                  <div className="bulk-tier-row">
+                    <button onClick={() => chooseBulkTier(20)} className={bulkTotalQty >= 20 ? 'chosen' : ''}><b>20+</b><small>10% off</small></button>
+                    <button onClick={() => chooseBulkTier(50)} className={bulkTotalQty >= 50 ? 'chosen' : ''}><b>50+</b><small>15% off</small></button>
+                    <button onClick={() => chooseBulkTier(100)} className={bulkTotalQty >= 100 ? 'chosen' : ''}><b>100+</b><small>20% off</small></button>
+                  </div>
+
+                  <div className="bulk-items-list">
+                    {items.map(i => {
+                      const q = Math.max(1, Number(bulkQty[String(i.productId)] || i.qty || 1));
+                      return <div className="bulk-item-row" key={`bulk-${i.productId}`}>
+                        <div><strong>{i.product?.title}</strong><small>₹{Number(i.product?.price || 0).toLocaleString('en-IN')} / piece</small></div>
+                        <div className="bulk-qty-control">
+                          <button onClick={() => updateBulkQuantity(i.productId, -1)} aria-label="Decrease quantity">−</button>
+                          <b>{q}</b>
+                          <button onClick={() => updateBulkQuantity(i.productId, 1)} aria-label="Increase quantity">+</button>
+                        </div>
+                      </div>;
+                    })}
+                  </div>
+
+                  <div className="bulk-price-box">
+                    <div><span>Total pieces</span><strong>{bulkTotalQty}</strong></div>
+                    <div><span>Volume discount</span><strong>{Math.round(bulkDiscountRate * 100)}%</strong></div>
+                    <div className="bulk-final-price"><span>Estimated total</span><strong>₹{bulkTotal.toLocaleString('en-IN')}</strong></div>
+                    <small>Approx. ₹{bulkUnitAverage.toLocaleString('en-IN')} per piece after volume discount.</small>
+                  </div>
+                  <div className="bulk-note">Bulk requests are reviewed with the artisan so larger orders can be confirmed at a fair, direct-to-maker price.</div>
+                </div>
+              ) : (
+                <div className="bulk-retail-note">Regular checkout for individual purchases. Switch to <b>Bulk / B2B</b> when you need 20+ pieces.</div>
+              )}
+            </div>
+
+            {orderType === 'retail' && <>
+              <div className="payment-section-title payment-method-title">Payment method</div>
+              <button className={`payment-method-card ${method === 'razorpay' ? 'selected' : ''}`} onClick={() => setMethod('razorpay')}>
+                <span className="payment-method-icon">▣</span><span><strong>Razorpay secure payment</strong><small>Google Pay, PhonePe, UPI, cards and netbanking</small></span><i>{method === 'razorpay' ? '●' : '○'}</i>
+              </button>
+              <button className={`payment-method-card ${method === 'cod' ? 'selected' : ''}`} onClick={() => setMethod('cod')}>
+                <span className="payment-method-icon">▤</span><span><strong>Cash on delivery</strong><small>Pay when your order arrives</small></span><i>{method === 'cod' ? '●' : '○'}</i>
+              </button>
+              <div className="payment-trust">✓ {method === 'razorpay' ? 'Payment is completed on Razorpay and verified before your order is created.' : 'Your order is confirmed now. Pay in cash when the artisan order arrives.'}</div>
+            </>}
+
             {error && <div className="payment-error">{error}</div>}
 
-            <div className="payment-summary"><span><small>{items.reduce((s,i)=>s+i.qty,0)} items</small><strong>₹{total.toLocaleString('en-IN')}</strong></span>
-              <button onClick={method === 'razorpay' ? payOnline : placeCOD} disabled={loading}>{loading ? 'Processing…' : method === 'razorpay' ? `Pay ₹${total.toLocaleString('en-IN')} securely` : `Place COD order • ₹${total.toLocaleString('en-IN')}`}</button>
-            </div>
+            {orderType === 'bulk' ? (
+              <div className="payment-summary bulk-summary">
+                <span><small>{bulkTotalQty} pieces • {Math.round(bulkDiscountRate * 100)}% volume discount</small><strong>₹{bulkTotal.toLocaleString('en-IN')}</strong></span>
+                <button onClick={requestBulkOrder} disabled={loading || bulkTotalQty < 20}>
+                  {loading ? 'Saving…' : `Request bulk order • ${bulkTotalQty} pieces`}
+                </button>
+              </div>
+            ) : (
+              <div className="payment-summary">
+                <span><small>{retailQty} items</small><strong>₹{total.toLocaleString('en-IN')}</strong></span>
+                <button onClick={method === 'razorpay' ? payOnline : placeCOD} disabled={loading}>{loading ? 'Processing…' : method === 'razorpay' ? `Pay ₹${total.toLocaleString('en-IN')} securely` : `Place COD order • ₹${total.toLocaleString('en-IN')}`}</button>
+              </div>
+            )}
           </div>
         </div>
       </div>}
@@ -1486,80 +1662,14 @@ function OrdersScreen({ user }: any) {
 // BUYER: PROFILE
 // ---------------------------------------------------------------------------
 function BuyerProfileScreen({ user, onLogout }: any) {
-  const profile = user.profile || {};
-  const [editing, setEditing] = useState(false);
-  const [city, setCity] = useState(profile.location || "");
-  const [saved, setSaved] = useState(false);
-  const [avatar, setAvatar] = useState(() => localStorage.getItem(`kalasutra_avatar_${user.id}`) || profile.avatar || "/assets/avatar-artisan.png");
-
-  async function handleAvatarPick(e: any) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try { const data = await fileToDataURL(file); setAvatar(data); localStorage.setItem(`kalasutra_avatar_${user.id}`, data); } catch (_) {}
-    e.target.value = "";
-  }
-  function saveBuyer() { setSaved(true); setEditing(false); }
-
   return (
-    <div className="profile-page buyer-profile-page">
-      <header className="profile-topbar">
-        <img src="/assets/logo.png" className="profile-logo" alt="KalaSutra" />
-        <div className="profile-top-actions">
-          <button><Icon name="search" /></button><button><Icon name="bell" /><span className="notification-dot" /></button><button>⚙</button>
-          <span className="profile-top-slogan">Good Choices<br/>Create Greater Impact ♡</span>
-        </div>
-      </header>
-
-      <main className="profile-container">
-        <section className="profile-hero buyer-hero">
-          <div className="profile-avatar-wrap buyer-avatar-wrap">
-            <img src={avatar} className="profile-avatar buyer-avatar" alt="Buyer profile" />
-            <input id="buyerAvatarInput" className="avatar-file-input" type="file" accept="image/*" capture="user" onChange={handleAvatarPick} />
-            <label htmlFor="buyerAvatarInput" className="avatar-camera" title="Upload profile photo">⌾</label>
-          </div>
-          <div className="profile-identity">
-            <h1>{user.name}</h1><h3>🌿 Conscious buyer</h3>
-            <p className="profile-quote">“Supporting artisans, preserving traditions<br/>and bringing handmade stories home.”</p>
-            <div className="buyer-meta"><span>⌖ {city || "India"}</span><span>◎ Exploring global crafts</span><span>♥ Handmade · Sustainable · Meaningful</span></div>
-          </div>
-          <div className="profile-hero-art buyer-art"><div className="handmade-script">More<br/>Handmade<br/>A Kinder World ♡</div><div className="hero-temple-art" /></div>
-          <button className="profile-edit-btn" onClick={() => setEditing(v => !v)}>✎ {editing ? "Close" : "Edit Profile"}</button>
-        </section>
-
-        {editing && (
-          <section className="profile-edit-panel">
-            <label>Delivery location<input value={city} onChange={e => setCity(e.target.value)} placeholder="City / locality" /></label>
-            <button className="profile-primary-btn" onClick={saveBuyer}>Save buyer profile</button>
-          </section>
-        )}
-
-        <section className="buyer-stat-layout">
-          <div className="profile-stat-grid buyer-stats">
-            <div><b>12</b><span>Orders Placed</span></div><div><b>28</b><span>Items Liked</span></div><div><b>46</b><span>Artisans Followed</span></div><div><b>4.8</b><span>Average Rating</span></div>
-          </div>
-          <div className="conscious-card"><span>🌿</span><div><strong>Conscious Buyer</strong><small>You support traditional artisans<br/>and sustainable crafts.</small></div><b>›</b></div>
-        </section>
-
-        <div className="buyer-impact-grid">
-          <section>
-            <div className="quick-heading"><h2>Quick Actions</h2><span>Shop<br/>Support<br/>Empower ♡</span></div>
-            <div className="quick-actions buyer-quick-actions">
-              <button><span>▣</span><b>My Orders</b></button><button><span>♥</span><b>My Wishlist</b></button><button><span>♟</span><b>Saved Artisans</b></button><button><span>⌖</span><b>Addresses</b></button>
-            </div>
-          </section>
-          <section className="your-impact-card"><span className="impact-leaf">🌿</span><div><h3>Your Impact</h3><p>Every purchase empowers an artisan.</p></div><div className="impact-numbers"><span><b>12</b><small>Artisans Supported</small></span><span><b>28</b><small>Handmade Pieces</small></span><span><b>3</b><small>Regions Explored</small></span></div></section>
-        </div>
-
-        <section className="recently-viewed">
-          <div className="section-row"><h2>Recently Viewed</h2><span>›</span></div>
-          <div className="recent-grid">
-            {["Blue Pottery Vase","Handloom Stole","Dhokra Art Piece","Embroidered Bag"].map((name,i) => <div key={name}><div className={`recent-img recent-${i}`} /><b>{name}</b><strong>{["₹1,200","₹850","₹2,300","₹1,450"][i]}</strong></div>)}
-          </div>
-        </section>
-        <div className="quick-banner buyer-banner"><div><em>Handmade<br/>Stories<br/>Better Tomorrows ♡</em><button>Explore More →</button></div></div>
-        <button className="logout-wide" onClick={onLogout}>Log out</button>
-        {saved && <div className="saved-note">✓ Buyer profile saved</div>}
-      </main>
+    <div className="content" style={{ paddingTop: 24 }}>
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <div style={{ width: 64, height: 64, borderRadius: "50%", background: "var(--madder)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, margin: "0 auto 10px" }}>🛍️</div>
+        <div className="serif" style={{ fontWeight: 600, fontSize: 17 }}>{user.name}</div>
+        <div style={{ fontSize: 11.5, color: "#6b6055" }}>{user.profile?.location || "Conscious buyer"}</div>
+      </div>
+      <button className="btn secondary" onClick={onLogout}>Log out</button>
     </div>
   );
 }
@@ -1568,48 +1678,14 @@ function BuyerProfileScreen({ user, onLogout }: any) {
 // BUYER: REELS FEED
 // ---------------------------------------------------------------------------
 function ReelsFeedScreen({ openProduct, setToast }: any) {
-  const [reels, setReels] = useState<any[]>([]);
-  useEffect(() => { apiGet(`/reels`).then(setReels); }, []);
-  const COLORS = ["#8a5a3a", "#3d5c73", "#6b4423", "#7a5c1e", "#5c6b3a", "#7a3a5c"];
-
-  return (
-    <div className="reels-wrap">
-      {reels.length === 0 && <div className="empty-note" style={{ paddingTop: 100 }}>No Reels yet — check back soon.</div>}
-      {reels.map((r, i) => (
-        <div className="reel" key={r.id}>
-          {r.video ? (
-            <video src={r.video} className="reel-visual" style={{ objectFit: "cover", fontSize: 0 }} autoPlay loop muted playsInline />
-          ) : (
-            <div className="reel-visual" style={{ background: COLORS[i % COLORS.length] }}>{r.thumbEmoji}</div>
-          )}
-          <div className="reel-gradient" />
-          <div className="reel-overlay">
-            <div className="reel-info">
-              <strong>@{r.artisan?.name?.toLowerCase().replace(/\s+/g, ".") || "artisan"}</strong>
-              <span>{r.caption}</span>
-              {r.product && (
-                <div>
-                  <span className="badge-inline" style={{ background: "#e2f0e4", color: "var(--green)" }}>
-                    <BadgeLabel status={r.product.verificationStatus} />
-                  </span>
-                  <div className="view-btn" onClick={() => openProduct(r.product.id)}>🛍️ View Product</div>
-                </div>
-              )}
-            </div>
-            <div className="reel-actions">
-              <button className="act" onClick={() => setToast("Liked")}><span className="ic">❤️</span>{r.likes}</button>
-              <button className="act" onClick={() => setToast("Comments coming soon")}><span className="ic">💬</span>{r.comments}</button>
-              <button className="act" onClick={() => setToast("Saved")}><span className="ic">🔖</span>Save</button>
-              <button className="act" onClick={() => setToast("Link copied")}><span className="ic">↗</span>Share</button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+ const [reels,setReels]=useState<any[]>([]),[liked,setLiked]=useState<Record<string,boolean>>({}),[saved,setSaved]=useState<Record<string,boolean>>({}),[counts,setCounts]=useState<Record<string,number>>({}),[comments,setComments]=useState<Record<string,string[]>>({}),[commentOpen,setCommentOpen]=useState<string|null>(null),[commentText,setCommentText]=useState("");
+ useEffect(()=>{apiGet(`/reels`).then(data=>{setReels(data);try{const l=JSON.parse(localStorage.getItem("kalasutra_reel_likes")||"{}"),s=JSON.parse(localStorage.getItem("kalasutra_reel_saves")||"{}"),c=JSON.parse(localStorage.getItem("kalasutra_reel_comments")||"{}"),n:any={};data.forEach((r:any)=>n[String(r.id)]=Number(r.likes||0));Object.keys(l).forEach(id=>{if(l[id])n[id]=(n[id]||0)+1});setLiked(l);setSaved(s);setComments(c);setCounts(n)}catch(_){}}).catch(()=>setReels([]))},[]);
+ const like=(id:string)=>{const k=String(id),v=!liked[k],l={...liked,[k]:v},n={...counts,[k]:Math.max(0,(counts[k]||0)+(v?1:-1))};setLiked(l);setCounts(n);localStorage.setItem("kalasutra_reel_likes",JSON.stringify(l));setToast(v?"Liked ❤️":"Like removed")};
+ const save=(id:string)=>{const k=String(id),v=!saved[k],s={...saved,[k]:v};setSaved(s);localStorage.setItem("kalasutra_reel_saves",JSON.stringify(s));setToast(v?"Reel saved 🔖":"Removed from saved")};
+ async function share(r:any){const url=window.location.href.split("#")[0]+`?reel=${encodeURIComponent(r.id)}`;try{if(navigator.share)await navigator.share({title:"KalaSutra Maker Reel",text:r.caption||"See this handmade craft story on KalaSutra",url});else{await navigator.clipboard.writeText(url);setToast("Reel link copied ↗")}}catch(_){}}
+ const comment=(id:string)=>{const v=commentText.trim();if(!v)return;const k=String(id),next=[...(comments[k]||[]),v],all={...comments,[k]:next};setComments(all);setCommentText("");localStorage.setItem("kalasutra_reel_comments",JSON.stringify(all));setToast("Comment added 💬")};
+ return <div className="reels-wrap">{reels.length===0&&<div className="empty-note" style={{paddingTop:100}}>No Reels yet — check back soon.</div>}{reels.map(r=>{const k=String(r.id),list=comments[k]||[],num=counts[k]??Number(r.likes||0);return <div className="reel" key={r.id}>{r.video?<video src={r.video} className="reel-visual" style={{objectFit:"cover",fontSize:0}} autoPlay loop muted playsInline/>:<div className="reel-visual" style={{background:"#8a5a3a"}}>{r.thumbEmoji}</div>}<div className="reel-gradient"/><div className="reel-overlay"><div className="reel-info"><strong>@{r.artisan?.name?.toLowerCase().replace(/\s+/g,".")||"artisan"}</strong><span>{r.caption}</span>{r.product&&<div><span className="badge-inline" style={{background:"#e2f0e4",color:"var(--green)"}}><BadgeLabel status={r.product.verificationStatus}/></span><div className="view-btn" onClick={()=>openProduct(r.product.id)}>🛍️ View Product</div></div>}</div><div className="reel-actions"><button className={`act ${liked[k]?"active":""}`} onClick={()=>like(k)}><span className="ic">{liked[k]?"❤️":"♡"}</span>{num}</button><button className={`act ${commentOpen===k?"active":""}`} onClick={()=>setCommentOpen(commentOpen===k?null:k)}><span className="ic">💬</span>{Number(r.comments||0)+list.length}</button><button className={`act ${saved[k]?"active":""}`} onClick={()=>save(k)}><span className="ic">{saved[k]?"🔖":"◇"}</span>{saved[k]?"Saved":"Save"}</button><button className="act" onClick={()=>share(r)}><span className="ic">↗</span>Share</button></div>{commentOpen===k&&<div className="reel-comments-sheet"><div className="reel-comments-title"><strong>Comments</strong><button onClick={()=>setCommentOpen(null)}>×</button></div><div className="reel-comments-list">{list.length===0?<small>No comments yet. Start the conversation.</small>:list.map((x,i)=><div key={i}><b>You</b><span>{x}</span></div>)}</div><div className="reel-comment-input"><input value={commentText} onChange={e=>setCommentText(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")comment(k)}} placeholder="Write a comment…"/><button onClick={()=>comment(k)}>Post</button></div></div>}</div></div>})}</div>;
 }
-
-
 // ---------------------------------------------------------------------------
 // DIGITAL PRODUCT CERTIFICATE — public QR destination
 // ---------------------------------------------------------------------------
