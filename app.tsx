@@ -611,7 +611,7 @@ function ArtisanDashboard({ user, go, setToast }: any) {
 // ARTISAN: ADD PRODUCT  →  SCAN/VERIFY
 // ---------------------------------------------------------------------------
 function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any) {
-  const [step, setStepState] = useState("form"); // form -> proof -> scanning -> result
+  const [step, setStepState] = useState("form");
   const [title, setTitle] = useState("");
   const [story, setStory] = useState("");
   const [englishDescription, setEnglishDescription] = useState("");
@@ -620,6 +620,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   const [material, setMaterial] = useState("");
   const [region, setRegion] = useState("");
   const [storyLang, setStoryLang] = useState("hi-IN");
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   const [proofVideo, setProofVideo] = useState<string | null>(null);
   const [recording, setRecording] = useState(false);
@@ -633,9 +634,22 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   const storyRecognitionRef = useRef<any>(null);
 
   async function handleImagePick(e: any) {
-    const file = e.target.files[0];
-    if (!file) return;
-    try { setImageDataUrl(await fileToDataURL(file)); } catch { setErr("Couldn't read that image — please try another file."); }
+    const files = Array.from(e.target.files || []) as File[];
+    if (!files.length) return;
+    try {
+      const urls = await Promise.all(files.slice(0, 6).map(fileToDataURL));
+      setGalleryImages(prev => [...prev, ...urls].slice(0, 6));
+      setImageDataUrl(prev => prev || urls[0]);
+      setErr(null);
+    } catch { setErr("Couldn't read that image — please try another file."); }
+    e.target.value = "";
+  }
+  function removeImage(index: number) {
+    setGalleryImages(prev => {
+      const next = prev.filter((_, i) => i !== index);
+      setImageDataUrl(next[0] || null);
+      return next;
+    });
   }
 
   function generateEnglishDescription(transcript: string) {
@@ -657,19 +671,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
       rec.onerror = () => { setStoryRecording(false); setErr("I couldn't hear the story. Please try again."); };
       rec.onresult = (event: any) => {
         const heard = event.results?.[0]?.[0]?.transcript || "";
-        if (heard) {
-          setStory(heard);
-          generateEnglishDescription(heard);
-          try {
-            if (window.speechSynthesis) {
-              window.speechSynthesis.cancel();
-              const u = new SpeechSynthesisUtterance("Aapki story save ho gayi hai. Ab verification ke liye making proof record karein.");
-              u.lang = "hi-IN";
-              u.rate = 0.95;
-              window.speechSynthesis.speak(u);
-            }
-          } catch (_) {}
-        }
+        if (heard) { setStory(heard); generateEnglishDescription(heard); }
       };
       storyRecognitionRef.current = rec; rec.start();
     } catch (e: any) { setErr(e.message || "Voice story could not start."); }
@@ -694,6 +696,13 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   }
   function stopProofRecording() { if (proofRecorderRef.current?.state === "recording") proofRecorderRef.current.stop(); proofStreamRef.current?.getTracks().forEach((t) => t.stop()); setRecording(false); }
 
+  async function handleProofUpload(e: any) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try { setProofVideo(await fileToDataURL(file)); setErr(null); } catch { setErr("Couldn't read that video. Please try another clip."); }
+    e.target.value = "";
+  }
+
   async function handleCreateAndScan() {
     if (!imageDataUrl) { setErr("First upload/take a photo of the piece."); return; }
     if (!story.trim()) { setErr("Please tell your craft story by voice before verification."); return; }
@@ -705,7 +714,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
       const finalDescription = englishDescription || `Handcrafted ${category.toLowerCase()} made by a traditional artisan. Story: “${story.trim()}”.`;
       const created = await apiPost("/products", {
         artisanId: user.id, title: finalTitle, description: finalDescription, price: price,
-        category, image: imageDataUrl, craftInfo: { material, region, storyLanguage: storyLang, originalStory: story, verificationProof: proofVideo },
+        category, image: imageDataUrl, craftInfo: { material, region, storyLanguage: storyLang, originalStory: story, verificationProof: proofVideo, gallery: galleryImages },
       });
       setProduct(created); setStepState("scanning");
       await new Promise((r) => setTimeout(r, 900));
@@ -721,37 +730,61 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
   useEffect(() => () => { try { storyRecognitionRef.current?.stop(); } catch (_) {} proofStreamRef.current?.getTracks().forEach((t) => t.stop()); }, []);
 
   return (<>
-    <div className="app-header add-piece-header"><button className="header-back" aria-label="Back to Home" onClick={() => go("dashboard")}>‹</button><div><h2>Add a piece</h2><div className="sub">Photo → Voice Story → Proof → Verify</div></div></div>
-    <div className="content"><ErrorBanner message={err} />
-      {step === "form" && <>
-        <div className="scan-box" style={{ marginBottom: 14, position: "relative" }} onClick={() => (document.getElementById("prodImgInput") as HTMLInputElement)?.click()}>
-          {imageDataUrl ? <img src={imageDataUrl} style={{ position:"absolute", inset:0, width:"100%", height:"100%", objectFit:"cover" }} /> : <><div style={{fontSize:36}}>📷</div><div style={{fontSize:12.5,fontWeight:700}}>Tap to take/upload a photo</div><div style={{fontSize:10.5,color:"#6b6055"}}>Your piece becomes the starting point</div></>}
-        </div>
-        <input id="prodImgInput" type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={handleImagePick}/>
-        <div className="voice-story-card">
-          <div className="field-label">YOUR STORY • VOICE FIRST</div>
-          <div style={{fontWeight:700,fontSize:13}}>Tell us about your craft</div>
-          <div style={{fontSize:10.5,color:"#6b6055",margin:"4px 0 9px"}}>Speak in your language — AI prepares the English buyer description.</div>
-          <div style={{display:"flex",gap:7,alignItems:"center"}}>
-            <select value={storyLang} onChange={(e)=>setStoryLang(e.target.value)} style={{flex:1}}><option value="hi-IN">Hindi</option><option value="mr-IN">Marathi</option><option value="ta-IN">Tamil</option><option value="bn-IN">Bangla</option><option value="en-IN">English</option></select>
-            <button className={`story-mic ${storyRecording ? "recording" : ""}`} onClick={storyRecording ? stopStoryRecording : startStoryRecording}>{storyRecording ? "■ Stop" : "🎙 Start"}</button>
-          </div>
-          {story && <div className="story-transcript"><b>Heard:</b> {story}</div>}
-          {englishDescription && <div className="ai-draft"><b>AI English draft:</b> {englishDescription}</div>}
-        </div>
-        <div className="field"><div className="field-label">Product name <span style={{fontWeight:400}}>(optional — AI can draft it)</span></div><input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="Leave blank to let AI draft a title"/></div>
-        <div style={{display:"flex",gap:10}}><div className="field" style={{flex:1}}><div className="field-label">Price (₹) • YOUR PRICE</div><input value={price} onChange={(e)=>setPrice(e.target.value.replace(/[^0-9.]/g,""))} placeholder="2000" inputMode="decimal"/></div><div className="field" style={{flex:1}}><div className="field-label">Category</div><select value={category} onChange={(e)=>setCategory(e.target.value)}>{Object.keys(CATEGORY_EMOJI).map(c=><option key={c}>{c}</option>)}</select></div></div>
-        <div style={{display:"flex",gap:10}}><div className="field" style={{flex:1}}><div className="field-label">Material</div><input value={material} onChange={(e)=>setMaterial(e.target.value)} placeholder="e.g. Terracotta clay"/></div><div className="field" style={{flex:1}}><div className="field-label">Region</div><input value={region} onChange={(e)=>setRegion(e.target.value)} placeholder="e.g. Rajasthan"/></div></div>
-        <div className="proof-card">
-          <div className="field-label">MANDATORY MAKING PROOF</div><div style={{fontWeight:700,fontSize:13}}>🎥 5-second verification clip</div><div style={{fontSize:10.5,color:"#6b6055",margin:"4px 0 9px"}}>Show the piece or a small moment of the making process. This proof is checked before listing.</div>
-          {proofVideo ? <video src={proofVideo} controls style={{width:"100%",borderRadius:12,maxHeight:190,objectFit:"cover"}}/> : <button className={`btn ${recording?"secondary":""}`} onClick={recording?stopProofRecording:startProofRecording}>{recording ? "⏹ Recording… (auto-stops in 5s)" : "🔴 Record 5-sec proof"}</button>}
-          {proofVideo && <button className="btn secondary" style={{marginTop:8}} onClick={()=>setProofVideo(null)}>Retake proof</button>}
-        </div>
-      </>}
-      {step === "scanning" && <div style={{paddingTop:18}}><span className="demo-tag">Demo verification</span><div className="section-title">🛡️ Authenticity Check Running</div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Micro-Texture + Image Analysis</div><div className="verify-note">Checking the uploaded piece and making-proof clip…</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Making-Process Proof</div><div className="verify-note">Confirming that proof was supplied before listing.</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Authenticity Decision</div><div className="verify-note">Generating a confidence score.</div></div></div></div>}
-      {step === "result" && verifyResult && <div style={{paddingTop:6}}><span className="demo-tag">Demo verification</span><div className={`badge-result ${verifyResult.status}`}><div className="big">{verifyResult.status === "verified" ? "🟢 Verified Handmade" : verifyResult.status === "needs_review" ? "🟡 Needs Verification" : "🔴 Not Eligible"}</div><div className="small">Confidence score: {(verifyResult.confidence*100).toFixed(0)}%</div></div><div className="section-title">Listing saved • Price locked at ₹{Number(price).toLocaleString("en-IN")}</div><div className="card" style={{gridColumn:"span 2"}}><div className="thumb" style={{backgroundImage:`url(${product.image})`}}><BadgeLabel status={verifyResult.status}/></div><div className="info"><div className="t">{product.title}</div><div className="p">₹{Number(product.price).toLocaleString("en-IN")}</div></div></div></div>}
+    <div className="addpiece-page">
+      <header className="addpiece-topbar">
+        <button className="addpiece-back" onClick={() => go("dashboard")} aria-label="Back">‹</button>
+        <img src="/assets/logo.png" className="addpiece-logo" alt="KalaSutra" />
+        <button className="addpiece-switch" onClick={() => go("buyerHome")}>Switch to Buyer</button>
+      </header>
+
+      <div className="addpiece-content"><ErrorBanner message={err} />
+        {step === "form" && <>
+          <section className="addpiece-heading"><span className="addpiece-eyebrow">FOR ARTISANS</span><h1>Add a New Piece</h1><p>Take a photo. Tell your story. <b>AI does the rest.</b></p></section>
+          <div className="addpiece-steps"><div className="active"><span>1</span><b>Capture</b></div><i></i><div><span>2</span><b>Add Details</b></div><i></i><div><span>3</span><b>Verify</b></div><i></i><div><span>4</span><b>Publish</b></div></div>
+
+          <section className="addpiece-card capture-card">
+            <div className="addpiece-section-head"><div><span className="addpiece-num">01</span><div><h2>Show us your piece</h2><p>Upload clear photos and a short making proof.</p></div></div><span>📷</span></div>
+            <div className="photo-grid">
+              {galleryImages.map((src, i) => <div className="photo-tile" key={i}><img src={src} alt={`Piece ${i+1}`} /><button onClick={() => removeImage(i)} aria-label="Remove photo">×</button></div>)}
+              {galleryImages.length < 6 && <label className="photo-add"><input id="prodImgInput" type="file" accept="image/*" capture="environment" multiple onChange={handleImagePick} /><span>＋</span><b>Add Photo</b><small>{galleryImages.length}/6 added</small></label>}
+              <label className="proof-upload-tile"><input type="file" accept="video/*" capture="environment" onChange={handleProofUpload} /><span>🎥</span><b>{proofVideo ? "Proof Added" : "Add Making Video"}</b><small>{proofVideo ? "Tap to replace" : "5-sec clip"}</small></label>
+            </div>
+            {proofVideo && <video src={proofVideo} controls className="proof-preview" />}
+            <div className="capture-actions"><button className={`record-proof-btn ${recording ? "recording" : ""}`} onClick={recording ? stopProofRecording : startProofRecording}>{recording ? "⏹ Recording… auto-stops in 5s" : "🔴 Record 5-sec Making Proof"}</button></div>
+          </section>
+
+          <section className="addpiece-card story-card-new">
+            <div className="addpiece-section-head"><div><span className="addpiece-num">02</span><div><h2>Tell Your Story</h2><p>Voice first — speak naturally in your language.</p></div></div><span>🎙️</span></div>
+            <div className="story-controls"><select value={storyLang} onChange={(e)=>setStoryLang(e.target.value)}><option value="hi-IN">Hindi</option><option value="mr-IN">Marathi</option><option value="ta-IN">Tamil</option><option value="bn-IN">Bangla</option><option value="en-IN">English</option></select><button className={`story-big-mic ${storyRecording ? "recording" : ""}`} onClick={storyRecording ? stopStoryRecording : startStoryRecording}>{storyRecording ? "■ Stop listening" : "🎙 Start speaking"}</button></div>
+            <textarea className="story-box-new" value={story} onChange={(e)=>setStory(e.target.value)} placeholder="Or type your story here…" />
+            {englishDescription && <div className="ai-draft-new"><b>✨ AI buyer description</b><span>{englishDescription}</span></div>}
+          </section>
+
+          <section className="addpiece-card details-card-new">
+            <div className="addpiece-section-head"><div><span className="addpiece-num">03</span><div><h2>Product Details</h2><p>Simple details help buyers discover your craft.</p></div></div><span>🧵</span></div>
+            <div className="detail-grid-new">
+              <label>Product Name<input value={title} onChange={(e)=>setTitle(e.target.value)} placeholder="e.g. Blue Pottery Vase" /></label>
+              <label>Category<select value={category} onChange={(e)=>setCategory(e.target.value)}>{Object.keys(CATEGORY_EMOJI).map(c=><option key={c}>{c}</option>)}</select></label>
+              <label>Price (₹)<input value={price} onChange={(e)=>setPrice(e.target.value.replace(/[^0-9.]/g,""))} placeholder="2000" inputMode="decimal" /></label>
+              <label>Material<input value={material} onChange={(e)=>setMaterial(e.target.value)} placeholder="Terracotta clay" /></label>
+              <label>Region<input value={region} onChange={(e)=>setRegion(e.target.value)} placeholder="Rajasthan" /></label>
+              <label>Tags<input placeholder="Handmade, traditional, sustainable" /></label>
+            </div>
+          </section>
+
+          <section className="addpiece-card verification-card-new">
+            <div className="addpiece-section-head"><div><span className="addpiece-num">04</span><div><h2>Verification</h2><p>Your piece is checked before it goes live.</p></div></div><span>🛡️</span></div>
+            <div className="verification-points"><span>✓</span><div><b>Authenticity &amp; safety check</b><small>Photo + making proof + craft story are reviewed by KalaSutra's verification flow.</small></div></div>
+            <div className="verification-points"><span>✓</span><div><b>Your price stays yours</b><small>No middleman markup is added to your artisan listing.</small></div></div>
+          </section>
+          <button className="addpiece-main-btn" onClick={handleCreateAndScan}>Add Piece &amp; Start Verification <span>→</span></button>
+        </>}
+
+        {step === "scanning" && <div className="addpiece-result-wrap"><span className="demo-tag">Demo verification</span><div className="section-title">🛡️ Authenticity Check Running</div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Micro-Texture + Image Analysis</div><div className="verify-note">Checking the uploaded piece and making-proof clip…</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Making-Process Proof</div><div className="verify-note">Confirming that proof was supplied before listing.</div></div></div><div className="verify-row"><div className="verify-icon pending">⏳</div><div><div className="verify-title">Authenticity Decision</div><div className="verify-note">Generating a confidence score.</div></div></div></div>}
+        {step === "result" && verifyResult && <div className="addpiece-result-wrap"><span className="demo-tag">Demo verification</span><div className={`badge-result ${verifyResult.status}`}><div className="big">{verifyResult.status === "verified" ? "🟢 Verified Handmade" : verifyResult.status === "needs_review" ? "🟡 Needs Verification" : "🔴 Not Eligible"}</div><div className="small">Confidence score: {(verifyResult.confidence*100).toFixed(0)}%</div></div><div className="section-title">Listing saved • Price locked at ₹{Number(price).toLocaleString("en-IN")}</div><div className="card"><div className="thumb" style={{backgroundImage:`url(${product.image})`}}><BadgeLabel status={verifyResult.status}/></div><div className="info"><div className="t">{product.title}</div><div className="p">₹{Number(product.price).toLocaleString("en-IN")}</div></div></div></div>}
+      </div>
+      <div className="addpiece-bottom-actions">{step === "result" && verifyResult?.status !== "rejected" && <button className="btn green" onClick={()=>go("createReel")}>Create a Reel for this product</button>}{step === "result" && <button className="btn secondary" onClick={()=>{setToast("Saved to your products");go("myProducts")}}>My Products</button>}</div>
     </div>
-    <div className="btn-row">{step === "form" && <button className="btn" onClick={handleCreateAndScan}>Scan &amp; Verify Product →</button>}{step === "result" && verifyResult?.status !== "rejected" && <button className="btn green" onClick={()=>go("createReel")}>Create a Reel for this product</button>}{step === "result" && <button className="btn secondary" onClick={()=>{setToast("Saved to your products");go("myProducts")}}>My Products</button>}</div>
   </>);
 }
 
@@ -921,7 +954,14 @@ function ArtisanProfileScreen({ user, onLogout, go }: any) {
   const [editing, setEditing] = useState(false);
   const [location, setLocation] = useState(profile.location || "Jaipur, Rajasthan");
   const [bio, setBio] = useState(profile.bio || "Keeping our traditions alive, one creation at a time.");
+  const [avatar, setAvatar] = useState(() => localStorage.getItem(`kalasutra_avatar_${user.id}`) || profile.avatar || "/assets/avatar-artisan.png");
 
+  async function handleAvatarPick(e: any) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try { const data = await fileToDataURL(file); setAvatar(data); localStorage.setItem(`kalasutra_avatar_${user.id}`, data); } catch (_) {}
+    e.target.value = "";
+  }
   function saveProfile() { setEditing(false); }
 
   return (
@@ -939,8 +979,9 @@ function ArtisanProfileScreen({ user, onLogout, go }: any) {
       <main className="profile-container">
         <section className="profile-hero artisan-hero">
           <div className="profile-avatar-wrap">
-            <img src="/assets/avatar-artisan.png" className="profile-avatar" alt="Artisan" />
-            <button className="avatar-camera">⌾</button>
+            <img src={avatar} className="profile-avatar" alt="Artisan profile" />
+            <input id="artisanAvatarInput" className="avatar-file-input" type="file" accept="image/*" capture="user" onChange={handleAvatarPick} />
+            <label htmlFor="artisanAvatarInput" className="avatar-camera" title="Upload profile photo">⌾</label>
           </div>
           <div className="profile-identity">
             <h1>{user.name} <span className="verified-check">✓</span></h1>
@@ -1449,7 +1490,14 @@ function BuyerProfileScreen({ user, onLogout }: any) {
   const [editing, setEditing] = useState(false);
   const [city, setCity] = useState(profile.location || "");
   const [saved, setSaved] = useState(false);
+  const [avatar, setAvatar] = useState(() => localStorage.getItem(`kalasutra_avatar_${user.id}`) || profile.avatar || "/assets/avatar-artisan.png");
 
+  async function handleAvatarPick(e: any) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try { const data = await fileToDataURL(file); setAvatar(data); localStorage.setItem(`kalasutra_avatar_${user.id}`, data); } catch (_) {}
+    e.target.value = "";
+  }
   function saveBuyer() { setSaved(true); setEditing(false); }
 
   return (
@@ -1465,8 +1513,9 @@ function BuyerProfileScreen({ user, onLogout }: any) {
       <main className="profile-container">
         <section className="profile-hero buyer-hero">
           <div className="profile-avatar-wrap buyer-avatar-wrap">
-            <img src="/assets/avatar-artisan.png" className="profile-avatar buyer-avatar" alt="Buyer" />
-            <button className="avatar-camera">⌾</button>
+            <img src={avatar} className="profile-avatar buyer-avatar" alt="Buyer profile" />
+            <input id="buyerAvatarInput" className="avatar-file-input" type="file" accept="image/*" capture="user" onChange={handleAvatarPick} />
+            <label htmlFor="buyerAvatarInput" className="avatar-camera" title="Upload profile photo">⌾</label>
           </div>
           <div className="profile-identity">
             <h1>{user.name}</h1><h3>🌿 Conscious buyer</h3>
