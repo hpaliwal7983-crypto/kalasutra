@@ -1,21 +1,28 @@
-# KalaSutra — MASTER FUNCTIONAL V3
+# KalaSutra V4 — Full Functional Update (ADD-ONLY)
 
-ADD + FIX, NEVER DELETE. This package is based on the previous functional version and only adds/fixes requested behavior.
+This package is built on the existing KalaSutra master functional version. Existing UI, checkout, Razorpay/COD, login/OTP, verification, Impact Hub, Reels, profiles, product pages and bulk checkout are preserved.
 
-### Included
-- Product Detail Back
-- Buyer + Artisan Profile Back
-- Profile Settings / Switch controls separated so they do not overlap
-- Compact Safety & Review Center
-- Recently Viewed trail from actual product views and newly-created products
-- Explore/profile navigation actions
-- Add Product Camera + Gallery image selection
-- Making-proof video recording + gallery upload
-- Hindi voice story and AI English listing draft
-- AI Talker floating helper with voice navigation for common actions
-- Existing Razorpay/COD checkout preserved
-- Bulk/B2B checkout with 20+/50+/100+ tiers, quantity, discount and bulk request
-- Existing Reels, verification, Impact Hub, login/OTP, product and order features preserved
+## Added / fixed
+- Product Detail back button + mobile floating back navigation.
+- Buyer and Artisan profile back navigation.
+- Settings / Switch role overlap fix on both profiles.
+- Compact, polished Safety & Review card styling.
+- Recently Viewed remains real and tied to opened products.
+- Explore/Profile actions remain working.
+- Add Product: camera/gallery photo upload, making-proof record/gallery, Hindi voice story + AI English draft.
+- Product customization: Hindi/English voice request input.
+- Separate Buyer Delivery Location and Artisan Craft Location sections using current-device location + manual save.
+- AI Talker remains available throughout logged-in flows (dashboard already has its embedded version).
+- Reel camera studio: front/back camera switch, Video/Photo modes, camera photo capture, video/gallery upload, music upload/player, timer, speed control, filters, beautify toggle, effects action and working back navigation.
+- Existing Razorpay/COD checkout preserved.
+- Existing Bulk/B2B checkout preserved with 20+/50+/100+ tiers, quantity and discount/request flow.
 
-### Upload
-Upload/replace only `app.tsx`, `styles.css`, `index.html`, and `kalasutra-login-flow.js` in the repository root. Do not delete or replace the existing `assets` folder.
+## Upload to GitHub
+Replace only these four files in the repo root:
+- app.tsx
+- styles.css
+- index.html
+- kalasutra-login-flow.js
+
+Do NOT delete or replace the `assets/` folder.
+After committing, deploy the latest commit on Render if auto-deploy does not start.
