@@ -856,7 +856,15 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
       result.riskScore = safety.riskScore; result.riskLevel = safety.level; result.riskReasons = safety.reasons;
       setVerifyResult(result);
       await new Promise((r) => setTimeout(r, 700));
-      setStepState("result"); setLastVerifiedProductId(created.id);
+      setStepState("result");
+      setLastVerifiedProductId(created.id);
+      try {
+        const key = `kalasutra_recent_products_${user.id}`;
+        const current = JSON.parse(localStorage.getItem(key) || "[]");
+        const next = [String(created.id), ...current.filter((x: any) => String(x) !== String(created.id))].slice(0, 8);
+        localStorage.setItem(key, JSON.stringify(next));
+        window.dispatchEvent(new Event("kalasutra:recent-product"));
+      } catch (_) {}
     } catch (e: any) { setErr(e.message || "Verification failed."); }
   }
 
@@ -879,8 +887,20 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
             <div className="addpiece-section-head"><div><span className="addpiece-num">01</span><div><h2>Show us your piece</h2><p>Upload clear photos and a short making proof.</p></div></div><span>📷</span></div>
             <div className="photo-grid">
               {galleryImages.map((src, i) => <div className="photo-tile" key={i}><img src={src} alt={`Piece ${i+1}`} /><button onClick={() => removeImage(i)} aria-label="Remove photo">×</button></div>)}
-              {galleryImages.length < 6 && <label className="photo-add"><input id="prodImgInput" type="file" accept="image/*" capture="environment" multiple onChange={handleImagePick} /><span>＋</span><b>Add Photo</b><small>{galleryImages.length}/6 added</small></label>}
-              <label className="proof-upload-tile"><input type="file" accept="video/*" capture="environment" onChange={handleProofUpload} /><span>🎥</span><b>{proofVideo ? "Proof Added" : "Add Making Video"}</b><small>{proofVideo ? "Tap to replace" : "5-sec clip"}</small></label>
+              {galleryImages.length < 6 && <div className="photo-add photo-add-choice">
+                <span>＋</span><b>Add Photos</b><small>{galleryImages.length}/6 added</small>
+                <div className="media-choice-row">
+                  <label><input type="file" accept="image/*" capture="environment" multiple onChange={handleImagePick} />📷 Camera</label>
+                  <label><input type="file" accept="image/*" multiple onChange={handleImagePick} />🖼 Gallery</label>
+                </div>
+              </div>}
+              <div className="proof-upload-tile proof-upload-choice">
+                <span>🎥</span><b>{proofVideo ? "Proof Added" : "Making Video"}</b><small>{proofVideo ? "Replace or record again" : "Upload or record 5-sec proof"}</small>
+                <div className="media-choice-row">
+                  <label><input type="file" accept="video/*" capture="environment" onChange={handleProofUpload} />📹 Record</label>
+                  <label><input type="file" accept="video/*" onChange={handleProofUpload} />🎞 Gallery</label>
+                </div>
+              </div>
             </div>
             {proofVideo && <video src={proofVideo} controls className="proof-preview" />}
             <div className="capture-actions"><button className={`record-proof-btn ${recording ? "recording" : ""}`} onClick={recording ? stopProofRecording : startProofRecording}>{recording ? "⏹ Recording… auto-stops in 5s" : "🔴 Record 5-sec Making Proof"}</button></div>
@@ -1225,8 +1245,20 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
   const [customizing, setCustomizing] = useState(false);
 
   useEffect(() => {
-    apiGet(`/products/${productId}`).then((p) => { setProduct(p); setSelectedImage(p.image || null); }).catch((e) => setErr(e.message));
-  }, [productId]);
+    apiGet(`/products/${productId}`).then((p) => {
+      setProduct(p);
+      setSelectedImage(p.image || null);
+      if (userId) {
+        try {
+          const key = `kalasutra_recent_products_${userId}`;
+          const current = JSON.parse(localStorage.getItem(key) || "[]");
+          const next = [String(productId), ...current.filter((x: any) => String(x) !== String(productId))].slice(0, 8);
+          localStorage.setItem(key, JSON.stringify(next));
+          window.dispatchEvent(new Event("kalasutra:recent-product"));
+        } catch (_) {}
+      }
+    }).catch((e) => setErr(e.message));
+  }, [productId, userId]);
 
   if (err) return <div className="content"><ErrorBanner message={err} /><button className="btn secondary" onClick={back}>Go back</button></div>;
   if (!product) return <div className="content"><div className="empty-note">Loading…</div></div>;
@@ -1240,6 +1272,7 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
   return (
     <div className="product-page">
       <header className="product-topbar">
+        <button className="product-back-btn" onClick={back} aria-label="Go back">← Back</button>
         <div className="product-brand"><img src="/assets/logo.png" alt="KalaSutra" /><span>Handmade. Heartfelt. Home.</span></div>
         <div className="product-search"><Icon name="search" /><input placeholder="Search for handmade, artisans, home decor…" /></div>
         <nav><button onClick={() => go("buyerHome")}>Explore</button><button onClick={() => go("buyerReels")}>Artisans</button><button onClick={() => go("orders")}>Orders</button><button onClick={() => go("cart")}>Cart <b>{/* live badge lives in bottom nav */}</b></button><button>♙</button></nav>
@@ -1677,12 +1710,15 @@ function OrdersScreen({ user }: any) {
 // ---------------------------------------------------------------------------
 // BUYER: PROFILE
 // ---------------------------------------------------------------------------
-function BuyerProfileScreen({ user, onLogout }: any) {
+function BuyerProfileScreen({ user, onLogout, go, openProduct }: any) {
   const profile = user.profile || {};
   const [editing, setEditing] = useState(false);
   const [city, setCity] = useState(profile.location || "");
   const [saved, setSaved] = useState(false);
   const [avatar, setAvatar] = useState(() => localStorage.getItem(`kalasutra_avatar_${user.id}`) || profile.avatar || "/assets/avatar-artisan.png");
+  const [products, setProducts] = useState<any[]>([]);
+  const [recentIds, setRecentIds] = useState<string[]>([]);
+  const recentKey = `kalasutra_recent_products_${user.id}`;
 
   async function handleAvatarPick(e: any) {
     const file = e.target.files?.[0];
@@ -1690,14 +1726,27 @@ function BuyerProfileScreen({ user, onLogout }: any) {
     try { const data = await fileToDataURL(file); setAvatar(data); localStorage.setItem(`kalasutra_avatar_${user.id}`, data); } catch (_) {}
     e.target.value = "";
   }
+  function loadRecent() {
+    try { setRecentIds(JSON.parse(localStorage.getItem(recentKey) || "[]")); } catch (_) { setRecentIds([]); }
+  }
+  useEffect(() => {
+    apiGet(`/products`).then(setProducts).catch(() => setProducts([]));
+    loadRecent();
+    const refresh = () => loadRecent();
+    window.addEventListener("kalasutra:recent-product", refresh);
+    return () => window.removeEventListener("kalasutra:recent-product", refresh);
+  }, [user.id]);
+  const recent = recentIds.map(id => products.find(p => String(p.id) === String(id))).filter(Boolean).slice(0, 4);
   function saveBuyer() { setSaved(true); setEditing(false); }
 
   return (
     <div className="profile-page buyer-profile-page">
       <header className="profile-topbar">
-        <img src="/assets/logo.png" className="profile-logo" alt="KalaSutra" />
+        <button className="profile-logo-button" onClick={() => go("buyerHome")} aria-label="Go home"><img src="/assets/logo.png" className="profile-logo" alt="KalaSutra" /></button>
         <div className="profile-top-actions">
-          <button><Icon name="search" /></button><button><Icon name="bell" /><span className="notification-dot" /></button><button>⚙</button>
+          <button onClick={() => go("buyerHome")} aria-label="Explore"><Icon name="search" /></button>
+          <button onClick={() => go("orders")} aria-label="Orders"><Icon name="bell" /><span className="notification-dot" /></button>
+          <button onClick={() => setEditing(v => !v)} aria-label="Settings">⚙</button>
           <span className="profile-top-slogan">Good Choices<br/>Create Greater Impact ♡</span>
         </div>
       </header>
@@ -1727,28 +1776,31 @@ function BuyerProfileScreen({ user, onLogout }: any) {
 
         <section className="buyer-stat-layout">
           <div className="profile-stat-grid buyer-stats">
-            <div><b>12</b><span>Orders Placed</span></div><div><b>28</b><span>Items Liked</span></div><div><b>46</b><span>Artisans Followed</span></div><div><b>4.8</b><span>Average Rating</span></div>
+            <button onClick={() => go("orders")}><b>12</b><span>Orders Placed</span></button><button onClick={() => go("wishlist")}><b>28</b><span>Items Liked</span></button><button onClick={() => go("buyerReels")}><b>46</b><span>Artisans Followed</span></button><div><b>4.8</b><span>Average Rating</span></div>
           </div>
-          <div className="conscious-card"><span>🌿</span><div><strong>Conscious Buyer</strong><small>You support traditional artisans<br/>and sustainable crafts.</small></div><b>›</b></div>
+          <button className="conscious-card conscious-card-button" onClick={() => go("buyerReels")}><span>🌿</span><div><strong>Conscious Buyer</strong><small>You support traditional artisans<br/>and sustainable crafts.</small></div><b>›</b></button>
         </section>
 
         <div className="buyer-impact-grid">
           <section>
             <div className="quick-heading"><h2>Quick Actions</h2><span>Shop<br/>Support<br/>Empower ♡</span></div>
             <div className="quick-actions buyer-quick-actions">
-              <button><span>▣</span><b>My Orders</b></button><button><span>♥</span><b>My Wishlist</b></button><button><span>♟</span><b>Saved Artisans</b></button><button><span>⌖</span><b>Addresses</b></button>
+              <button onClick={() => go("orders")}><span>▣</span><b>My Orders</b></button>
+              <button onClick={() => go("wishlist")}><span>♥</span><b>My Wishlist</b></button>
+              <button onClick={() => go("buyerReels")}><span>♟</span><b>Saved Artisans</b></button>
+              <button onClick={() => { setEditing(true); window.scrollTo({top: 0, behavior: "smooth"}); }}><span>⌖</span><b>Addresses</b></button>
             </div>
           </section>
           <section className="your-impact-card"><span className="impact-leaf">🌿</span><div><h3>Your Impact</h3><p>Every purchase empowers an artisan.</p></div><div className="impact-numbers"><span><b>12</b><small>Artisans Supported</small></span><span><b>28</b><small>Handmade Pieces</small></span><span><b>3</b><small>Regions Explored</small></span></div></section>
         </div>
 
         <section className="recently-viewed">
-          <div className="section-row"><h2>Recently Viewed</h2><span>›</span></div>
-          <div className="recent-grid">
-            {["Blue Pottery Vase","Handloom Stole","Dhokra Art Piece","Embroidered Bag"].map((name,i) => <div key={name}><div className={`recent-img recent-${i}`} /><b>{name}</b><strong>{["₹1,200","₹850","₹2,300","₹1,450"][i]}</strong></div>)}
-          </div>
+          <div className="section-row"><h2>Recently Viewed</h2><button className="text-link-btn" onClick={() => go("buyerHome")}>Explore →</button></div>
+          {recent.length ? <div className="recent-grid">
+            {recent.map((p:any) => <button className="recent-real-card" key={p.id} onClick={() => openProduct(p.id)}><div className="recent-img real-recent-img" style={{backgroundImage:`url(${p.image})`}} /><b>{p.title}</b><strong>₹{Number(p.price||0).toLocaleString("en-IN")}</strong></button>)}
+          </div> : <div className="recent-empty">Open a product from Explore and it will appear here automatically.</div>}
         </section>
-        <div className="quick-banner buyer-banner"><div><em>Handmade<br/>Stories<br/>Better Tomorrows ♡</em><button>Explore More →</button></div></div>
+        <div className="quick-banner buyer-banner"><div><em>Handmade<br/>Stories<br/>Better Tomorrows ♡</em><button onClick={() => go("buyerHome")}>Explore More →</button></div></div>
         <button className="logout-wide" onClick={onLogout}>Log out</button>
         {saved && <div className="saved-note">✓ Buyer profile saved</div>}
       </main>
@@ -1903,6 +1955,15 @@ function App() {
     });
   }
   function openProduct(id: string) {
+    if (user?.id) {
+      const key = `kalasutra_recent_products_${user.id}`;
+      try {
+        const current = JSON.parse(localStorage.getItem(key) || "[]");
+        const next = [String(id), ...current.filter((x: any) => String(x) !== String(id))].slice(0, 8);
+        localStorage.setItem(key, JSON.stringify(next));
+        window.dispatchEvent(new Event("kalasutra:recent-product"));
+      } catch (_) {}
+    }
     setActiveProductId(id);
     go("productDetail");
   }
@@ -1948,7 +2009,7 @@ function App() {
       {!isArtisan && screen === "wishlist" && <WishlistScreen user={user} openProduct={openProduct} toggleWishlist={toggleWishlist} />}
       {!isArtisan && screen === "cart" && <CartScreen user={user} go={setScreen} setToast={setToast} refreshCartCount={() => refreshCartCount(user.id)} />}
       {!isArtisan && screen === "orders" && <OrdersScreen user={user} />}
-      {!isArtisan && screen === "buyerProfile" && <BuyerProfileScreen user={user} onLogout={logout} />}
+      {!isArtisan && screen === "buyerProfile" && <BuyerProfileScreen user={user} onLogout={logout} go={setScreen} openProduct={openProduct} />}
       {screen === "productDetail" && (
         <ProductDetailScreen productId={activeProductId} go={setScreen} back={goBack} setToast={setToast} wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} userId={user.id} />
       )}

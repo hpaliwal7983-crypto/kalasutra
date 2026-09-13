@@ -879,3 +879,20 @@ body { min-height:100dvh; width:100vw; max-width:100vw; display:block; overflow-
   .bulk-tier-row{gap:5px}
   .bulk-tier-row button{padding:8px 3px}
 }
+
+
+/* Functional polish: media pickers, product back button and live profile cards */
+.product-topbar{grid-template-columns:auto 190px minmax(260px,1fr) auto}
+.product-back-btn{border:1px solid #d9c6b5;background:#fffaf5;color:#63392b;border-radius:22px;padding:9px 13px;font-weight:800;font-size:11px;cursor:pointer;white-space:nowrap}
+.profile-logo-button{border:0;background:transparent;padding:0;cursor:pointer;text-align:left}
+.conscious-card-button{width:100%;border:0;text-align:left;cursor:pointer;color:inherit}
+.text-link-btn{border:0;background:transparent;color:#6e3526;font-weight:800;cursor:pointer}
+.recent-real-card{border:0;background:transparent;padding:0;text-align:left;display:flex;flex-direction:column;gap:5px;cursor:pointer;color:inherit;font:inherit}
+.real-recent-img{background-size:cover;background-position:center;background-repeat:no-repeat}
+.recent-empty{padding:22px;border:1px dashed #d8c5b6;border-radius:14px;color:#8a7769;background:#fffaf5;font-size:11px}
+.photo-add-choice,.proof-upload-choice{gap:2px}
+.media-choice-row{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap;justify-content:center}
+.media-choice-row label{display:inline-flex;align-items:center;gap:3px;padding:6px 8px;border:1px solid #cda995;border-radius:9px;background:#fffaf5;color:#6f3829;font-size:8px;font-weight:900;cursor:pointer}
+.media-choice-row input{display:none}
+@media(max-width:900px){.product-topbar{grid-template-columns:auto 1fr auto}.product-back-btn{font-size:9px;padding:7px 9px}.product-brand img{width:110px}}
+@media(max-width:560px){.product-topbar{display:flex;gap:7px}.product-back-btn{order:-1}.product-brand{display:flex}.product-topbar nav{margin-left:auto}.media-choice-row label{font-size:7px;padding:5px 6px}.photo-add-choice,.proof-upload-choice{height:145px!important}.recent-real-card b{font-size:10px}.recent-real-card strong{font-size:12px}}

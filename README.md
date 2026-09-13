@@ -1,19 +1,20 @@
-# KalaSutra Master Final UI + Features
+# KalaSutra — Functional Master Update
 
-This package is the safe merged KalaSutra build.
+This version preserves the KalaSutra reference UI and adds/fixes the requested interactions:
 
-Preserved existing functionality and added/retained:
-- Premium cream/terracotta Buyer Profile reference UI
-- Premium cream/terracotta Artisan Profile reference UI
-- Product Detail reference UI with gallery, artisan verification, Digital Product ID/QR, customization, impact, pricing and cart actions
-- Add a New Piece reference flow: Capture -> Add Details -> Verify -> Publish
-- Multiple product photos, making-proof video, voice-first story, AI title/description assistance, product details and verification
-- Create Reel camera-style flow and post form
-- Working profile photo upload/camera controls
-- Bulk/B2B checkout additions while preserving Razorpay/COD checkout
-- Artisan Impact Hub: Fair Price AI, Craft Capital, Material Hub, Design Lab, Craft Passport, Direct Market Match, Craft Gurukul
-- Buyer Recently Viewed using actual opened products
-- Reel like, comment, save and share interactions
-- Existing login/OTP, verification, orders, payments, location, AI Talker and API functionality are preserved
+- Recently Viewed is live: opening a product records it for the current buyer; newly published artisan products are also added to the browsing trail.
+- Buyer Profile Recently Viewed uses real product data and opens Product Detail.
+- Explore/search/profile/quick actions navigate to their working screens.
+- Product Detail has a visible Back button that uses the app navigation history.
+- Add a Piece supports photo Camera + Gallery selection, and making-video Record + Gallery upload.
+- 5-second making-proof camera recording remains available.
+- Voice-first story supports Hindi and other selected Indian languages through the browser SpeechRecognition API when the browser exposes it; the text box remains available as a fallback.
+- Existing checkout, Razorpay/COD, verification, reels, impact hub, login/OTP, and other app flows are retained.
 
-GitHub upload: replace only app.tsx, styles.css, index.html and kalasutra-login-flow.js in the repository root. Do not delete or replace the assets folder.
+Upload only these files to the repository root:
+- app.tsx
+- styles.css
+- index.html
+- kalasutra-login-flow.js
+
+Do not delete or replace the existing assets folder.
