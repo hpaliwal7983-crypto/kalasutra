@@ -52,6 +52,28 @@ function fileToDataURL(file: File): Promise<string> {
   });
 }
 
+// Shared browsing trail: keeps Recently Viewed consistent when the demo switches
+// between Buyer and Artisan roles on the same device.
+function saveRecentProduct(userId: any, productId: any) {
+  try {
+    const globalKey = "kalasutra_recent_products_global";
+    const userKey = userId ? `kalasutra_recent_products_${userId}` : null;
+    const read = (key: string) => { try { return JSON.parse(localStorage.getItem(key) || "[]"); } catch (_) { return []; } };
+    const next = [String(productId), ...read(globalKey).filter((x: any) => String(x) !== String(productId))].slice(0, 12);
+    localStorage.setItem(globalKey, JSON.stringify(next));
+    if (userKey) localStorage.setItem(userKey, JSON.stringify(next));
+    window.dispatchEvent(new Event("kalasutra:recent-product"));
+  } catch (_) {}
+}
+
+function getRecentProductIds(userId: any) {
+  try {
+    const global = JSON.parse(localStorage.getItem("kalasutra_recent_products_global") || "[]");
+    const own = userId ? JSON.parse(localStorage.getItem(`kalasutra_recent_products_${userId}`) || "[]") : [];
+    return [...own, ...global].map(String).filter((id, i, a) => a.indexOf(id) === i).slice(0, 12);
+  } catch (_) { return []; }
+}
+
 const CATEGORY_EMOJI: Record<string, string> = {
   Pottery: "🏺", Textiles: "🧣", Woodwork: "🐘", Metalwork: "🪔",
   Basketry: "🧺", Other: "🎨",
@@ -858,13 +880,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }: any)
       await new Promise((r) => setTimeout(r, 700));
       setStepState("result");
       setLastVerifiedProductId(created.id);
-      try {
-        const key = `kalasutra_recent_products_${user.id}`;
-        const current = JSON.parse(localStorage.getItem(key) || "[]");
-        const next = [String(created.id), ...current.filter((x: any) => String(x) !== String(created.id))].slice(0, 8);
-        localStorage.setItem(key, JSON.stringify(next));
-        window.dispatchEvent(new Event("kalasutra:recent-product"));
-      } catch (_) {}
+      saveRecentProduct(user.id, created.id);
     } catch (e: any) { setErr(e.message || "Verification failed."); }
   }
 
@@ -1119,12 +1135,13 @@ function ArtisanProfileScreen({ user, onLogout, go }: any) {
 
   return (
     <div className="profile-page artisan-profile-page">
-      <header className="profile-topbar">
+      <header className="profile-topbar profile-topbar-with-back">
+        <button className="profile-back-btn" onClick={() => go("dashboard")} aria-label="Back">‹</button>
         <img src="/assets/logo.png" className="profile-logo" alt="KalaSutra" />
         <div className="profile-top-actions">
           <button aria-label="Search"><Icon name="search" /></button>
           <button aria-label="Notifications"><Icon name="bell" /><span className="notification-dot" /></button>
-          <button aria-label="Settings">⚙</button>
+          <button aria-label="Settings" onClick={() => { setEditing(v => !v); window.scrollTo({top: 0, behavior: "smooth"}); }}>⚙</button>
           <span className="profile-top-slogan">Handmade<br/>Stories<br/>Brighter Tomorrows ♡</span>
         </div>
       </header>
@@ -1224,10 +1241,10 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
 // ---------------------------------------------------------------------------
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }: any) {
  const [products,setProducts]=useState<any[]>([]),[query,setQuery]=useState(""),[err,setErr]=useState<string|null>(null),[listening,setListening]=useState(false),[recentIds,setRecentIds]=useState<string[]>([]);
- const recentKey=`kalasutra_recent_products_${user.id}`,loadRecent=()=>{try{setRecentIds(JSON.parse(localStorage.getItem(recentKey)||"[]"))}catch(_){setRecentIds([])}};
+ const recentKey=`kalasutra_recent_products_${user.id}`,loadRecent=()=>setRecentIds(getRecentProductIds(user.id));
  useEffect(()=>{apiGet(`/products`).then(setProducts).catch(e=>setErr(e.message));loadRecent();const f=()=>loadRecent();window.addEventListener("kalasutra:recent-product",f);return()=>window.removeEventListener("kalasutra:recent-product",f)},[user.id]);
  const filtered=products.filter(p=>!query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>`${p.title} ${p.category} ${p.craftInfo?.material||""} ${p.craftInfo?.region||""}`.toLowerCase().includes(w))),recent=recentIds.map(id=>products.find(p=>String(p.id)===String(id))).filter(Boolean).slice(0,4);
- const viewProduct=(id:string)=>{const next=[String(id),...recentIds.filter(x=>String(x)!==String(id))].slice(0,8);localStorage.setItem(recentKey,JSON.stringify(next));setRecentIds(next);openProduct(id)};
+ const viewProduct=(id:string)=>{saveRecentProduct(user.id,id);setRecentIds(getRecentProductIds(user.id));openProduct(id)};
  async function voiceSearch(){const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR){setErr("Voice search is not supported in this browser.");return}const ok=await requestVoicePermission();if(!ok){setErr("Please allow microphone access for voice search.");return}const r=new SR();r.lang="hi-IN";r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>setListening(true);r.onend=()=>setListening(false);r.onerror=()=>{setListening(false);setErr("Voice search could not start. Please try again.")};r.onresult=(e:any)=>setQuery(e.results[0][0].transcript);try{r.start()}catch(_){}}
  return <><div className="buyer-hero-header"><div><div className="buyer-kicker">KALASUTRA MARKETPLACE</div><h2>Hello, {user.name} <span className="hello-dot">✦</span></h2><div className="sub">Discover stories behind every handmade piece.</div></div><button className="buyer-wishlist-head" onClick={()=>go("wishlist")} aria-label="Saved pieces"><Icon name="heart"/>{wishlist.length>0&&<b>{wishlist.length}</b>}</button></div><div className="content buyer-content"><ErrorBanner message={err}/><div className="smart-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…"/><button className={listening?"voice-search listening":"voice-search"} onClick={voiceSearch}>🎙</button></div><div className="buyer-shortcuts"><button onClick={()=>go("wishlist")}><Icon name="heart"/> Saved {wishlist.length?`(${wishlist.length})`:""}</button><button onClick={()=>go("buyerReels")}><Icon name="reels"/> Maker Reels</button><button onClick={()=>go("cart")}><Icon name="cart"/> Cart {cartCount?`(${cartCount})`:""}</button></div><div className="section-row"><div className="section-title" style={{margin:0}}>{query?`Results for "${query}"`:"For you"}</div><span className="view-all" onClick={()=>go("buyerReels")}>Explore Reels →</span></div>{filtered.length===0?<div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>:<div className="grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>viewProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>{wishlist.includes(p.id)?"❤️":"🤍"}</button></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{p.price.toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={e=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️")}}>＋ Add to cart</button></div></div></div>)}</div>}{recent.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>viewProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}</div><div className="floating-cart-wrap">{cartCount>0&&<button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{cartCount} item{cartCount>1?"s":""}</small></span><b>›</b></button>}</div></>;
 }
@@ -1248,15 +1265,7 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
     apiGet(`/products/${productId}`).then((p) => {
       setProduct(p);
       setSelectedImage(p.image || null);
-      if (userId) {
-        try {
-          const key = `kalasutra_recent_products_${userId}`;
-          const current = JSON.parse(localStorage.getItem(key) || "[]");
-          const next = [String(productId), ...current.filter((x: any) => String(x) !== String(productId))].slice(0, 8);
-          localStorage.setItem(key, JSON.stringify(next));
-          window.dispatchEvent(new Event("kalasutra:recent-product"));
-        } catch (_) {}
-      }
+      if (userId) saveRecentProduct(userId, productId);
     }).catch((e) => setErr(e.message));
   }, [productId, userId]);
 
@@ -1677,7 +1686,7 @@ function SafetyReviewScreen({ go, setToast }: any) {
   </div>;
 }
 
-function OrdersScreen({ user }: any) {
+function OrdersScreen({ user, go }: any) {
   const [orders, setOrders] = useState<any[]>([]);
   const [statusFilter, setStatusFilter] = useState('all');
   useEffect(() => { apiGet(`/orders?userId=${user.id}`).then(setOrders); }, [user.id]);
@@ -1686,7 +1695,7 @@ function OrdersScreen({ user }: any) {
   const filtered = statusFilter === 'all' ? orders : orders.filter(o => o.status === statusFilter);
   const earnings = isArtisan ? orders.reduce((sum, o) => sum + (o.artisanItems || []).reduce((s:any, p:any) => s + Number(p.price || 0) * Number(p.qty || 0), 0), 0) : 0;
   return (<>
-    <div className="app-header"><div><h2>{isArtisan ? 'Orders & Earnings' : 'Your Orders'}</h2><div className="sub">{isArtisan ? 'Manage your artisan business' : 'Track your purchases'}</div></div></div>
+    <div className="app-header"><button className="header-back" onClick={() => go ? go(isArtisan ? 'dashboard' : 'buyerHome') : null} aria-label="Back">‹</button><div><h2>{isArtisan ? 'Orders & Earnings' : 'Your Orders'}</h2><div className="sub">{isArtisan ? 'Manage your artisan business' : 'Track your purchases'}</div></div></div>
     <div className="content">
       {isArtisan && <div className="artisan-order-summary">
         <div><small>EARNINGS</small><strong>₹{earnings.toLocaleString('en-IN')}</strong></div>
@@ -1727,7 +1736,7 @@ function BuyerProfileScreen({ user, onLogout, go, openProduct }: any) {
     e.target.value = "";
   }
   function loadRecent() {
-    try { setRecentIds(JSON.parse(localStorage.getItem(recentKey) || "[]")); } catch (_) { setRecentIds([]); }
+    setRecentIds(getRecentProductIds(user.id));
   }
   useEffect(() => {
     apiGet(`/products`).then(setProducts).catch(() => setProducts([]));
@@ -1741,7 +1750,8 @@ function BuyerProfileScreen({ user, onLogout, go, openProduct }: any) {
 
   return (
     <div className="profile-page buyer-profile-page">
-      <header className="profile-topbar">
+      <header className="profile-topbar profile-topbar-with-back">
+        <button className="profile-back-btn" onClick={() => go("buyerHome")} aria-label="Back">‹</button>
         <button className="profile-logo-button" onClick={() => go("buyerHome")} aria-label="Go home"><img src="/assets/logo.png" className="profile-logo" alt="KalaSutra" /></button>
         <div className="profile-top-actions">
           <button onClick={() => go("buyerHome")} aria-label="Explore"><Icon name="search" /></button>
@@ -1955,15 +1965,7 @@ function App() {
     });
   }
   function openProduct(id: string) {
-    if (user?.id) {
-      const key = `kalasutra_recent_products_${user.id}`;
-      try {
-        const current = JSON.parse(localStorage.getItem(key) || "[]");
-        const next = [String(id), ...current.filter((x: any) => String(x) !== String(id))].slice(0, 8);
-        localStorage.setItem(key, JSON.stringify(next));
-        window.dispatchEvent(new Event("kalasutra:recent-product"));
-      } catch (_) {}
-    }
+    if (user?.id) saveRecentProduct(user.id, id);
     setActiveProductId(id);
     go("productDetail");
   }
@@ -2000,7 +2002,7 @@ function App() {
       {isArtisan && screen === "myProducts" && <MyProductsScreen user={user} go={setScreen} />}
       {isArtisan && screen === "createReel" && <CreateReelScreen user={user} go={setScreen} setToast={setToast} prefillProductId={lastVerifiedProductId} />}
       {isArtisan && screen === "myReels" && <MyReelsScreen user={user} go={setScreen} setToast={setToast} />}
-      {isArtisan && screen === "orders" && <OrdersScreen user={user} />}
+      {isArtisan && screen === "orders" && <OrdersScreen user={user} go={setScreen} />}
       {isArtisan && screen === "reviews" && <SafetyReviewScreen go={setScreen} setToast={setToast} />}
       {isArtisan && screen === "profile" && <ArtisanProfileScreen user={user} onLogout={logout} go={setScreen} />}
 
@@ -2008,13 +2010,14 @@ function App() {
       {!isArtisan && screen === "buyerReels" && <ReelsFeedScreen openProduct={openProduct} setToast={setToast} />}
       {!isArtisan && screen === "wishlist" && <WishlistScreen user={user} openProduct={openProduct} toggleWishlist={toggleWishlist} />}
       {!isArtisan && screen === "cart" && <CartScreen user={user} go={setScreen} setToast={setToast} refreshCartCount={() => refreshCartCount(user.id)} />}
-      {!isArtisan && screen === "orders" && <OrdersScreen user={user} />}
+      {!isArtisan && screen === "orders" && <OrdersScreen user={user} go={setScreen} />}
       {!isArtisan && screen === "buyerProfile" && <BuyerProfileScreen user={user} onLogout={logout} go={setScreen} openProduct={openProduct} />}
       {screen === "productDetail" && (
         <ProductDetailScreen productId={activeProductId} go={setScreen} back={goBack} setToast={setToast} wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} userId={user.id} />
       )}
 
       {navBar}
+      {!(isArtisan && screen === "dashboard") && <AITalker compact role={isArtisan ? "artisan" : "buyer"} go={setScreen} />}
       {!(isArtisan && screen === "dashboard") && <div className="mode-switch-wrap">
         <button className="mode-pill" onClick={switchRole}>⇄ Switch to {isArtisan ? "Buyer" : "Artisan"}</button>
       </div>}

@@ -896,3 +896,110 @@ body { min-height:100dvh; width:100vw; max-width:100vw; display:block; overflow-
 .media-choice-row input{display:none}
 @media(max-width:900px){.product-topbar{grid-template-columns:auto 1fr auto}.product-back-btn{font-size:9px;padding:7px 9px}.product-brand img{width:110px}}
 @media(max-width:560px){.product-topbar{display:flex;gap:7px}.product-back-btn{order:-1}.product-brand{display:flex}.product-topbar nav{margin-left:auto}.media-choice-row label{font-size:7px;padding:5px 6px}.photo-add-choice,.proof-upload-choice{height:145px!important}.recent-real-card b{font-size:10px}.recent-real-card strong{font-size:12px}}
+
+
+/* ================================================================
+   KALASUTRA FINAL POLISH — additive only
+   Keeps all existing UI/features and improves navigation, safety,
+   AI assistance, media upload and B2B checkout usability.
+================================================================ */
+
+/* Always-visible, non-overlapping back control on profile screens */
+.profile-topbar-with-back{position:relative;justify-content:flex-start;gap:14px}
+.profile-back-btn{
+  flex:0 0 36px;width:36px;height:36px;border:1px solid #d9c8b9;border-radius:50%;
+  background:#fffaf3;color:#63392b;font-size:26px;line-height:1;display:grid;place-items:center;
+  cursor:pointer;box-shadow:0 3px 10px rgba(73,45,31,.08)
+}
+.profile-topbar-with-back .profile-top-actions{margin-left:auto}
+
+/* Move the role switch away from profile header/settings icons */
+.profile-page + .bottom-nav + .mode-switch-wrap,
+.profile-page + .buyer-bottom-nav + .mode-switch-wrap{
+  top:76px;right:14px;z-index:25;
+}
+.profile-page + .bottom-nav + .mode-switch-wrap .mode-pill,
+.profile-page + .buyer-bottom-nav + .mode-switch-wrap .mode-pill{
+  min-height:32px;font-size:9px;padding:6px 10px;
+}
+
+/* Product detail: make the requested back control impossible to miss */
+.product-back-btn{
+  min-width:74px;height:38px;display:inline-flex;align-items:center;justify-content:center;
+  gap:4px;border:1.5px solid #b98f73!important;background:#fffaf3!important;
+  box-shadow:0 4px 12px rgba(70,43,29,.08);font-size:11px!important;
+}
+@media(max-width:560px){
+  .product-topbar{position:sticky;top:0;z-index:45}
+  .product-back-btn{min-width:42px;width:42px;height:38px;font-size:0!important;padding:0!important}
+  .product-back-btn::before{content:"‹";font-size:29px;line-height:1}
+  .profile-topbar-with-back{padding-left:10px!important;padding-right:10px!important}
+  .profile-back-btn{width:32px;height:32px;flex-basis:32px;font-size:23px}
+}
+
+/* Safety & Review: compact but still prominent and fully clickable */
+.safety-center{
+  min-height:62px!important;padding:10px 14px!important;border-radius:18px!important;
+  margin-top:12px!important;gap:10px!important;background:linear-gradient(100deg,#fff5ed,#fffaf5)!important;
+}
+.safety-center>span{width:34px!important;height:34px!important;flex:none;background:#9e3f2f!important}
+.safety-center strong{font-size:12px!important}
+.safety-center small{font-size:9px!important;line-height:1.25!important;margin-top:2px!important}
+.safety-center>b{font-size:19px!important}
+
+/* Global AI help: the existing AI Talker becomes available on every
+   logged-in screen except the dashboard where it is already embedded. */
+.app-shell > .ai-talker:not(.ai-talker-embedded){
+  position:fixed;right:16px;bottom:88px;z-index:70;
+}
+.app-shell > .ai-fab{z-index:69}
+@media(max-width:460px){
+  .app-shell > .ai-talker:not(.ai-talker-embedded){right:12px;bottom:86px;width:min(330px,calc(100% - 24px))}
+}
+
+/* Media chooser: make camera/gallery actions clear on phones */
+.photo-add-choice,.proof-upload-choice{min-height:150px!important}
+.media-choice-row label{
+  min-height:30px!important;justify-content:center;white-space:nowrap;
+  box-shadow:0 2px 6px rgba(71,44,31,.06)
+}
+.capture-actions .record-proof-btn{
+  min-height:44px!important;border-radius:16px!important;font-weight:900
+}
+
+/* Bulk / B2B checkout — deliberately distinct from the reference image
+   while preserving retail checkout, Razorpay and COD. */
+.bulk-order-card{
+  border:1.5px solid #d7b59f!important;
+  background:linear-gradient(145deg,#fffaf5,#f8eee4)!important;
+  box-shadow:0 10px 26px rgba(76,48,33,.08)!important;
+}
+.bulk-order-head{align-items:flex-start}
+.bulk-order-icon{
+  background:#6f3c2d!important;color:#fff!important;border-radius:14px!important;
+  box-shadow:0 5px 12px rgba(79,43,31,.18)
+}
+.bulk-order-tabs button{
+  transition:.18s ease;min-height:54px!important
+}
+.bulk-order-tabs button.active{
+  background:#633327!important;color:#fff!important;border-color:#633327!important;
+  box-shadow:0 7px 15px rgba(82,43,31,.16)
+}
+.bulk-tier-row button{
+  min-height:58px!important;border-radius:15px!important;
+  border:1px solid #dfc9ba!important;background:#fffdf9!important
+}
+.bulk-tier-row button.chosen{
+  background:#e5f0e6!important;border-color:#5e8a64!important;color:#315c39!important
+}
+.bulk-price-box{
+  border-radius:16px!important;background:#fff!important;border:1px solid #ead9cc!important
+}
+.bulk-summary button{
+  background:#317b73!important;border-radius:16px!important
+}
+.bulk-note{border-left:3px solid #317b73!important}
+
+/* Keep the app's existing bottom navigation above floating helpers */
+.buyer-bottom-nav,.bottom-nav{z-index:80!important}
