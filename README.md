@@ -1,25 +1,19 @@
-# KalaSutra — Ready-to-Upload Hackathon Build
+# KalaSutra Master Final UI + Features
 
-This package preserves the KalaSutra React + Node structure and adds the requested prototype-inspired flows.
+This package is the safe merged KalaSutra build.
 
-## Included
-- KalaSutra themed login and role selection
-- Buyer and Artisan profiles with photo upload
-- Unique digital Product IDs
-- Multi-photo product upload (2–4 photos)
-- Voice-first story capture + AI English listing draft
-- Making-proof video capture (back camera) and Reel capture/gallery upload
-- AI verification demo: Trust Score, Risk Score, Product–Process Match
-- Duplicate/image-reuse signal + ownership declaration
-- Suspicious listing → Human Review queue
-- Buyer star reviews
-- AI Talker voice/microphone UI
-- Moving truck Order Journey confirmation
-- COD checkout and optional Razorpay integration hook
+Preserved existing functionality and added/retained:
+- Premium cream/terracotta Buyer Profile reference UI
+- Premium cream/terracotta Artisan Profile reference UI
+- Product Detail reference UI with gallery, artisan verification, Digital Product ID/QR, customization, impact, pricing and cart actions
+- Add a New Piece reference flow: Capture -> Add Details -> Verify -> Publish
+- Multiple product photos, making-proof video, voice-first story, AI title/description assistance, product details and verification
+- Create Reel camera-style flow and post form
+- Working profile photo upload/camera controls
+- Bulk/B2B checkout additions while preserving Razorpay/COD checkout
+- Artisan Impact Hub: Fair Price AI, Craft Capital, Material Hub, Design Lab, Craft Passport, Direct Market Match, Craft Gurukul
+- Buyer Recently Viewed using actual opened products
+- Reel like, comment, save and share interactions
+- Existing login/OTP, verification, orders, payments, location, AI Talker and API functionality are preserved
 
-## Run
-`node server/server.js`
-
-Then open `http://localhost:3000`.
-
-For Render, use the included `render.yaml` or set the start command to `node server/server.js`.
+GitHub upload: replace only app.tsx, styles.css, index.html and kalasutra-login-flow.js in the repository root. Do not delete or replace the assets folder.
