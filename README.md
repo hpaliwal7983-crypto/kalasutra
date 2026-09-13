@@ -1,25 +1,21 @@
-# KalaSutra MASTER FUNCTIONAL — Add + Fix, Never Delete
+# KalaSutra — MASTER FUNCTIONAL V3
 
-This package is an additive update to the existing KalaSutra app.
+ADD + FIX, NEVER DELETE. This package is based on the previous functional version and only adds/fixes requested behavior.
 
-## Fixed / added
-- Recently Viewed uses real products and a shared device browsing trail, including products newly created by an artisan.
-- Product Detail has a clearly visible back control and sticky mobile header.
-- Buyer/Artisan profile screens have a dedicated back control.
-- Buyer/Artisan profile settings controls are separated from the role-switch control to prevent overlap.
-- Explore/profile quick actions remain functional.
-- Safety & Review Center is redesigned as a compact, readable trust card; the existing review workflow remains.
-- Add Product supports Camera + Gallery image selection and Record + Gallery making-video selection.
-- 5-second making-proof recorder remains available.
-- Hindi/Indian-language voice story remains available, with AI English listing draft generation.
-- Existing AI Talker is made available as a floating helper on logged-in screens (dashboard embedded Talker is preserved).
-- Bulk/B2B checkout remains additive: Retail vs Bulk/B2B, 20+/50+/100+ tiers, volume discount, per-product quantities, bulk request, while existing Razorpay/COD retail checkout remains intact.
+### Included
+- Product Detail Back
+- Buyer + Artisan Profile Back
+- Profile Settings / Switch controls separated so they do not overlap
+- Compact Safety & Review Center
+- Recently Viewed trail from actual product views and newly-created products
+- Explore/profile navigation actions
+- Add Product Camera + Gallery image selection
+- Making-proof video recording + gallery upload
+- Hindi voice story and AI English listing draft
+- AI Talker floating helper with voice navigation for common actions
+- Existing Razorpay/COD checkout preserved
+- Bulk/B2B checkout with 20+/50+/100+ tiers, quantity, discount and bulk request
+- Existing Reels, verification, Impact Hub, login/OTP, product and order features preserved
 
-## Upload
-Replace only:
-- app.tsx
-- styles.css
-- index.html
-- kalasutra-login-flow.js
-
-Do not delete or replace the existing assets folder.
+### Upload
+Upload/replace only `app.tsx`, `styles.css`, `index.html`, and `kalasutra-login-flow.js` in the repository root. Do not delete or replace the existing `assets` folder.

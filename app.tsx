@@ -286,6 +286,22 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }: { c
           speak("Aap verified craft ki making Reel bana sakte hain aur buyers ko uski kahani dikha sakte hain.");
         } else if (q.includes("verify") || q.includes("verification") || q.includes("जांच")) {
           speak("Product verification ke liye pehle photo, phir aapki voice story aur making proof clip chahiye.");
+          if (role === 'artisan') go?.('addProduct');
+        } else if (q.includes("profile") || q.includes("प्रोफाइल")) {
+          speak("Bilkul, main aapka profile khol raha hoon.");
+          go?.(role === 'artisan' ? 'profile' : 'buyerProfile');
+        } else if (q.includes("order") || q.includes("ऑर्डर")) {
+          speak("Bilkul, main aapke orders khol raha hoon.");
+          go?.('orders');
+        } else if (q.includes("home") || q.includes("होम") || q.includes("explore") || q.includes("देखना")) {
+          speak("Chaliye, Explore kholte hain.");
+          go?.(role === 'artisan' ? 'dashboard' : 'buyerHome');
+        } else if (q.includes("wishlist") || q.includes("saved") || q.includes("पसंद")) {
+          speak("Aapki saved pieces list khol raha hoon.");
+          if (role === 'buyer') go?.('wishlist');
+        } else if (q.includes("add a piece") || q.includes("product") || q.includes("उत्पाद")) {
+          speak("Chaliye, Add a Piece kholte hain. Main photo, story aur verification mein guide karunga.");
+          if (role === 'artisan') go?.('addProduct');
         } else {
           speak(`Aapne kaha: ${heard}. Main aapki KalaSutra journey mein help karta hoon.`);
         }
@@ -965,7 +981,7 @@ function MyProductsScreen({ user, go }: any) {
   useEffect(() => { apiGet(`/products`).then((all) => setProducts(all.filter((p: any) => p.artisanId === user.id))); }, []);
   return (
     <>
-      <div className="app-header"><div><h2>My Products</h2><div className="sub">{products.length} listed</div></div></div>
+      <div className="app-header"><button className="header-back" onClick={() => go('dashboard')} aria-label="Back">‹</button><div><h2>My Products</h2><div className="sub">{products.length} listed</div></div></div>
       <div className="content">
         {products.length === 0 ? <div className="empty-note">No products yet.</div> : (
           <div className="grid">
@@ -1079,7 +1095,7 @@ function MyReelsScreen({ user, go, setToast }: any) {
   return (
     <>
       <div className="app-header">
-        <div><h2>My Reels</h2><div className="sub">{reels.length} posted</div></div>
+        <button className="header-back" onClick={() => go('dashboard')} aria-label="Back">‹</button><div><h2>My Reels</h2><div className="sub">{reels.length} posted</div></div>
         <div className="fab" style={{ position: "static", width: 40, height: 40, fontSize: 18 }} onClick={() => go("createReel")}>🎬</div>
       </div>
       <div className="content">
@@ -2018,7 +2034,7 @@ function App() {
 
       {navBar}
       {!(isArtisan && screen === "dashboard") && <AITalker compact role={isArtisan ? "artisan" : "buyer"} go={setScreen} />}
-      {!(isArtisan && screen === "dashboard") && <div className="mode-switch-wrap">
+      {!(isArtisan && screen === "dashboard") && <div className={`mode-switch-wrap ${screen === 'profile' || screen === 'buyerProfile' ? 'profile-mode-switch' : ''}`}>
         <button className="mode-pill" onClick={switchRole}>⇄ Switch to {isArtisan ? "Buyer" : "Artisan"}</button>
       </div>}
       <Toast message={toast} />
