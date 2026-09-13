@@ -1008,61 +1008,81 @@ function CreateReelScreen({ user, go, setToast, prefillProductId }: any) {
   const [products,setProducts]=useState<any[]>([]),[productId,setProductId]=useState(prefillProductId||""),[caption,setCaption]=useState(""),[category,setCategory]=useState("Pottery"),[tags,setTags]=useState("");
   const [videoDataUrl,setVideoDataUrl]=useState<string|null>(null),[photoDataUrl,setPhotoDataUrl]=useState<string|null>(null),[mode,setMode]=useState<'video'|'photo'>('video'),[recording,setRecording]=useState(false),[facing,setFacing]=useState<'user'|'environment'>('environment');
   const [err,setErr]=useState<string|null>(null),[timer,setTimer]=useState(0),[speed,setSpeed]=useState(1),[filter,setFilter]=useState('none'),[beautify,setBeautify]=useState(false),[music,setMusic]=useState<string|null>(null),[musicName,setMusicName]=useState('');
+  const [mediaPicker,setMediaPicker]=useState(false),[musicPicker,setMusicPicker]=useState(false),[musicQuery,setMusicQuery]=useState(''),[musicResults,setMusicResults]=useState<any[]>([]),[musicLoading,setMusicLoading]=useState(false),[cameraSettings,setCameraSettings]=useState(false);
+  const [savedMusic,setSavedMusic]=useState<any[]>(()=>{try{return JSON.parse(localStorage.getItem('kalasutra_saved_music')||'[]')}catch(_){return[]}});
   const videoRef=useRef<HTMLVideoElement>(null),streamRef=useRef<MediaStream|null>(null),recorderRef=useRef<MediaRecorder|null>(null),chunksRef=useRef<Blob[]>([]),musicRef=useRef<HTMLAudioElement>(null),timerRef=useRef<any>(null);
+  const photoInputRef=useRef<HTMLInputElement>(null),videoInputRef=useRef<HTMLInputElement>(null),fileInputRef=useRef<HTMLInputElement>(null);
 
-  useEffect(()=>{apiGet("/products").then((all)=>{const mine=all.filter((p:any)=>p.artisanId===user.id&&p.verificationStatus!=="rejected");setProducts(mine);const p=prefillProductId?mine.find((x:any)=>x.id===prefillProductId):mine[0];if(p){setProductId(p.id);setCategory(p.category);setCaption(`Making of: ${p.title}`)}}).catch((e)=>setErr(e.message));return()=>{stopCamera();clearTimeout(timerRef.current)}},[]);
+  useEffect(()=>{
+    apiGet("/products").then((all)=>{const mine=all.filter((p:any)=>p.artisanId===user.id&&p.verificationStatus!=="rejected");setProducts(mine);const p=prefillProductId?mine.find((x:any)=>x.id===prefillProductId):mine[0];if(p){setProductId(p.id);setCategory(p.category);setCaption(`Making of: ${p.title}`)}}).catch((e)=>setErr(e.message));
+    const t=setTimeout(()=>openCamera('environment'),350);
+    return()=>{clearTimeout(t);stopCamera();clearTimeout(timerRef.current)}
+  },[]);
 
   async function openCamera(cameraFacing: 'user'|'environment'=facing) {
     stopCamera(); setErr(null);
-    try { const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cameraFacing}},audio:true}); streamRef.current=stream; if(videoRef.current){videoRef.current.srcObject=stream;await videoRef.current.play();} }
-    catch(e:any){setErr('Camera permission is needed. Please allow camera + microphone and try again. '+(e.message||''));}
+    try {
+      if(!navigator.mediaDevices?.getUserMedia) throw new Error('Live camera is not supported in this browser.');
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cameraFacing},width:{ideal:1080},height:{ideal:1920}},audio:true});
+      streamRef.current=stream;
+      if(videoRef.current){videoRef.current.srcObject=stream;await videoRef.current.play();}
+    } catch(e:any){setErr('Camera permission is needed. Please allow camera + microphone and try again. '+(e.message||''));}
   }
   function stopCamera(){streamRef.current?.getTracks().forEach(t=>t.stop());streamRef.current=null;if(videoRef.current)videoRef.current.srcObject=null;}
-  async function flipCamera(){if(recording) stopRecording(); const next=facing==='environment'?'user':'environment';setFacing(next);await new Promise(r=>setTimeout(r,80));openCamera(next);}
+  async function flipCamera(){if(recording) stopRecording();const next=facing==='environment'?'user':'environment';setFacing(next);await new Promise(r=>setTimeout(r,80));openCamera(next);}
   async function startRecording(){
-    if(mode==='photo'){if(!streamRef.current) await openCamera(); if(streamRef.current) capturePhoto(); return;}
-    setErr(null); if(!streamRef.current) await openCamera(); if(!streamRef.current)return;
-    const begin=()=>{try{chunksRef.current=[];const rec=new MediaRecorder(streamRef.current!);rec.ondataavailable=e=>{if(e.data.size)chunksRef.current.push(e.data)};rec.onstop=()=>{const blob=new Blob(chunksRef.current,{type:'video/webm'});const r=new FileReader();r.onload=()=>setVideoDataUrl(r.result as string);r.readAsDataURL(blob);stopCamera()};rec.start();recorderRef.current=rec;setRecording(true);if(timerRef.current)clearTimeout(timerRef.current);timerRef.current=setTimeout(()=>stopRecording(),15000)}catch(e:any){setErr(e.message||'Could not start recording')}};
+    if(mode==='photo'){if(!streamRef.current) await openCamera();if(streamRef.current) capturePhoto();return;}
+    setErr(null);if(!streamRef.current) await openCamera();if(!streamRef.current)return;
+    const begin=()=>{try{chunksRef.current=[];const rec=new MediaRecorder(streamRef.current!);rec.ondataavailable=e=>{if(e.data.size)chunksRef.current.push(e.data)};rec.onstop=()=>{const blob=new Blob(chunksRef.current,{type:'video/webm'});const r=new FileReader();r.onload=()=>setVideoDataUrl(r.result as string);r.readAsDataURL(blob);stopCamera()};rec.start();recorderRef.current=rec;setRecording(true);if(timerRef.current)clearTimeout(timerRef.current);timerRef.current=setTimeout(()=>stopRecording(),60000)}catch(e:any){setErr(e.message||'Could not start recording')}};
     if(timer>0){setToast(`Timer set: ${timer}s`);timerRef.current=setTimeout(begin,timer*1000)}else begin();
   }
   function stopRecording(){if(recorderRef.current?.state==='recording')recorderRef.current.stop();setRecording(false);if(timerRef.current)clearTimeout(timerRef.current)}
-  function capturePhoto(){const v=videoRef.current;if(!v)return;const c=document.createElement('canvas');c.width=v.videoWidth||720;c.height=v.videoHeight||1280;const ctx=c.getContext('2d');if(!ctx)return;if(facing==='user')ctx.translate(c.width,0),ctx.scale(-1,1);ctx.drawImage(v,0,0,c.width,c.height);setPhotoDataUrl(c.toDataURL('image/jpeg',.9));setToast('Photo captured 📸');}
-  async function uploadVideo(e:any){const f=e.target.files?.[0];if(!f)return;try{setVideoDataUrl(await fileToDataURL(f));setPhotoDataUrl(null);setMode('video');setToast('Video added from gallery')}catch(_){setErr('Could not load that video.')}}
-  async function uploadPhoto(e:any){const f=e.target.files?.[0];if(!f)return;try{setPhotoDataUrl(await fileToDataURL(f));setVideoDataUrl(null);setMode('photo');setToast('Photo added from gallery')}catch(_){setErr('Could not load that photo.')}}
-  async function uploadMusic(e:any){const f=e.target.files?.[0];if(!f)return;try{const u=await fileToDataURL(f);setMusic(u);setMusicName(f.name);setTimeout(()=>musicRef.current?.play().catch(()=>{}),50);setToast('Music added 🎵')}catch(_){setErr('Could not load that audio file.')}}
-  function cycleTimer(){setTimer(t=>t===0?3:t===3?5:10)}
+  function capturePhoto(){const v=videoRef.current;if(!v)return;const c=document.createElement('canvas');c.width=v.videoWidth||720;c.height=v.videoHeight||1280;const ctx=c.getContext('2d');if(!ctx)return;if(facing==='user'){ctx.translate(c.width,0);ctx.scale(-1,1)}ctx.drawImage(v,0,0,c.width,c.height);setPhotoDataUrl(c.toDataURL('image/jpeg',.9));setVideoDataUrl(null);setMode('photo');setToast('Photo captured 📸');}
+  async function uploadVideo(e:any){const f=e.target.files?.[0];if(!f)return;try{setVideoDataUrl(await fileToDataURL(f));setPhotoDataUrl(null);setMode('video');setMediaPicker(false);setToast('Video added from gallery')}catch(_){setErr('Could not load that video.')}}
+  async function uploadPhoto(e:any){const f=e.target.files?.[0];if(!f)return;try{setPhotoDataUrl(await fileToDataURL(f));setVideoDataUrl(null);setMode('photo');setMediaPicker(false);setToast('Photo added from gallery')}catch(_){setErr('Could not load that photo.')}}
+  async function uploadAny(e:any){const f=e.target.files?.[0];if(!f)return;if(f.type.startsWith('video/'))return uploadVideo(e);return uploadPhoto(e)}
+  async function uploadMusic(e:any){const f=e.target.files?.[0];if(!f)return;try{const u=await fileToDataURL(f);setMusic(u);setMusicName(f.name);setMusicPicker(false);setTimeout(()=>musicRef.current?.play().catch(()=>{}),80);setToast('Music added 🎵')}catch(_){setErr('Could not load that audio file.')}}
+  async function searchMusic(q=musicQuery){
+    const term=(q||'handmade instrumental').trim();setMusicLoading(true);
+    try{const res=await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&media=music&entity=song&limit=25`);const data=await res.json();setMusicResults(data.results||[])}catch(_){setMusicResults([]);setErr('Music search is unavailable right now. You can still import audio from your device.')}finally{setMusicLoading(false)}
+  }
+  function chooseMusic(track:any){if(!track.previewUrl){setToast('Preview unavailable for this track');return}setMusic(track.previewUrl);setMusicName(`${track.trackName} · ${track.artistName}`);setMusicPicker(false);setTimeout(()=>musicRef.current?.play().catch(()=>{}),80);const item={trackName:track.trackName,artistName:track.artistName,previewUrl:track.previewUrl,artworkUrl100:track.artworkUrl100};const next=[item,...savedMusic.filter((x:any)=>x.previewUrl!==item.previewUrl)].slice(0,12);setSavedMusic(next);localStorage.setItem('kalasutra_saved_music',JSON.stringify(next));setToast('Music selected 🎵')}
+  function chooseSavedMusic(track:any){setMusic(track.previewUrl);setMusicName(`${track.trackName} · ${track.artistName}`);setMusicPicker(false);setTimeout(()=>musicRef.current?.play().catch(()=>{}),80);}
+  function cycleTimer(){setTimer(t=>t===0?3:t===3?5:t===5?10:0)}
   function cycleSpeed(){setSpeed(s=>s===1?0.5:s===0.5?1.5:s===1.5?2:1)}
   function cycleFilter(){setFilter(f=>f==='none'?'warm':f==='warm'?'mono':f==='mono'?'soft':'none')}
   function filterStyle(){return {filter:`${filter==='warm'?'sepia(.18) saturate(1.15)':filter==='mono'?'grayscale(1)':filter==='soft'?'brightness(1.06) contrast(.92)':'none'} ${beautify?'brightness(1.03) saturate(1.05)':''}`}}
   async function postReel(){if(!videoDataUrl&&!photoDataUrl){setErr('Record or upload your Reel first.');return}try{await apiPost('/reels',{artisanId:user.id,productId:productId||null,caption:caption||'Stories behind my handmade craft',category,tags,video:videoDataUrl||photoDataUrl});setToast('Reel posted successfully ✨');go('myReels')}catch(e:any){setErr(e.message||'Could not post Reel.')}}
 
   return <div className="reel-create-page">
-    <header className="reel-create-topbar"><button onClick={()=>{stopCamera();go('dashboard')}} aria-label="Back">‹</button><img src="/assets/logo.png" alt="KalaSutra"/><div><b>KalaSutra</b><span>Artisans to the World</span></div><button onClick={flipCamera} title="Flip camera">↻</button><button onClick={()=>setToast('Draft saved locally')}>Save Draft</button></header>
+    <header className="reel-create-topbar"><button onClick={()=>{stopCamera();go('dashboard')}} aria-label="Back">‹</button><img src="/assets/logo.png" alt="KalaSutra"/><div><b>KalaSutra</b><span>Artisans to the World</span></div><button onClick={()=>setCameraSettings(v=>!v)} title="Camera settings">⚙</button><button onClick={flipCamera} title="Flip camera">↻</button><button onClick={()=>setToast('Draft saved locally')}>Save Draft</button></header>
     <div className="reel-create-layout">
       <section className="reel-camera-panel">
         <div className="reel-viewfinder">
-          {(videoDataUrl||photoDataUrl)?(videoDataUrl?<video src={videoDataUrl} controls playsInline className="reel-preview" style={{...filterStyle(),transform:speed!==1?'scale(1)':'none'}} playbackRate={speed}/>:<img src={photoDataUrl} className="reel-preview" style={filterStyle()}/>):<><video ref={videoRef} className="reel-preview" muted playsInline style={{...filterStyle(),transform:facing==='user'?'scaleX(-1)':'none'}}/><div className="reel-empty-visual"><div className="reel-caption-art">Capture<br/>Your Craft<br/>Share Your Story ♡</div><div className="reel-placeholder">{recording?'Recording your craft…':'Your craft camera appears here'}</div></div></>}
+          {(videoDataUrl||photoDataUrl)?(videoDataUrl?<video src={videoDataUrl} controls playsInline className="reel-preview" style={{...filterStyle(),transform:speed!==1?'scale(1)':'none'}}/>:<img src={photoDataUrl} className="reel-preview" style={filterStyle()}/>):<><video ref={videoRef} className="reel-preview" muted playsInline style={{...filterStyle(),transform:facing==='user'?'scaleX(-1)':'none'}}/><div className="reel-empty-visual"><div className="reel-caption-art">Capture<br/>Your Craft<br/>Share Your Story ♡</div><div className="reel-placeholder">{recording?'Recording your craft…':'Your craft camera appears here'}</div></div></>}
           <div className="viewfinder-corners" />
+          <div className="reel-live-status">● {facing==='user'?'FRONT CAMERA':'BACK CAMERA'}</div>
           <div className="reel-side-tools">
-            <label className="reel-tool-button">♫<small>{musicName?'Music ✓':'Music'}</small><input type="file" accept="audio/*" onChange={uploadMusic}/></label>
+            <button onClick={()=>{setMusicPicker(true);if(!musicResults.length)searchMusic('handmade instrumental')}}>♫<small>{musicName?'Music ✓':'Music'}</small></button>
             <button onClick={cycleTimer}>◷<small>Timer {timer?timer+'s':'Off'}</small></button>
             <button onClick={cycleSpeed}>1×<small>Speed {speed}×</small></button>
             <button onClick={cycleFilter}>✦<small>Filter {filter}</small></button>
             <button className={beautify?'tool-active':''} onClick={()=>setBeautify(v=>!v)}>♧<small>Beautify {beautify?'On':'Off'}</small></button>
           </div>
-          <div className="reel-mode-toggle"><button className={mode==='video'?'active':''} onClick={()=>setMode('video')}>Video</button><button className={mode==='photo'?'active':''} onClick={()=>setMode('photo')}>Photo</button></div>
-          <button className={`record-button ${recording?'recording':''}`} onClick={recording?stopRecording:startRecording}>{recording?'■':mode==='photo'?'●':'●'}</button><span className="record-hint">{recording?'Tap to stop':mode==='photo'?'Tap for photo':'Tap to record'}<small>{timer?'Timer ready':''}</small></span>
-          <label className="gallery-upload"><span>▧</span><small>Gallery</small><input type="file" accept="video/*" onChange={uploadVideo}/></label>
-          <label className="photo-gallery-upload"><span>▣</span><small>Photo</small><input type="file" accept="image/*" onChange={uploadPhoto}/></label>
+          <div className="reel-mode-toggle"><button className={mode==='video'?'active':''} onClick={()=>{setMode('video');if(!streamRef.current)openCamera()}}>Video</button><button className={mode==='photo'?'active':''} onClick={()=>{setMode('photo');if(!streamRef.current)openCamera()}}>Photo</button></div>
+          <button className={`record-button ${recording?'recording':''}`} onClick={recording?stopRecording:startRecording}>{recording?'■':'●'}</button><span className="record-hint">{recording?'Tap to stop':mode==='photo'?'Tap for photo':'Tap to record'}<small>{timer?'Timer ready':''}</small></span>
+          <button className="gallery-upload" onClick={()=>setMediaPicker(true)}><span>▧</span><small>Gallery</small></button>
+          <button className="photo-gallery-upload" onClick={()=>{setMediaPicker(true)}}><span>▣</span><small>Photo</small></button>
           <button className="effects-btn" onClick={cycleFilter}>✧<small>Effects</small></button>
           {music&&<audio ref={musicRef} src={music} loop controls className="reel-music-player"/>}
+          {cameraSettings&&<div className="reel-settings-sheet"><div className="reel-sheet-head"><b>Camera settings</b><button onClick={()=>setCameraSettings(false)}>×</button></div><button onClick={flipCamera}>↻ Switch to {facing==='environment'?'front':'back'} camera</button><button onClick={()=>{setBeautify(v=>!v);setCameraSettings(false)}}>♧ Beautify: {beautify?'On':'Off'}</button><button onClick={()=>{cycleFilter();setCameraSettings(false)}}>✦ Filter: {filter}</button><button onClick={()=>{cycleTimer();setCameraSettings(false)}}>◷ Timer: {timer?timer+'s':'Off'}</button></div>}
         </div>
-        <div className="reel-camera-controls"><button onClick={flipCamera}>↻ {facing==='environment'?'Back camera':'Front camera'}</button><button onClick={()=>{setMusic(null);setMusicName('');musicRef.current?.pause()}}>♫ Remove music</button></div>
+        <div className="reel-camera-controls"><button onClick={flipCamera}>↻ {facing==='environment'?'Front camera':'Back camera'}</button><button onClick={()=>{setMusicPicker(true);if(!musicResults.length)searchMusic('handmade instrumental')}}>♫ Add music</button><button onClick={()=>{setMusic(null);setMusicName('');musicRef.current?.pause()}}>Remove music</button></div>
         <div className="reel-bottom-tools"><span>♧<b>Tips</b></span><span>▣<b>Inspiration</b></span><span>▤<b>Guidelines</b></span></div>
       </section>
       <section className="reel-details-panel">
         <div className="reel-panel-title"><div><h1>Almost Ready!</h1><p>Add a few details and let the world see your creation</p></div><span>♧</span></div>
-        <div className="reel-story-card">{videoDataUrl?<video src={videoDataUrl} controls playsInline style={filterStyle()}/>:photoDataUrl?<img src={photoDataUrl} style={filterStyle()}/>:<div className="no-clip"><span>◉</span><b>No clip yet</b><small>Use camera, front/back flip, or gallery upload</small></div>}<div><em>Stories<br/>Behind<br/>Handmade<br/>Matter ♡</em></div></div>
+        <div className="reel-story-card">{videoDataUrl?<video src={videoDataUrl} controls playsInline style={filterStyle()}/>:photoDataUrl?<img src={photoDataUrl} style={filterStyle()}/>:<div className="no-clip"><span>◉</span><b>No clip yet</b><small>Use live camera, front/back flip, or gallery upload</small></div>}<div><em>Stories<br/>Behind<br/>Handmade<br/>Matter ♡</em></div></div>
         {err&&<ErrorBanner message={err}/>} 
         <label className="reel-field"><b>✎ Caption</b><textarea value={caption} maxLength={300} onChange={e=>setCaption(e.target.value)} placeholder="e.g. Making this piece takes days of hard work, patience and love. ❤️"/></label>
         <label className="reel-field"><b>▣ Attach Product <small>(Optional)</small></b><select value={productId} onChange={e=>setProductId(e.target.value)}><option value="">No product — just my process</option>{products.map((p:any)=><option key={p.id} value={p.id}>{p.title} · ₹{p.price}</option>)}</select></label>
@@ -1071,6 +1091,14 @@ function CreateReelScreen({ user, go, setToast, prefillProductId }: any) {
         <button className="post-reel-btn" onClick={postReel}>☁ &nbsp; Post Reel</button><div className="reel-footer-note">Show the world your craft ✨</div><div className="reel-bottom-quote">“Every craft has a story. Tell yours.” ♥</div>
       </section>
     </div>
+
+    <input ref={photoInputRef} type="file" accept="image/*" onChange={uploadPhoto} className="hidden-media-input"/>
+    <input ref={videoInputRef} type="file" accept="video/*" onChange={uploadVideo} className="hidden-media-input"/>
+    <input ref={fileInputRef} type="file" accept="image/*,video/*" onChange={uploadAny} className="hidden-media-input"/>
+
+    {mediaPicker&&<div className="reel-modal-backdrop" onClick={()=>setMediaPicker(false)}><div className="reel-media-sheet" onClick={e=>e.stopPropagation()}><div className="reel-sheet-handle"/><div className="reel-sheet-head"><b>Add to your Reel</b><button onClick={()=>setMediaPicker(false)}>×</button></div><button onClick={()=>photoInputRef.current?.click()}>▣ <span><strong>Photo Library</strong><small>Choose photos from your device</small></span></button><button onClick={()=>videoInputRef.current?.click()}>▣ <span><strong>Take Video</strong><small>Open your camera to record</small></span></button><button onClick={()=>fileInputRef.current?.click()}>▱ <span><strong>Choose File</strong><small>Select a photo or video file</small></span></button></div></div>}
+
+    {musicPicker&&<div className="reel-modal-backdrop" onClick={()=>setMusicPicker(false)}><div className="reel-music-sheet" onClick={e=>e.stopPropagation()}><div className="reel-sheet-handle"/><div className="reel-sheet-head"><b>🎵 Add music</b><button onClick={()=>setMusicPicker(false)}>×</button></div><div className="music-search-row"><input value={musicQuery} onChange={e=>setMusicQuery(e.target.value)} onKeyDown={e=>{if(e.key==='Enter')searchMusic()}} placeholder="Search songs, artists, sounds…"/><button onClick={()=>searchMusic()}>Search</button></div><div className="music-tabs"><button className="active">For you</button><button>Trending</button><button>Original audio</button><button>Saved</button></div><button className="music-import-btn" onClick={()=>document.getElementById('reelMusicFile')?.click()}>🎵 Import audio from device</button><input id="reelMusicFile" type="file" accept="audio/*" onChange={uploadMusic} className="hidden-media-input"/>{savedMusic.length>0&&<><div className="music-section-label">Saved on this device</div>{savedMusic.slice(0,5).map((t:any,i:number)=><button className="music-row" key={'saved'+i} onClick={()=>chooseSavedMusic(t)}><img src={t.artworkUrl100||'/assets/logo.png'} /><span><strong>{t.trackName}</strong><small>{t.artistName} · Saved</small></span><b>▶</b></button>)}</>}{musicLoading?<div className="music-loading">Finding music…</div>:<>{musicResults.length>0&&<div className="music-section-label">Search results</div>}{musicResults.map((t:any,i:number)=><button className="music-row" key={t.trackId||i} onClick={()=>chooseMusic(t)}><img src={t.artworkUrl100||'/assets/logo.png'} /><span><strong>{t.trackName}</strong><small>{t.artistName} · {t.trackTimeMillis?Math.round(t.trackTimeMillis/60000)+':'+String(Math.round(t.trackTimeMillis/1000)%60).padStart(2,'0'):''}</small></span><b>▶</b></button>)}</>}{!musicLoading&&!musicResults.length&&<div className="music-empty">Search for a song or use <b>Import audio</b> to add your own track.</div>}</div></div>}
   </div>;
 }
 
