@@ -1,27 +1,27 @@
-# KalaSutra — Production Responsive UI Fix
+KALASUTRA — PRODUCTION UI FIX V2
 
-This package is an **additive UI/layout update** built on the current KalaSutra camera-working build.
+This V2 is an additive responsive-layout patch built on the existing KalaSutra production UI fix.
 
-## Preserved
-- Existing KalaSutra visual identity and screens
-- Existing marketplace, profiles, products, verification and navigation
-- Impact Hub 7 modules and existing calculations
-- Razorpay/COD checkout and Bulk/B2B checkout
-- Camera preview, front/back switch, recording, playback, photo/gallery and music tools
-- Voice story / AI draft and AI Talker
-- Existing assets and functionality
+PRESERVED:
+- Existing KalaSutra design language and screens
+- Existing Artisan Impact Hub + all 7 modules
+- Fair Price AI calculation and CTA
+- Craft Capital, Material Hub, Design Lab, Craft Passport, Direct Market Match, Craft Gurukul
+- Buyer marketplace, Recently Viewed, Reels, cart/checkout, Bulk/B2B, Razorpay/COD
+- Profiles, Add Product, verification, AI Talker and bottom navigation
+- Existing logo/assets and camera/reel functionality
 
-## Added / fixed
-- Structural responsive spacing across Artisan Home, profiles, Product Detail, Add Product and Reels
-- Header/switch-button collision prevention
-- Impact Hub expanded panels remain in normal document flow and push later modules downward
-- Mobile profile stacking and readable statistics
-- Product gallery/back-control containment
-- Verification CTA safe spacing above navigation
-- AI Talker safe floating position
-- Bottom navigation content clearance and safe-area support
-- 320/360/375/390/414/430px responsive handling
-- Horizontal overflow prevention through actual width/flex/grid constraints
+FIXED:
+- Mobile bottom-nav content collision by reserving real document space
+- Artisan greeting/switch-button flow
+- Buyer Switch to Artisan top spacing
+- Profile mobile stacking
+- Product Detail mobile Back button overlap with logo
+- Impact Hub one-column accordion flow; expanded panels stay in normal document flow
+- Add Product verification CTA safe-area spacing
+- AI Talker/floating controls moved to a safer rail above bottom navigation
+- Mobile width/overflow constraints and safe-area handling
 
-## Important
-Do not delete or replace the `assets` folder. Upload the package files to the existing project root as appropriate.
+IMPORTANT:
+Only replace app.tsx, styles.css, index.html and kalasutra-login-flow.js in the repo root.
+Do NOT delete or replace the assets folder.

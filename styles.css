@@ -1302,3 +1302,288 @@ button, input, select, textarea { max-width:100%; }
   .app-header, .profile-topbar, .product-topbar, .reel-create-topbar { padding-top:max(12px, env(safe-area-inset-top)); }
   .buyer-bottom-nav, .bottom-nav { margin-bottom:env(safe-area-inset-bottom); }
 }
+
+/* ================================================================
+   KALASUTRA V2 — FINAL MOBILE OVERLAP / FLOW PATCH
+   ADDITIVE ONLY: no existing components, features, or calculations removed.
+================================================================ */
+
+/* 1) Fixed bottom navigation: reserve a real safety zone on every long page. */
+.content,
+.artisan-content,
+.product-container,
+.profile-container,
+.addpiece-content,
+.addpiece-result-wrap,
+.reel-create-page {
+  padding-bottom: calc(190px + env(safe-area-inset-bottom)) !important;
+}
+.artisan-content { padding-top: 4px; }
+.artisan-growth-hub { margin-bottom: 34px !important; }
+.artisan-growth-hub + .home-section-row { margin-top: 28px !important; }
+
+/* Keep the floating AI avatar in the rail above the nav, never over a CTA. */
+.app-shell > .ai-fab {
+  right: max(14px, env(safe-area-inset-right));
+  bottom: calc(94px + env(safe-area-inset-bottom));
+}
+.app-shell > .ai-talker:not(.ai-talker-embedded) {
+  right: max(12px, env(safe-area-inset-right));
+  bottom: calc(94px + env(safe-area-inset-bottom));
+}
+
+/* 2) Artisan header/greeting: entirely normal document flow. */
+.artisan-home .artisan-topbar {
+  height: auto !important;
+  min-height: 108px;
+}
+.artisan-greeting {
+  position: relative !important;
+  inset: auto !important;
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: flex-start !important;
+  gap: 10px 14px !important;
+  padding: 16px 24px 18px !important;
+  margin: 0 !important;
+}
+.artisan-greeting > div {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.artisan-greeting .sub {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  line-height: 1.4 !important;
+}
+.home-switch {
+  position: relative !important;
+  inset: auto !important;
+  flex: 0 1 auto !important;
+  max-width: 100% !important;
+  white-space: normal !important;
+  line-height: 1.25 !important;
+}
+
+/* 3) Buyer home: reserve a top row for Switch to Artisan so it cannot collide
+      with the greeting/wishlist area. */
+.screen-buyerHome .mode-switch-wrap {
+  top: 10px !important;
+  right: 12px !important;
+}
+.screen-buyerHome .buyer-hero-header {
+  padding-top: 64px !important;
+  padding-right: 16px !important;
+}
+.screen-buyerHome .buyer-hero-header > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* Other non-profile screens: switch control stays inside a reserved header rail. */
+.screen-orders .mode-switch-wrap,
+.screen-myReels .mode-switch-wrap,
+.screen-wishlist .mode-switch-wrap {
+  top: 10px !important;
+  right: 12px !important;
+}
+.screen-orders .app-header,
+.screen-myReels .app-header {
+  padding-right: 170px !important;
+}
+
+/* 4) Profiles: on phone, stack the identity instead of forcing a two-column hero. */
+@media (max-width: 560px) {
+  .profile-page { overflow-x: clip !important; }
+  .profile-topbar {
+    min-height: 70px !important;
+    height: auto !important;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+    flex-wrap: wrap !important;
+  }
+  .profile-topbar-with-back { align-items: center !important; }
+  .profile-topbar-with-back .profile-logo-button { flex: 0 1 110px; min-width: 0; }
+  .profile-logo { width: 108px !important; max-width: 100%; }
+  .profile-top-actions {
+    flex: 1 1 180px;
+    justify-content: flex-end;
+    gap: 8px !important;
+    min-width: 0;
+  }
+  .profile-top-slogan { display: none !important; }
+  .profile-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+    min-height: 0 !important;
+    padding: 20px 14px 18px !important;
+    text-align: center;
+  }
+  .profile-avatar-wrap {
+    width: 96px !important;
+    height: 96px !important;
+    flex: 0 0 96px !important;
+    margin: 0 auto !important;
+  }
+  .profile-identity {
+    width: 100% !important;
+    min-width: 0 !important;
+    text-align: center !important;
+  }
+  .profile-identity h1 { font-size: 26px !important; line-height: 1.15 !important; }
+  .profile-identity h3 { font-size: 15px !important; }
+  .profile-location { font-size: 11px !important; }
+  .profile-quote { font-size: 11px !important; line-height: 1.45 !important; }
+  .profile-tags, .buyer-meta { justify-content: center !important; }
+  .profile-hero-art {
+    position: relative !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: 82px !important;
+    order: 3;
+  }
+  .profile-edit-btn {
+    position: relative !important;
+    inset: auto !important;
+    order: 4;
+    align-self: center !important;
+  }
+  .profile-switch-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+  .profile-switch-row button {
+    width: 100% !important;
+    min-height: 50px !important;
+    flex: none !important;
+  }
+  .profile-stat-grid,
+  .buyer-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* 5) Product Detail: use the real inline back button on mobile.
+      The old floating back is hidden because it was sitting over the logo. */
+.mobile-floating-back { display: none !important; }
+.product-topbar .product-back-primary {
+  display: inline-flex !important;
+  position: relative !important;
+  inset: auto !important;
+  order: -1;
+  flex: 0 0 42px;
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 38px !important;
+  padding: 0 !important;
+  font-size: 0 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 2 !important;
+}
+.product-topbar .product-back-primary::before {
+  content: "‹";
+  font-size: 29px;
+  line-height: 1;
+}
+@media (max-width: 560px) {
+  .product-topbar {
+    position: relative !important;
+    height: auto !important;
+    min-height: 68px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 7px !important;
+    padding: max(10px, env(safe-area-inset-top)) 10px 10px !important;
+    flex-wrap: nowrap !important;
+  }
+  .product-brand { flex: 0 1 118px; min-width: 0; }
+  .product-brand img { width: 108px !important; max-width: 100%; }
+  .product-brand span { display: none !important; }
+  .product-search { display: none !important; }
+  .product-topbar nav { margin-left: auto !important; gap: 4px !important; flex: 0 0 auto; }
+  .product-topbar nav button { font-size: 9px !important; }
+  .product-topbar nav button:not(:last-child) { display: none !important; }
+  .product-container { padding-bottom: calc(190px + env(safe-area-inset-bottom)) !important; }
+}
+
+/* 6) Impact Hub: one column + panel directly after the selected card.
+      The panel is never absolutely positioned and never has a forced height. */
+.artisan-growth-hub .growth-module-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 9px !important;
+}
+.artisan-growth-hub .growth-module-card {
+  flex: none !important;
+  width: 100% !important;
+  min-height: 82px !important;
+  box-sizing: border-box !important;
+}
+.artisan-growth-hub .growth-module-panel {
+  position: relative !important;
+  inset: auto !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  margin: 0 0 2px !important;
+}
+.growth-module-panel input,
+.growth-module-panel textarea,
+.growth-module-panel button { max-width: 100% !important; box-sizing: border-box; }
+.growth-form-grid { grid-template-columns: 1fr 1fr; }
+@media (max-width: 430px) {
+  .growth-form-grid { grid-template-columns: 1fr !important; }
+  .growth-module-panel h4 { font-size: 18px !important; }
+  .growth-action { min-height: 46px !important; }
+  .material-row, .demand-row, .lesson-row { align-items: flex-start !important; flex-wrap: wrap !important; }
+  .material-row > div, .demand-row > div, .lesson-row > div { flex: 1 1 150px !important; }
+  .material-row button, .demand-row button, .lesson-row button { flex: 0 0 auto; }
+}
+
+/* 7) Add Product / Verification: CTA has a dedicated bottom safety zone. */
+.addpiece-content,
+.addpiece-result-wrap { padding-bottom: calc(210px + env(safe-area-inset-bottom)) !important; }
+.addpiece-main-btn {
+  display: block !important;
+  width: 100% !important;
+  min-height: 52px !important;
+  margin: 16px 0 24px !important;
+  position: relative !important;
+  inset: auto !important;
+  z-index: 1 !important;
+}
+.addpiece-bottom-actions { padding-bottom: 20px !important; }
+
+/* 8) No accidental viewport-wide overflow. Do not use overflow:hidden to hide
+      broken children; let individual controls wrap instead. */
+.artisan-home,
+.profile-page,
+.product-page,
+.addpiece-page,
+.reel-create-page,
+.app-shell { min-width: 0 !important; max-width: 100vw !important; }
+.artisan-growth-hub *,
+.profile-page *,
+.product-page *,
+.addpiece-page * { min-width: 0; }
+
+/* 9) Safe-area aware fixed nav dimensions. */
+.buyer-bottom-nav,
+.bottom-nav {
+  bottom: max(8px, env(safe-area-inset-bottom)) !important;
+}
+
+@media (max-width: 360px) {
+  .buyer-bottom-nav, .bottom-nav { height: 62px !important; padding: 6px 6px !important; }
+  .nav-btn { font-size: 8px !important; }
+  .nav-btn svg { width: 18px !important; height: 18px !important; }
+  .content { padding-left: 11px !important; padding-right: 11px !important; }
+  .artisan-content { padding-left: 14px !important; padding-right: 14px !important; }
+}
