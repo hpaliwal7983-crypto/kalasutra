@@ -1007,7 +1007,7 @@ function MyProductsScreen({ user, go }: any) {
 function CreateReelScreen({ user, go, setToast, prefillProductId }: any) {
   const [products,setProducts]=useState<any[]>([]),[productId,setProductId]=useState(prefillProductId||""),[caption,setCaption]=useState(""),[category,setCategory]=useState("Pottery"),[tags,setTags]=useState("");
   const [videoDataUrl,setVideoDataUrl]=useState<string|null>(null),[photoDataUrl,setPhotoDataUrl]=useState<string|null>(null),[mode,setMode]=useState<'video'|'photo'>('video'),[recording,setRecording]=useState(false),[facing,setFacing]=useState<'user'|'environment'>('environment');
-  const [err,setErr]=useState<string|null>(null),[timer,setTimer]=useState(0),[speed,setSpeed]=useState(1),[filter,setFilter]=useState('none'),[beautify,setBeautify]=useState(false),[music,setMusic]=useState<string|null>(null),[musicName,setMusicName]=useState('');
+  const [err,setErr]=useState<string|null>(null),[cameraReady,setCameraReady]=useState(false),[timer,setTimer]=useState(0),[speed,setSpeed]=useState(1),[filter,setFilter]=useState('none'),[beautify,setBeautify]=useState(false),[music,setMusic]=useState<string|null>(null),[musicName,setMusicName]=useState('');
   const [mediaPicker,setMediaPicker]=useState(false),[musicPicker,setMusicPicker]=useState(false),[musicQuery,setMusicQuery]=useState(''),[musicResults,setMusicResults]=useState<any[]>([]),[musicLoading,setMusicLoading]=useState(false),[cameraSettings,setCameraSettings]=useState(false);
   const [savedMusic,setSavedMusic]=useState<any[]>(()=>{try{return JSON.parse(localStorage.getItem('kalasutra_saved_music')||'[]')}catch(_){return[]}});
   const videoRef=useRef<HTMLVideoElement>(null),streamRef=useRef<MediaStream|null>(null),recorderRef=useRef<MediaRecorder|null>(null),chunksRef=useRef<Blob[]>([]),musicRef=useRef<HTMLAudioElement>(null),timerRef=useRef<any>(null);
@@ -1025,6 +1025,7 @@ function CreateReelScreen({ user, go, setToast, prefillProductId }: any) {
       if(!navigator.mediaDevices?.getUserMedia) throw new Error('Live camera is not supported in this browser.');
       const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:cameraFacing},width:{ideal:1080},height:{ideal:1920}},audio:true});
       streamRef.current=stream;
+      setCameraReady(true);
       if(videoRef.current){videoRef.current.srcObject=stream;await videoRef.current.play();}
     } catch(e:any){setErr('Camera permission is needed. Please allow camera + microphone and try again. '+(e.message||''));}
   }
@@ -1059,7 +1060,7 @@ function CreateReelScreen({ user, go, setToast, prefillProductId }: any) {
     <div className="reel-create-layout">
       <section className="reel-camera-panel">
         <div className="reel-viewfinder">
-          {(videoDataUrl||photoDataUrl)?(videoDataUrl?<video src={videoDataUrl} controls playsInline className="reel-preview" style={{...filterStyle(),transform:speed!==1?'scale(1)':'none'}}/>:<img src={photoDataUrl} className="reel-preview" style={filterStyle()}/>):<><video ref={videoRef} className="reel-preview" muted playsInline style={{...filterStyle(),transform:facing==='user'?'scaleX(-1)':'none'}}/><div className="reel-empty-visual"><div className="reel-caption-art">Capture<br/>Your Craft<br/>Share Your Story ♡</div><div className="reel-placeholder">{recording?'Recording your craft…':'Your craft camera appears here'}</div></div></>}
+          {(videoDataUrl||photoDataUrl)?(videoDataUrl?<video src={videoDataUrl} controls playsInline className="reel-preview" style={{...filterStyle(),transform:speed!==1?'scale(1)':'none'}}/>:<img src={photoDataUrl} className="reel-preview" style={filterStyle()}/>):<><video ref={videoRef} className="reel-preview" autoPlay muted playsInline style={{...filterStyle(),transform:facing==='user'?'scaleX(-1)':'none'}}/>{!cameraReady&&<div className="reel-empty-visual"><div className="reel-caption-art">Capture<br/>Your Craft<br/>Share Your Story ♡</div><div className="reel-placeholder">{recording?'Recording your craft…':'Your craft camera appears here'}</div></div>}</>}
           <div className="viewfinder-corners" />
           <div className="reel-live-status">● {facing==='user'?'FRONT CAMERA':'BACK CAMERA'}</div>
           <div className="reel-side-tools">
@@ -2090,7 +2091,7 @@ function App() {
     : ["buyerHome", "buyerReels", "cart", "orders", "buyerProfile"].includes(screen) && <BuyerNav screen={screen} go={setScreen} cartCount={cartCount} />;
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell screen-${screen}`}>
       {isArtisan && screen === "dashboard" && (
         <>
           <ArtisanDashboard user={user} go={go} setToast={setToast} />

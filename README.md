@@ -1,18 +1,27 @@
-# KalaSutra MASTER FUNCTIONAL V5
+# KalaSutra — Production Responsive UI Fix
 
-Additive final polish built on the previous MASTER FUNCTIONAL V4. Existing screens and functionality are preserved.
+This package is an **additive UI/layout update** built on the current KalaSutra camera-working build.
 
-## Reel Camera + Music
-- Live front/back camera with permission handling and camera status.
-- Video recording and photo capture.
-- Gallery / Photo Library / Take Video / Choose File picker.
-- Music button opens an Instagram-style music sheet.
-- Search songs/artists through iTunes Search (preview URLs only), saved-on-device tracks, and import local audio.
-- Timer, speed, filters, beautify, effects and camera settings remain available.
-- Add/remove music without deleting any previous Reel features.
+## Preserved
+- Existing KalaSutra visual identity and screens
+- Existing marketplace, profiles, products, verification and navigation
+- Impact Hub 7 modules and existing calculations
+- Razorpay/COD checkout and Bulk/B2B checkout
+- Camera preview, front/back switch, recording, playback, photo/gallery and music tools
+- Voice story / AI draft and AI Talker
+- Existing assets and functionality
 
-## Existing functionality preserved
-Product detail/profile back navigation, settings/switch layout fixes, compact Safety & Review, Recently Viewed, Explore/Profile actions, photo/video upload, Hindi voice story + AI draft, AI Talker, buyer/artisan location tools, Razorpay/COD checkout, Bulk/B2B checkout, Impact Hub, Reels interactions, verification, login/OTP and existing product/listing flows.
+## Added / fixed
+- Structural responsive spacing across Artisan Home, profiles, Product Detail, Add Product and Reels
+- Header/switch-button collision prevention
+- Impact Hub expanded panels remain in normal document flow and push later modules downward
+- Mobile profile stacking and readable statistics
+- Product gallery/back-control containment
+- Verification CTA safe spacing above navigation
+- AI Talker safe floating position
+- Bottom navigation content clearance and safe-area support
+- 320/360/375/390/414/430px responsive handling
+- Horizontal overflow prevention through actual width/flex/grid constraints
 
-## Upload
-Replace only `app.tsx`, `styles.css`, `index.html`, and `kalasutra-login-flow.js` in the repo root. Keep the `assets` folder unchanged.
+## Important
+Do not delete or replace the `assets` folder. Upload the package files to the existing project root as appropriate.
