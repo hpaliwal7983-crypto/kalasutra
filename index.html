@@ -6,72 +6,60 @@
 <title>Kala Sutra</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=20260919-debug2">
+<link rel="stylesheet" href="/styles.css?v=20260919-safe1">
 <style>
-#ks-debug{position:fixed;inset:0;z-index:999999;background:#f4eeda;color:#241c1b;padding:22px 16px;font-family:Arial,sans-serif;overflow:auto}
-#ks-debug .box{max-width:760px;margin:3vh auto;background:#fffaf3;border:1px solid #c9b8a5;border-radius:18px;padding:20px;box-shadow:0 12px 40px #0002}
-#ks-debug h2{margin:0 0 8px;font-family:Georgia,serif}
-#ks-debug .ok{padding:8px 10px;background:#e6f4e8;border-radius:9px;margin:7px 0;font-size:13px}
-#ks-debug .bad{padding:10px;background:#f6e0d8;border-radius:9px;margin:7px 0;font-size:13px}
-#ks-debug pre{white-space:pre-wrap;word-break:break-word;background:#f1e7d8;padding:12px;border-radius:10px;font-size:11px;line-height:1.45;max-height:45vh;overflow:auto}
+#ks-safe-error{display:none;position:fixed;inset:0;z-index:999999;background:#f4eeda;color:#241c1b;padding:22px 16px;font-family:Arial,sans-serif;overflow:auto}
+#ks-safe-error .box{max-width:760px;margin:4vh auto;background:#fffaf3;border:1px solid #c9b8a5;border-radius:18px;padding:22px;box-shadow:0 12px 40px #0002}
+#ks-safe-error h2{margin:0 0 10px;font-family:Georgia,serif}
+#ks-safe-error pre{white-space:pre-wrap;word-break:break-word;background:#f1e7d8;padding:12px;border-radius:10px;font-size:12px;line-height:1.45}
 </style>
 </head>
 <body>
 <div id="root"></div>
-<div id="ks-debug"><div class="box">
-<h2>KalaSutra JavaScript diagnostic</h2>
-<div id="ks-status">Checking app…</div>
-<pre id="ks-details"></pre>
-</div></div>
+<div id="ks-safe-error">
+  <div class="box">
+    <h2>KalaSutra loading error</h2>
+    <p>The existing app reported a JavaScript error. Your app files were not changed.</p>
+    <pre id="ks-safe-error-text"></pre>
+  </div>
+</div>
+
 <script>
-(function(){
-  var d=document.getElementById('ks-debug'), s=document.getElementById('ks-status'), p=document.getElementById('ks-details');
-  window.__ksDebug={
-    show:function(title,details,bad){
-      s.innerHTML='<div class="'+(bad?'bad':'ok')+'"><b>'+title+'</b></div>';
-      p.textContent=details||'';
-      d.style.display=bad?'block':'none';
-    }
-  };
-  window.addEventListener('error',function(e){
-    if(e.target && e.target.tagName==='LINK') return;
-    var detail='window error\\nmessage: '+(e.message||'')+'\\nfile: '+(e.filename||'')+'\\nline: '+(e.lineno||'')+'\\ncolumn: '+(e.colno||'')+'\\nstack: '+((e.error&&e.error.stack)||'');
-    window.__ksDebug.show('Runtime error',detail,true);
+(function () {
+  window.addEventListener("error", function (e) {
+    var box = document.getElementById("ks-safe-error");
+    var text = document.getElementById("ks-safe-error-text");
+    if (!box || !text) return;
+    if (e.target && (e.target.tagName === "IMG" || e.target.tagName === "LINK")) return;
+    var detail =
+      "Message: " + (e.message || "Unknown error") + "\n" +
+      "File: " + (e.filename || "unknown") + "\n" +
+      "Line: " + (e.lineno || "?") + "\n" +
+      "Column: " + (e.colno || "?") + "\n\n" +
+      ((e.error && e.error.stack) || "");
+    text.textContent = detail;
+    box.style.display = "block";
   });
-  window.addEventListener('unhandledrejection',function(e){
-    var r=e.reason, detail='Unhandled promise rejection\\n'+(r&&r.stack||r&&r.message||String(r));
-    window.__ksDebug.show('Runtime promise error',detail,true);
+  window.addEventListener("unhandledrejection", function (e) {
+    var box = document.getElementById("ks-safe-error");
+    var text = document.getElementById("ks-safe-error-text");
+    if (!box || !text) return;
+    var r = e.reason;
+    text.textContent = "Unhandled promise rejection:\n\n" +
+      ((r && (r.stack || r.message)) || String(r));
+    box.style.display = "block";
   });
 })();
 </script>
+
 <script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
 <script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script src="./kalasutra-login-flow.js?v=20260919-debug2"></script>
-<script>
-(async function(){
-  function fail(title,details){ window.__ksDebug.show(title,details,true); }
-  try{
-    if(!window.React) throw new Error('React did not load from unpkg.');
-    if(!window.ReactDOM) throw new Error('ReactDOM did not load from unpkg.');
-    if(!window.Babel) throw new Error('Babel did not load from unpkg.');
-    var res=await fetch('/app.tsx?v=20260919-debug2',{cache:'no-store'});
-    if(!res.ok) throw new Error('Could not load /app.tsx. HTTP '+res.status);
-    var source=await res.text();
-    window.__ksDebug.show('App source loaded. Compiling…','app.tsx bytes: '+source.length+'\\nNow compiling with Babel…',false);
-    var out=Babel.transform(source,{presets:['react','typescript'],filename:'app.tsx',sourceMaps:false});
-    window.__ksDebug.show('Babel compilation succeeded. Starting React app…','Compiled JavaScript bytes: '+out.code.length,false);
-    var run=new Function('React','ReactDOM',out.code+'\\n//# sourceURL=/app.tsx');
-    run(window.React,window.ReactDOM);
-    setTimeout(function(){
-      var root=document.getElementById('root');
-      if(!root || !root.children.length) fail('React app did not render','Babel ran without a syntax error, but React produced no visible root content.');
-    },1500);
-  }catch(err){
-    fail('KalaSutra app failed to start',(err&&err.stack)||String(err));
-  }
-})();
-</script>
+<script src="./kalasutra-login-flow.js?v=20260919-safe1"></script>
+
+<!-- IMPORTANT: keep the original Babel execution path.
+     Do NOT wrap app.tsx in new Function/eval here. -->
+<script type="text/babel" data-presets="react,typescript" src="/app.tsx?v=20260919-safe1"></script>
 </body>
 </html>

@@ -1,9 +1,18 @@
-KalaSutra exact JavaScript diagnostic
+KALASUTRA SAFE RESTORE
 
-Replace ONLY index.html in GitHub with this file.
-Do NOT replace app.tsx or styles.css.
+This package intentionally contains ONLY index.html.
 
-After Render deploys, reload the site. This diagnostic directly fetches /app.tsx,
-compiles it with the same Babel presets, and shows the exact compile/runtime error.
+It restores the normal React + Babel execution path and adds cache-busting plus
+a visible JavaScript error panel.
 
-If an error card appears, send a screenshot of the full card.
+DO NOT replace app.tsx or styles.css with this package.
+Your existing app.tsx, styles.css, backend and assets stay untouched.
+
+GitHub:
+1. Replace only index.html.
+2. Commit.
+3. Wait for Render deployment.
+4. Reload Safari.
+
+If the app still fails, screenshot the error panel. It will show the actual
+browser error without changing the existing application source.
