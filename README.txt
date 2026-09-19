@@ -1,9 +1,9 @@
-IMPORTANT — DO NOT replace app.tsx or styles.css with an older file.
+KalaSutra exact JavaScript diagnostic
 
-This package contains ONLY a safer index.html.
-It:
-1. Forces Safari/Render to fetch a fresh app.tsx and styles.css instead of using an old cached copy.
-2. Shows the real JavaScript error instead of a blank cream screen if the current app crashes.
+Replace ONLY index.html in GitHub with this file.
+Do NOT replace app.tsx or styles.css.
 
-Upload/replace ONLY index.html in GitHub, then wait for Render to redeploy.
-If the error card appears, send me a screenshot of that card. Do not replace any other file.
+After Render deploys, reload the site. This diagnostic directly fetches /app.tsx,
+compiles it with the same Babel presets, and shows the exact compile/runtime error.
+
+If an error card appears, send a screenshot of the full card.
