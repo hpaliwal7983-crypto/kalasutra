@@ -1334,23 +1334,33 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
 // BUYER: HOME / EXPLORE
 // ---------------------------------------------------------------------------
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }: any) {
+ const safeUser = user || { id: "guest", name: "Harsh" };
+ const safeWishlist = Array.isArray(wishlist) ? wishlist : [];
+ const safeCartCount = Number(cartCount) || 0;
  const [products,setProducts]=useState<any[]>([]),[query,setQuery]=useState(""),[err,setErr]=useState<string|null>(null),[listening,setListening]=useState(false),[recentIds,setRecentIds]=useState<string[]>([]);
- const recentKey=`kalasutra_recent_products_${user.id}`,loadRecent=()=>setRecentIds(getRecentProductIds(user.id));
- useEffect(()=>{apiGet(`/products`).then(setProducts).catch(e=>setErr(e.message));loadRecent();const f=()=>loadRecent();window.addEventListener("kalasutra:recent-product",f);return()=>window.removeEventListener("kalasutra:recent-product",f)},[user.id]);
- const filtered=products.filter(p=>!query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>`${p.title} ${p.category} ${p.craftInfo?.material||""} ${p.craftInfo?.region||""}`.toLowerCase().includes(w))),recent=recentIds.map(id=>products.find(p=>String(p.id)===String(id))).filter(Boolean).slice(0,4);
- const viewProduct=(id:string)=>{saveRecentProduct(user.id,id);setRecentIds(getRecentProductIds(user.id));openProduct(id)};
+ const recentKey=`kalasutra_recent_products_${safeUser.id}`;
+ const loadRecent=()=>{ try { setRecentIds(getRecentProductIds(safeUser.id)); } catch (_) { setRecentIds([]); } };
+ useEffect(()=>{
+   let alive=true;
+   apiGet(`/products`).then((data)=>{
+     if(!alive) return;
+     const list=Array.isArray(data)?data:(Array.isArray(data?.products)?data.products:[]);
+     setProducts(list.filter(Boolean));
+     if(!Array.isArray(data) && !Array.isArray(data?.products)) setErr(null);
+   }).catch(e=>{ if(alive){ setProducts([]); setErr(e?.message || "Products could not be loaded right now."); }});
+   loadRecent();
+   const f=()=>loadRecent();
+   window.addEventListener("kalasutra:recent-product",f);
+   return()=>{alive=false;window.removeEventListener("kalasutra:recent-product",f)};
+ },[safeUser.id]);
+ const filtered=products.filter(p=>{
+   const hay=`${p?.title||""} ${p?.category||""} ${p?.craftInfo?.material||""} ${p?.craftInfo?.region||""}`.toLowerCase();
+   return !query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>hay.includes(w));
+ });
+ const recent=recentIds.map(id=>products.find(p=>String(p?.id)===String(id))).filter(Boolean).slice(0,4);
+ const viewProduct=(id:string)=>{try{saveRecentProduct(safeUser.id,id);setRecentIds(getRecentProductIds(safeUser.id))}catch(_){} openProduct(id)};
  async function voiceSearch(){const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR){setErr("Voice search is not supported in this browser.");return}const ok=await requestVoicePermission();if(!ok){setErr("Please allow microphone access for voice search.");return}const r=new SR();r.lang="hi-IN";r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>setListening(true);r.onend=()=>setListening(false);r.onerror=()=>{setListening(false);setErr("Voice search could not start. Please try again.")};r.onresult=(e:any)=>setQuery(e.results[0][0].transcript);try{r.start()}catch(_){}}
- return <><div className="buyer-hero-header"><div><div className="buyer-kicker">KALASUTRA MARKETPLACE</div><h2>Hello, {user.name} <span className="hello-dot">✦</span></h2><div className="sub">Discover stories behind every handmade piece.</div></div><button className="buyer-wishlist-head" onClick={()=>go("wishlist")} aria-label="Saved pieces"><Icon name="heart"/>{wishlist.length>0&&<b>{wishlist.length}</b>}</button></div><div className="content buyer-content"><ErrorBanner message={err}/><div className="smart-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…"/><button className={listening?"voice-search listening":"voice-search"} onClick={voiceSearch}>🎙</button></div><div className="buyer-shortcuts"><button onClick={()=>go("wishlist")}><Icon name="heart"/> Saved {wishlist.length?`(${wishlist.length})`:""}</button><button onClick={()=>go("buyerReels")}><Icon name="reels"/> Maker Reels</button><button onClick={()=>go("cart")}><Icon name="cart"/> Cart {cartCount?`(${cartCount})`:""}</button></div><section className="explore-craft-section">
-  <div className="explore-craft-head"><div><span className="field-label">EXPLORE BY CRAFT</span><h3>Find your kind of handmade</h3></div><button onClick={()=>setQuery("")}>View all</button></div>
-  <div className="craft-circle-row">
-    {[
-      ["Pottery","🏺"],["Textiles","🧣"],["Woodwork","🐘"],["Metalwork","🪔"],
-      ["Basketry","🧺"],["Jewellery","💍"],["Home Decor","🪴"],["More","✦"]
-    ].map(([label,emoji])=><button key={label} className="craft-circle-card" onClick={()=>label==="More"?setQuery(""):setQuery(label)}>
-      <span className="craft-circle">{emoji}</span><strong>{label}</strong>
-    </button>)}
-  </div>
-</section><div className="section-row"><div className="section-title" style={{margin:0}}>{query?`Results for "${query}"`:"For you"}</div><span className="view-all" onClick={()=>go("buyerReels")}>Explore Reels →</span></div>{filtered.length===0?<div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>:<div className="grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>viewProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>{wishlist.includes(p.id)?"❤️":"🤍"}</button></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{p.price.toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={e=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️")}}>＋ Add to cart</button></div></div></div>)}</div>}{recent.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>viewProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}</div><div className="floating-cart-wrap">{cartCount>0&&<button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{cartCount} item{cartCount>1?"s":""}</small></span><b>›</b></button>}</div></>;
+ return <><div className="buyer-hero-header"><div><div className="buyer-kicker">KALASUTRA MARKETPLACE</div><h2>Hello, {safeUser.name} <span className="hello-dot">✦</span></h2><div className="sub">Discover stories behind every handmade piece.</div></div><button className="buyer-wishlist-head" onClick={()=>go("wishlist")} aria-label="Saved pieces"><Icon name="heart"/>{safeWishlist.length>0&&<b>{safeWishlist.length}</b>}</button></div><div className="content buyer-content"><ErrorBanner message={err}/><div className="smart-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…"/><button className={listening?"voice-search listening":"voice-search"} onClick={voiceSearch}>🎙</button></div><div className="buyer-shortcuts"><button onClick={()=>go("wishlist")}><Icon name="heart"/> Saved {safeWishlist.length?`(${safeWishlist.length})`:""}</button><button onClick={()=>go("buyerReels")}><Icon name="reels"/> Maker Reels</button><button onClick={()=>go("cart")}><Icon name="cart"/> Cart {safeCartCount?`(${safeCartCount})`:""}</button></div><section className="explore-craft-section"><div className="explore-craft-head"><div><span className="field-label">EXPLORE BY CRAFT</span><h3>Find your kind of handmade</h3></div><button onClick={()=>setQuery("")}>View all</button></div><div className="craft-circle-row">{[["Pottery","🏺"],["Textiles","🧣"],["Woodwork","🐘"],["Metalwork","🪔"],["Basketry","🧺"],["Jewellery","💍"],["Home Decor","🪴"],["More","✦"]].map(([label,emoji])=><button key={label} className="craft-circle-card" onClick={()=>label==="More"?setQuery(""):setQuery(label)}><span className="craft-circle">{emoji}</span><strong>{label}</strong></button>)}</div></section><div className="section-row"><div className="section-title" style={{margin:0}}>{query?`Results for "${query}"`:"For you"}</div><span className="view-all" onClick={()=>go("buyerReels")}>Explore Reels →</span></div>{filtered.length===0?<div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>:<div className="grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>viewProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>{safeWishlist.includes(p.id)?"❤️":"🤍"}</button></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{Number(p?.price||0).toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={e=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️")}}>＋ Add to cart</button></div></div></div>)}</div>}{recent.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>viewProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}</div><div className="floating-cart-wrap">{safeCartCount>0&&<button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{safeCartCount} item{safeCartCount>1?"s":""}</small></span><b>›</b></button>}</div></>;
 }
 // ---------------------------------------------------------------------------
 // BUYER: PRODUCT DETAIL
@@ -1652,7 +1662,7 @@ function CartScreen({ user, go, setToast, refreshCartCount }: any) {
 
   return (
     <>
-      <div className="app-header cart-page-header"><button className="header-back" onClick={() => go ? go("buyerHome") : null} aria-label="Back to Home">‹</button><div><h2>Your Cart</h2><div className="sub">{items.length} item(s)</div></div></div>
+      <div className="app-header"><div><h2>Your Cart</h2><div className="sub">{items.length} item(s)</div></div></div>
       <div className="content">
         {items.length === 0 ? <div className="empty-note">Your cart is empty.</div> : (
           <>
@@ -1977,33 +1987,6 @@ function CertificateScreen({ certificateId }: { certificateId: string }) {
 // ---------------------------------------------------------------------------
 // ROOT APP — simple state-based router (no react-router dependency needed)
 // ---------------------------------------------------------------------------
-// Defensive boundary: if one route ever throws on a mobile browser, keep
-// KalaSutra usable instead of leaving a blank cream screen.
-class KalaSutraErrorBoundary extends React.Component<any, any> {
-  state = { hasError: false, message: "" };
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, message: error?.message || "Something went wrong while opening this screen." };
-  }
-  componentDidCatch(error: any) {
-    try { console.error("KalaSutra route error:", error); } catch (_) {}
-  }
-  render() {
-    if (this.state.hasError) {
-      return <div className="app-shell ks-runtime-fallback">
-        <div className="ks-runtime-card">
-          <div className="ks-runtime-mark">✦</div>
-          <div className="field-label">KALASUTRA</div>
-          <h2>Let’s reopen this screen</h2>
-          <p>{this.state.message}</p>
-          <button className="btn" onClick={() => { this.setState({ hasError: false, message: "" }); window.location.reload(); }}>Reload KalaSutra</button>
-          <button className="btn secondary" onClick={() => { window.location.href = window.location.pathname; }}>Start again</button>
-        </div>
-      </div>;
-    }
-    return this.props.children;
-  }
-}
-
 function App() {
   const certificateId = new URLSearchParams(window.location.search).get('certificate');
   if (certificateId) return <CertificateScreen certificateId={certificateId} />;
@@ -2122,56 +2105,49 @@ function App() {
   if (phase === "role") return <div className="app-shell"><RoleSelectScreen name={pendingName} onPick={handleRolePick} /><Toast message={toast} /></div>;
 
   // ----- logged in app -----
-  // Guard against a stale browser state leaving the router without a user.
-  if (!user) return <div className="app-shell"><LoginScreen onLoggedIn={handleLoggedIn} /><Toast message={toast} /></div>;
-  const isArtisan = user?.role === "artisan";
-  const buyerScreens = ["buyerHome", "buyerReels", "wishlist", "cart", "orders", "buyerProfile", "productDetail"];
-  const artisanScreens = ["dashboard", "addProduct", "myProducts", "createReel", "myReels", "orders", "reviews", "profile", "productDetail"];
-  const allowedScreens = isArtisan ? artisanScreens : buyerScreens;
-  // If an old/stale screen value survives a role switch, always render a real screen.
-  const currentScreen = allowedScreens.includes(screen) ? screen : (isArtisan ? "dashboard" : "buyerHome");
+  const isArtisan = user.role === "artisan";
   const navBar = isArtisan
-    ? ["dashboard", "addProduct", "myReels", "orders", "profile"].includes(currentScreen) && <ArtisanNav screen={currentScreen} go={setScreen} />
-    : ["buyerHome", "buyerReels", "cart", "orders", "buyerProfile"].includes(currentScreen) && <BuyerNav screen={currentScreen} go={setScreen} cartCount={cartCount} />;
+    ? ["dashboard", "addProduct", "myReels", "orders", "profile"].includes(screen) && <ArtisanNav screen={screen} go={setScreen} />
+    : ["buyerHome", "buyerReels", "cart", "orders", "buyerProfile"].includes(screen) && <BuyerNav screen={screen} go={setScreen} cartCount={cartCount} />;
 
   return (
-    <div className={`app-shell screen-${currentScreen}`}>
-      {isArtisan && currentScreen === "dashboard" && (
+    <div className={`app-shell screen-${screen}`}>
+      {isArtisan && screen === "dashboard" && (
         <>
           <ArtisanDashboard user={user} go={go} setToast={setToast} />
           <button className="fab" onClick={() => go("addProduct")}>＋</button>
         </>
       )}
-      {isArtisan && currentScreen === "addProduct" && (
+      {isArtisan && screen === "addProduct" && (
         <AddProductScreen user={user} go={(s: string) => { if (s === "createReel") { go("createReel"); } else { setScreen(s); } }} setToast={setToast} setLastVerifiedProductId={setLastVerifiedProductId} />
       )}
-      {isArtisan && currentScreen === "myProducts" && <MyProductsScreen user={user} go={setScreen} />}
-      {isArtisan && currentScreen === "createReel" && <CreateReelScreen user={user} go={setScreen} setToast={setToast} prefillProductId={lastVerifiedProductId} />}
-      {isArtisan && currentScreen === "myReels" && <MyReelsScreen user={user} go={setScreen} setToast={setToast} />}
-      {isArtisan && currentScreen === "orders" && <OrdersScreen user={user} go={setScreen} />}
-      {isArtisan && currentScreen === "reviews" && <SafetyReviewScreen go={setScreen} setToast={setToast} />}
-      {isArtisan && currentScreen === "profile" && <ArtisanProfileScreen user={user} onLogout={logout} go={setScreen} />}
+      {isArtisan && screen === "myProducts" && <MyProductsScreen user={user} go={setScreen} />}
+      {isArtisan && screen === "createReel" && <CreateReelScreen user={user} go={setScreen} setToast={setToast} prefillProductId={lastVerifiedProductId} />}
+      {isArtisan && screen === "myReels" && <MyReelsScreen user={user} go={setScreen} setToast={setToast} />}
+      {isArtisan && screen === "orders" && <OrdersScreen user={user} go={setScreen} />}
+      {isArtisan && screen === "reviews" && <SafetyReviewScreen go={setScreen} setToast={setToast} />}
+      {isArtisan && screen === "profile" && <ArtisanProfileScreen user={user} onLogout={logout} go={setScreen} />}
 
-      {!isArtisan && currentScreen === "buyerHome" && <BuyerHomeScreen user={user} go={setScreen} openProduct={openProduct} wishlist={wishlist} toggleWishlist={toggleWishlist} cartCount={cartCount} addToCart={addToCart} setToast={setToast} />}
-      {!isArtisan && currentScreen === "buyerReels" && <ReelsFeedScreen openProduct={openProduct} setToast={setToast} />}
-      {!isArtisan && currentScreen === "wishlist" && <WishlistScreen user={user} openProduct={openProduct} toggleWishlist={toggleWishlist} />}
-      {!isArtisan && currentScreen === "cart" && <CartScreen user={user} go={setScreen} setToast={setToast} refreshCartCount={() => refreshCartCount(user.id)} />}
-      {!isArtisan && currentScreen === "orders" && <OrdersScreen user={user} go={setScreen} />}
-      {!isArtisan && currentScreen === "buyerProfile" && <BuyerProfileScreen user={user} onLogout={logout} go={setScreen} openProduct={openProduct} />}
-      {currentScreen === "productDetail" && (
+      {!isArtisan && screen === "buyerHome" && <BuyerHomeScreen user={user} go={setScreen} openProduct={openProduct} wishlist={wishlist} toggleWishlist={toggleWishlist} cartCount={cartCount} addToCart={addToCart} setToast={setToast} />}
+      {!isArtisan && screen === "buyerReels" && <ReelsFeedScreen openProduct={openProduct} setToast={setToast} />}
+      {!isArtisan && screen === "wishlist" && <WishlistScreen user={user} openProduct={openProduct} toggleWishlist={toggleWishlist} />}
+      {!isArtisan && screen === "cart" && <CartScreen user={user} go={setScreen} setToast={setToast} refreshCartCount={() => refreshCartCount(user.id)} />}
+      {!isArtisan && screen === "orders" && <OrdersScreen user={user} go={setScreen} />}
+      {!isArtisan && screen === "buyerProfile" && <BuyerProfileScreen user={user} onLogout={logout} go={setScreen} openProduct={openProduct} />}
+      {screen === "productDetail" && (
         <ProductDetailScreen productId={activeProductId} go={setScreen} back={goBack} setToast={setToast} wishlist={wishlist} toggleWishlist={toggleWishlist} addToCart={addToCart} userId={user.id} />
       )}
 
       {navBar}
-      {!(isArtisan && currentScreen === "dashboard") && <AITalker compact role={isArtisan ? "artisan" : "buyer"} go={setScreen} />}
-      {!(isArtisan && currentScreen === "dashboard") && <div className={`mode-switch-wrap ${currentScreen === 'profile' || currentScreen === 'buyerProfile' ? 'profile-mode-switch' : ''}`}>
+      {!(isArtisan && screen === "dashboard") && !( !isArtisan && screen === "buyerHome") && <AITalker compact role={isArtisan ? "artisan" : "buyer"} go={setScreen} />}
+      {!(isArtisan && screen === "dashboard") && <div className={`mode-switch-wrap ${screen === 'profile' || screen === 'buyerProfile' ? 'profile-mode-switch' : ''}`}>
         <button className="mode-pill" onClick={switchRole}>⇄ Switch to {isArtisan ? "Buyer" : "Artisan"}</button>
       </div>}
       <Toast message={toast} />
-      {showPermissions && <PermissionCenter onClose={closePermissions} />}
+      {showPermissions && !( !isArtisan && screen === "buyerHome") && <PermissionCenter onClose={closePermissions} />}
     </div>
   );
 }
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-root.render(<KalaSutraErrorBoundary><App /></KalaSutraErrorBoundary>);
+root.render(<App />);

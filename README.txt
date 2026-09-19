@@ -1,16 +1,14 @@
-KalaSutra additive UI + routing fix
+KalaSutra — Buyer Home Working Fix
 
-Replace ONLY these two files in the existing GitHub repository:
-1. app.tsx
-2. styles.css
+IMPORTANT:
+Replace ONLY the existing app.tsx with this app.tsx.
+Do NOT replace styles.css, index.html, server files, assets, or any other existing files.
 
-Keep the existing index.html and kalasutra-login-flow.js unchanged.
-
-Included fixes:
-- defensive route/user fallback to prevent a blank cream screen
-- runtime error recovery screen instead of a silent blank page
-- Buyer Home Explore by Craft section
-- Cart back button preserved
-- safer Orders / My Reels header spacing
-- Buyer Reels spacing above the floating bottom navigation
-- existing features and API flows retained; changes are additive
+This is an additive fix to the current app:
+- preserves the existing Buyer/Artisan code and features
+- makes Buyer Home product data handling defensive
+- prevents malformed API data from crashing the Buyer Home
+- prevents the AI Talker and permission sheet from covering/crashing the Buyer Home
+- keeps Buyer Home navigation, search, cart, wishlist and product opening
+- keeps Explore by Craft as an additive section
+- no Cart/Orders/Artisan redesigns are included
