@@ -1,75 +1,111 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Kala Sutra</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=20260919-working3">
+<link rel="stylesheet" href="/styles.css?v=20260919-finalstart1">
 <style>
-#ks-load-error{display:none;position:fixed;inset:0;z-index:999999;background:#f4eeda;color:#241c1b;padding:20px;font-family:Arial,sans-serif;overflow:auto}
-#ks-load-error .box{max-width:760px;margin:5vh auto;background:#fffaf3;border:1px solid #c9b8a5;border-radius:18px;padding:22px;box-shadow:0 12px 40px #0002}
-#ks-load-error h2{margin:0 0 8px;font-family:Georgia,serif}
-#ks-load-error pre{white-space:pre-wrap;word-break:break-word;background:#f1e7d8;padding:12px;border-radius:10px;font-size:12px;line-height:1.45}
+#ks-start-error{display:none;position:fixed;inset:0;z-index:2147483647;background:#f4eeda;padding:24px 16px;font-family:Arial,sans-serif;overflow:auto;color:#2b211c}
+#ks-start-error .card{max-width:760px;margin:5vh auto;padding:24px;border-radius:20px;background:#fffaf3;border:1px solid #cbb9a5;box-shadow:0 16px 50px #0002}
+#ks-start-error h2{font:700 28px Georgia,serif;margin:0 0 10px}
+#ks-start-error pre{white-space:pre-wrap;word-break:break-word;background:#f1e7d8;border-radius:12px;padding:14px;font:12px/1.5 ui-monospace,monospace}
 </style>
 </head>
 <body>
 <div id="root"></div>
-<div id="ks-load-error">
-  <div class="box">
-    <h2>KalaSutra loading error</h2>
-    <p>The application could not start. Existing app files have not been changed.</p>
-    <pre id="ks-load-error-text"></pre>
-  </div>
-</div>
+<div id="ks-start-error"><div class="card"><h2>KalaSutra loading error</h2><p id="ks-start-message">Starting…</p><pre id="ks-start-details"></pre></div></div>
 
 <script>
 (function(){
-  function show(msg){
-    var box=document.getElementById("ks-load-error");
-    var out=document.getElementById("ks-load-error-text");
-    if(box&&out){out.textContent=msg;box.style.display="block";}
-  }
-  window.__ksShowError=show;
+  window.__ksFail=function(message,detail){
+    var box=document.getElementById("ks-start-error");
+    var m=document.getElementById("ks-start-message");
+    var d=document.getElementById("ks-start-details");
+    if(m)m.textContent=message||"The app could not start.";
+    if(d)d.textContent=detail||"";
+    if(box)box.style.display="block";
+  };
   window.addEventListener("error",function(e){
-    if(e.target && e.target.tagName && ["IMG","LINK"].indexOf(e.target.tagName)>=0) return;
-    if(e.target && e.target.tagName==="SCRIPT"){
-      show("Script resource failed to load.\n\nSource: "+(e.target.src||"unknown"));
-      return;
-    }
-    var msg=(e.message||"Script error.");
-    var detail=msg;
-    if(e.filename) detail+="\nFile: "+e.filename;
-    if(e.lineno) detail+="\nLine: "+e.lineno+"  Column: "+(e.colno||"?");
-    if(e.error&&e.error.stack) detail+="\n\n"+e.error.stack;
-    show(detail);
+    if(e.target && e.target.tagName==="IMG") return;
+    if(e.target && e.target.tagName==="LINK") return;
+    var detail="message: "+(e.message||"Script error.")+
+      "\nfile: "+(e.filename||"unknown")+
+      "\nline: "+(e.lineno||"?")+
+      "\ncolumn: "+(e.colno||"?");
+    if(e.error && e.error.stack) detail+="\n\n"+e.error.stack;
+    window.__ksFail("JavaScript error",detail);
   });
   window.addEventListener("unhandledrejection",function(e){
     var r=e.reason;
-    show("Unhandled promise rejection:\n\n"+((r&&(r.stack||r.message))||String(r)));
+    window.__ksFail("Unhandled promise rejection",(r&&(r.stack||r.message))||String(r));
   });
 })();
 </script>
 
-<!-- Use stable CDN builds without crossorigin masking Safari's error reporting. -->
-<script src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.26.4/babel.min.js"></script>
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-<!-- IMPORTANT: keep the existing app.tsx source untouched. -->
-<script type="text/babel" data-presets="react,typescript" src="/app.tsx?v=20260919-working3"></script>
-
-<!-- Login animation is additive; load it after the app so an animation error can
-     never prevent the main React application from starting. -->
 <script>
-window.addEventListener("load",function(){
-  var s=document.createElement("script");
-  s.src="./kalasutra-login-flow.js?v=20260919-working3";
-  s.onerror=function(){ console.warn("KalaSutra login enhancement could not load; main app remains active."); };
-  document.body.appendChild(s);
-});
+(function(){
+  function load(src){
+    return new Promise(function(resolve,reject){
+      var s=document.createElement("script");
+      s.src=src;
+      s.onload=resolve;
+      s.onerror=function(){reject(new Error("Could not load "+src));};
+      document.head.appendChild(s);
+    });
+  }
+
+  async function start(){
+    try{
+      await load("https://unpkg.com/react@18.3.1/umd/react.production.min.js");
+      if(!window.React) throw new Error("React loaded but window.React is missing.");
+
+      await load("https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js");
+      if(!window.ReactDOM) throw new Error("ReactDOM loaded but window.ReactDOM is missing.");
+
+      await load("https://unpkg.com/@babel/standalone@7.26.4/babel.min.js");
+      if(!window.Babel) throw new Error("Babel loaded but window.Babel is missing.");
+
+      /* Razorpay is optional for startup. If it is unavailable, checkout can
+         still be reached later and the main app must not be blocked. */
+      load("https://checkout.razorpay.com/v1/checkout.js").catch(function(){});
+
+      var response=await fetch("/app.tsx?v=20260919-finalstart1",{cache:"no-store"});
+      if(!response.ok) throw new Error("Could not load app.tsx (HTTP "+response.status+").");
+      var source=await response.text();
+
+      var result=Babel.transform(source,{
+        filename:"app.tsx",
+        presets:["react","typescript"],
+        sourceMaps:false
+      });
+
+      var script=document.createElement("script");
+      script.text=result.code+"\n//# sourceURL=/app.tsx";
+      document.body.appendChild(script);
+
+      setTimeout(function(){
+        var root=document.getElementById("root");
+        if(!root || !root.firstElementChild){
+          window.__ksFail("KalaSutra did not render","app.tsx compiled successfully, but React did not create any visible content.");
+        }
+      },1800);
+
+      /* Login enhancement is deliberately loaded last. It cannot prevent the
+         main application from starting. */
+      var login=document.createElement("script");
+      login.src="./kalasutra-login-flow.js?v=20260919-finalstart1";
+      login.onerror=function(){ console.warn("Login enhancement unavailable; main app remains active."); };
+      document.body.appendChild(login);
+
+    }catch(err){
+      window.__ksFail("KalaSutra could not start",err && err.stack ? err.stack : String(err));
+    }
+  }
+  start();
+})();
 </script>
 </body>
 </html>

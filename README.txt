@@ -1,19 +1,20 @@
-KALASUTRA WORKING INDEX FIX
+KALASUTRA FINAL START FIX
 
-Replace ONLY index.html.
+This package contains ONLY index.html.
 
-DO NOT replace:
-- app.tsx
-- styles.css
-- server.js
-- assets
-- kalasutra-login-flow.js
+Replace ONLY:
+  index.html
 
-This index:
-- keeps the current app.tsx and styles.css untouched
-- uses stable CDN builds
-- restores normal Babel React execution
-- loads the login animation AFTER the main app so it cannot block startup
-- keeps a visible error panel if the browser still reports a startup error
+Do NOT replace:
+  app.tsx
+  styles.css
+  server.js
+  assets
+  kalasutra-login-flow.js
 
-After committing index.html, wait for Render deployment and reload Safari.
+This version keeps the current app.tsx completely intact. It loads React and
+Babel first, fetches the existing app.tsx, compiles it normally with Babel,
+then starts the compiled React script. Razorpay and the login enhancement are
+non-blocking so they cannot prevent the main app from starting.
+
+After GitHub commit, wait for Render deployment and reload Safari.
