@@ -1,18 +1,19 @@
-KALASUTRA SAFE RESTORE
+KALASUTRA WORKING INDEX FIX
 
-This package intentionally contains ONLY index.html.
+Replace ONLY index.html.
 
-It restores the normal React + Babel execution path and adds cache-busting plus
-a visible JavaScript error panel.
+DO NOT replace:
+- app.tsx
+- styles.css
+- server.js
+- assets
+- kalasutra-login-flow.js
 
-DO NOT replace app.tsx or styles.css with this package.
-Your existing app.tsx, styles.css, backend and assets stay untouched.
+This index:
+- keeps the current app.tsx and styles.css untouched
+- uses stable CDN builds
+- restores normal Babel React execution
+- loads the login animation AFTER the main app so it cannot block startup
+- keeps a visible error panel if the browser still reports a startup error
 
-GitHub:
-1. Replace only index.html.
-2. Commit.
-3. Wait for Render deployment.
-4. Reload Safari.
-
-If the app still fails, screenshot the error panel. It will show the actual
-browser error without changing the existing application source.
+After committing index.html, wait for Render deployment and reload Safari.
