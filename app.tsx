@@ -1320,9 +1320,15 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
     { id: "buyerProfile", label: "Profile", icon: "profile" },
   ];
   return (
-    <div className="bottom-nav buyer-bottom-nav">
+    <div className="bottom-nav buyer-bottom-nav ks-buyer-nav-safe" style={{ zIndex: 1000, pointerEvents: "auto" }}>
       {items.map((it) => (
-        <button key={it.id} className={`nav-btn ${screen === it.id ? "active" : ""}`} onClick={() => go(it.id)}>
+        <button
+          type="button"
+          key={it.id}
+          className={`nav-btn ${screen === it.id ? "active" : ""}`}
+          style={{ pointerEvents: "auto", touchAction: "manipulation" }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); go(it.id); }}
+        >
           <span className="nav-icon-wrap"><Icon name={it.icon} />{it.id === "cart" && cartCount > 0 && <b className="nav-badge">{cartCount > 9 ? "9+" : cartCount}</b>}</span><span>{it.label}</span>
         </button>
       ))}
@@ -1334,33 +1340,13 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
 // BUYER: HOME / EXPLORE
 // ---------------------------------------------------------------------------
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }: any) {
- const safeUser = user || { id: "guest", name: "Harsh" };
- const safeWishlist = Array.isArray(wishlist) ? wishlist : [];
- const safeCartCount = Number(cartCount) || 0;
  const [products,setProducts]=useState<any[]>([]),[query,setQuery]=useState(""),[err,setErr]=useState<string|null>(null),[listening,setListening]=useState(false),[recentIds,setRecentIds]=useState<string[]>([]);
- const recentKey=`kalasutra_recent_products_${safeUser.id}`;
- const loadRecent=()=>{ try { setRecentIds(getRecentProductIds(safeUser.id)); } catch (_) { setRecentIds([]); } };
- useEffect(()=>{
-   let alive=true;
-   apiGet(`/products`).then((data)=>{
-     if(!alive) return;
-     const list=Array.isArray(data)?data:(Array.isArray(data?.products)?data.products:[]);
-     setProducts(list.filter(Boolean));
-     if(!Array.isArray(data) && !Array.isArray(data?.products)) setErr(null);
-   }).catch(e=>{ if(alive){ setProducts([]); setErr(e?.message || "Products could not be loaded right now."); }});
-   loadRecent();
-   const f=()=>loadRecent();
-   window.addEventListener("kalasutra:recent-product",f);
-   return()=>{alive=false;window.removeEventListener("kalasutra:recent-product",f)};
- },[safeUser.id]);
- const filtered=products.filter(p=>{
-   const hay=`${p?.title||""} ${p?.category||""} ${p?.craftInfo?.material||""} ${p?.craftInfo?.region||""}`.toLowerCase();
-   return !query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>hay.includes(w));
- });
- const recent=recentIds.map(id=>products.find(p=>String(p?.id)===String(id))).filter(Boolean).slice(0,4);
- const viewProduct=(id:string)=>{try{saveRecentProduct(safeUser.id,id);setRecentIds(getRecentProductIds(safeUser.id))}catch(_){} openProduct(id)};
+ const recentKey=`kalasutra_recent_products_${user.id}`,loadRecent=()=>setRecentIds(getRecentProductIds(user.id));
+ useEffect(()=>{apiGet(`/products`).then(setProducts).catch(e=>setErr(e.message));loadRecent();const f=()=>loadRecent();window.addEventListener("kalasutra:recent-product",f);return()=>window.removeEventListener("kalasutra:recent-product",f)},[user.id]);
+ const filtered=products.filter(p=>!query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>`${p.title} ${p.category} ${p.craftInfo?.material||""} ${p.craftInfo?.region||""}`.toLowerCase().includes(w))),recent=recentIds.map(id=>products.find(p=>String(p.id)===String(id))).filter(Boolean).slice(0,4);
+ const viewProduct=(id:string)=>{saveRecentProduct(user.id,id);setRecentIds(getRecentProductIds(user.id));openProduct(id)};
  async function voiceSearch(){const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR){setErr("Voice search is not supported in this browser.");return}const ok=await requestVoicePermission();if(!ok){setErr("Please allow microphone access for voice search.");return}const r=new SR();r.lang="hi-IN";r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>setListening(true);r.onend=()=>setListening(false);r.onerror=()=>{setListening(false);setErr("Voice search could not start. Please try again.")};r.onresult=(e:any)=>setQuery(e.results[0][0].transcript);try{r.start()}catch(_){}}
- return <><div className="buyer-hero-header"><div><div className="buyer-kicker">KALASUTRA MARKETPLACE</div><h2>Hello, {safeUser.name} <span className="hello-dot">✦</span></h2><div className="sub">Discover stories behind every handmade piece.</div></div><button className="buyer-wishlist-head" onClick={()=>go("wishlist")} aria-label="Saved pieces"><Icon name="heart"/>{safeWishlist.length>0&&<b>{safeWishlist.length}</b>}</button></div><div className="content buyer-content"><ErrorBanner message={err}/><div className="smart-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…"/><button className={listening?"voice-search listening":"voice-search"} onClick={voiceSearch}>🎙</button></div><div className="buyer-shortcuts"><button onClick={()=>go("wishlist")}><Icon name="heart"/> Saved {safeWishlist.length?`(${safeWishlist.length})`:""}</button><button onClick={()=>go("buyerReels")}><Icon name="reels"/> Maker Reels</button><button onClick={()=>go("cart")}><Icon name="cart"/> Cart {safeCartCount?`(${safeCartCount})`:""}</button></div><section className="explore-craft-section"><div className="explore-craft-head"><div><span className="field-label">EXPLORE BY CRAFT</span><h3>Find your kind of handmade</h3></div><button onClick={()=>setQuery("")}>View all</button></div><div className="craft-circle-row">{[["Pottery","🏺"],["Textiles","🧣"],["Woodwork","🐘"],["Metalwork","🪔"],["Basketry","🧺"],["Jewellery","💍"],["Home Decor","🪴"],["More","✦"]].map(([label,emoji])=><button key={label} className="craft-circle-card" onClick={()=>label==="More"?setQuery(""):setQuery(label)}><span className="craft-circle">{emoji}</span><strong>{label}</strong></button>)}</div></section><div className="section-row"><div className="section-title" style={{margin:0}}>{query?`Results for "${query}"`:"For you"}</div><span className="view-all" onClick={()=>go("buyerReels")}>Explore Reels →</span></div>{filtered.length===0?<div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>:<div className="grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>viewProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>{safeWishlist.includes(p.id)?"❤️":"🤍"}</button></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{Number(p?.price||0).toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={e=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️")}}>＋ Add to cart</button></div></div></div>)}</div>}{recent.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>viewProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}</div><div className="floating-cart-wrap">{safeCartCount>0&&<button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{safeCartCount} item{safeCartCount>1?"s":""}</small></span><b>›</b></button>}</div></>;
+ return <><div className="buyer-hero-header"><div><div className="buyer-kicker">KALASUTRA MARKETPLACE</div><h2>Hello, {user.name} <span className="hello-dot">✦</span></h2><div className="sub">Discover stories behind every handmade piece.</div></div><button className="buyer-wishlist-head" onClick={()=>go("wishlist")} aria-label="Saved pieces"><Icon name="heart"/>{wishlist.length>0&&<b>{wishlist.length}</b>}</button></div><div className="content buyer-content"><ErrorBanner message={err}/><div className="smart-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…"/><button className={listening?"voice-search listening":"voice-search"} onClick={voiceSearch}>🎙</button></div><div className="buyer-shortcuts"><button onClick={()=>go("wishlist")}><Icon name="heart"/> Saved {wishlist.length?`(${wishlist.length})`:""}</button><button onClick={()=>go("buyerReels")}><Icon name="reels"/> Maker Reels</button><button onClick={()=>go("cart")}><Icon name="cart"/> Cart {cartCount?`(${cartCount})`:""}</button></div><div className="section-row"><div className="section-title" style={{margin:0}}>{query?`Results for "${query}"`:"For you"}</div><span className="view-all" onClick={()=>go("buyerReels")}>Explore Reels →</span></div>{filtered.length===0?<div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>:<div className="grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>viewProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>{wishlist.includes(p.id)?"❤️":"🤍"}</button></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{p.price.toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={e=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️")}}>＋ Add to cart</button></div></div></div>)}</div>}{recent.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>viewProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}</div><div className="floating-cart-wrap">{cartCount>0&&<button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{cartCount} item{cartCount>1?"s":""}</small></span><b>›</b></button>}</div></>;
 }
 // ---------------------------------------------------------------------------
 // BUYER: PRODUCT DETAIL
@@ -2017,7 +2003,10 @@ function App() {
   const [showPermissions, setShowPermissions] = useState(false);
 
   useEffect(() => {
-    if (phase === 'app' && localStorage.getItem('kalasutra_permission_seen') !== '1') setShowPermissions(true);
+    const requested = new URLSearchParams(window.location.search).get('permissions') === '1';
+    if (phase === 'app' && requested && localStorage.getItem('kalasutra_permission_seen') !== '1') {
+      setShowPermissions(true);
+    }
   }, [phase]);
 
   function closePermissions() {
@@ -2139,12 +2128,12 @@ function App() {
       )}
 
       {navBar}
-      {!(isArtisan && screen === "dashboard") && !( !isArtisan && screen === "buyerHome") && <AITalker compact role={isArtisan ? "artisan" : "buyer"} go={setScreen} />}
+      {!(isArtisan && screen === "dashboard") && <AITalker compact role={isArtisan ? "artisan" : "buyer"} go={setScreen} />}
       {!(isArtisan && screen === "dashboard") && <div className={`mode-switch-wrap ${screen === 'profile' || screen === 'buyerProfile' ? 'profile-mode-switch' : ''}`}>
         <button className="mode-pill" onClick={switchRole}>⇄ Switch to {isArtisan ? "Buyer" : "Artisan"}</button>
       </div>}
       <Toast message={toast} />
-      {showPermissions && !( !isArtisan && screen === "buyerHome") && <PermissionCenter onClose={closePermissions} />}
+      {showPermissions && <PermissionCenter onClose={closePermissions} />}
     </div>
   );
 }

@@ -1757,3 +1757,34 @@ button, input, select, textarea { max-width:100%; }
 }
 .ks-runtime-card .btn-row{padding:0;background:transparent;}
 .ks-runtime-card .btn{margin-bottom:8px;}
+
+
+/* ================================================================
+   KALASUTRA — BUYER WORKING SAFETY PATCH
+   Additive only. Existing designs/features remain intact.
+================================================================ */
+.ks-buyer-nav-safe{
+  position:fixed !important;
+  z-index:1000 !important;
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
+}
+.ks-buyer-nav-safe .nav-btn{
+  pointer-events:auto !important;
+  touch-action:manipulation !important;
+}
+.screen-buyerHome,
+.screen-buyerReels,
+.screen-cart,
+.screen-orders,
+.screen-buyerProfile{
+  min-height:100dvh;
+}
+/* The automatic permission sheet must never cover Buyer navigation. */
+.screen-buyerHome .permission-overlay,
+.screen-buyerReels .permission-overlay,
+.screen-cart .permission-overlay,
+.screen-orders .permission-overlay,
+.screen-buyerProfile .permission-overlay{
+  display:none !important;
+}
