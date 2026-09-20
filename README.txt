@@ -1,17 +1,26 @@
-KalaSutra Buyer Reference Photo Fix — 20 Sep 2026
+KalaSutra — Buyer Craft Photo Add-on
 
-BASELINE:
-This package is based on the working Buyer Blank Fix version. Existing app functionality is preserved.
+This package is ADDITIVE. It keeps the existing app.tsx/styles.css functionality and adds the exact supplied buyer reference photos.
 
-FIX:
-The Buyer reference photos were present inside a nested /assets folder, but the deployment path being used was not serving those newly added nested files. The reference photos are now ALSO placed at the project root and Buyer Home references root-level paths. The original assets folder is retained as a compatibility backup.
+Included:
+- app.tsx — updated Buyer Home only
+- styles.css — additive Buyer reference-photo styling
+- assets/buyer-crafts/hero-pottery.jpg — supplied hero photo
+- assets/buyer-crafts/pottery.jpg
+- assets/buyer-crafts/textiles.jpg
+- assets/buyer-crafts/woodwork.jpg
+- assets/buyer-crafts/metalwork.jpg
+- assets/buyer-crafts/cane-bamboo.jpg
+- assets/buyer-crafts/jewellery.jpg
+- assets/buyer-crafts/home-decor.jpg
 
-INCLUDES:
-- working app.js + app.tsx
-- styles.css
-- login flow
-- Buyer reference photos at root + /assets backup
-- logo/avatar fallback assets
+Important:
+- No AI/generated image was used.
+- The supplied photos are used as-is; square craft cards use object-fit: contain so the artwork/text is not cropped.
+- The final supplied Craft Stories strip image was intentionally NOT added.
+- No existing Buyer/Artisan functionality was intentionally removed.
 
-IMPORTANT:
-Replace the files from this ZIP in the same place as the previous working deployment. Do not delete backend/API files or other existing project files.
+Upload/replace:
+- app.tsx -> public/app.tsx
+- styles.css -> public/styles.css
+- assets/buyer-crafts/* -> public/assets/buyer-crafts/*
