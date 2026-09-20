@@ -1930,43 +1930,89 @@ function BuyerNav({ screen, go, cartCount }) {
 // ---------------------------------------------------------------------------
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }) {
     const [products, setProducts] = useState([]), [query, setQuery] = useState(""), [err, setErr] = useState(null), [listening, setListening] = useState(false), [recentIds, setRecentIds] = useState([]);
-    const recentKey = `kalasutra_recent_products_${user.id}`;
-    const loadRecent = () => setRecentIds(getRecentProductIds(user.id));
+    const recentKey = `kalasutra_recent_products_${user.id}`, loadRecent = () => setRecentIds(getRecentProductIds(user.id));
     useEffect(() => { apiGet(`/products`).then(setProducts).catch(e => setErr(e.message)); loadRecent(); const f = () => loadRecent(); window.addEventListener("kalasutra:recent-product", f); return () => window.removeEventListener("kalasutra:recent-product", f); }, [user.id]);
-    const filtered = products.filter(p => !query.trim() || query.toLowerCase().split(" ").filter(Boolean).every(w => `${p.title} ${p.category} ${p.craftInfo?.material || ""} ${p.craftInfo?.region || ""}`.toLowerCase().includes(w)));
-    const recent = recentIds.map(id => products.find(p => String(p.id) === String(id))).filter(Boolean).slice(0, 4);
+    const filtered = products.filter(p => !query.trim() || query.toLowerCase().split(" ").filter(Boolean).every(w => `${p.title} ${p.category} ${p.craftInfo?.material || ""} ${p.craftInfo?.region || ""}`.toLowerCase().includes(w))), recent = recentIds.map(id => products.find(p => String(p.id) === String(id))).filter(Boolean).slice(0, 4);
     const viewProduct = (id) => { saveRecentProduct(user.id, id); setRecentIds(getRecentProductIds(user.id)); openProduct(id); };
-    async function voiceSearch() { const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SR) { setErr("Voice search is not supported in this browser."); return; } const ok = await requestVoicePermission(); if (!ok) { setErr("Please allow microphone access for voice search."); return; } const r = new SR(); r.lang = "hi-IN"; r.interimResults = false; r.maxAlternatives = 1; r.onstart = () => setListening(true); r.onend = () => setListening(false); r.onerror = () => { setListening(false); setErr("Voice search could not start. Please try again."); }; r.onresult = (ev) => setQuery(ev.results[0][0].transcript); try { r.start(); } catch (_) {} }
-    const craftItems = [["Pottery", "/explore-pottery.jpg"], ["Textiles", "/explore-textiles.jpg"], ["Woodwork", "/explore-woodwork.jpg"], ["Metalwork", "/explore-metalwork.jpg"], ["Cane & Bamboo", "/explore-cane.jpg"], ["Jewellery", "/explore-jewellery.jpg"], ["Home Decor", "/explore-home-decor.jpg"]];
-    const craftQuery = name => { setQuery(name); document.getElementById("buyer-explore-craft")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
-    const scrollToCraft = () => document.getElementById("buyer-explore-craft")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    const storyCards = ["Cane Lamps from Jaipur", "The Art of Pottery", "Block Printing Tradition", "Meet the Maker", "From Forest to Home", "Handcrafted Jewellery"];
-    const e = React.createElement;
-    const craftTiles = craftItems.map(([name, img]) => e("button", { className: "buyer-craft-tile", key: name, onClick: () => craftQuery(name) }, e("span", null, e("img", { src: img, alt: name })), e("b", null, name)));
-    craftTiles.push(e("button", { className: "buyer-craft-more", key: "more", onClick: () => setQuery("") }, e("span", null, "›"), e("b", null, "More")));
-    const storyTiles = storyCards.map((title, i) => e("button", { key: title, onClick: () => go("buyerReels") }, e("img", { src: `/craft-story-${i + 1}.jpg`, alt: "" }), e("span", { className: "play" }, "▶"), e("b", null, title)));
-    const productCards = filtered.map(p => e("div", { key: p.id, className: "card buyer-product-card", onClick: () => viewProduct(p.id) },
-        e("div", { className: "thumb", style: { backgroundImage: `url(${p.image})` } }, e(BadgeLabel, { status: p.verificationStatus }), e("button", { className: "card-icon-btn card-heart", onClick: ev => { ev.stopPropagation(); toggleWishlist(p.id); } }, wishlist.includes(p.id) ? "❤️" : "🤍")),
-        e("div", { className: "info" }, e("div", { className: "t" }, p.title), e("div", { className: "buyer-card-bottom" }, e("div", { className: "p" }, `₹${p.price.toLocaleString("en-IN")}`), e("button", { className: "quick-cart-btn", onClick: ev => { ev.stopPropagation(); addToCart(p.id); setToast("Added to cart 🛍️"); } }, "＋ Add to cart")))));
-    const recentSection = recent.length > 0 ? e("section", { className: "recent-viewed-section" },
-        e("div", { className: "recent-viewed-head" }, e("div", null, e("span", { className: "field-label" }, "YOUR BROWSING TRAIL"), e("h3", null, "Recently Viewed")), e("button", { onClick: () => { localStorage.removeItem(recentKey); setRecentIds([]); } }, "Clear")),
-        e("div", { className: "recent-viewed-grid" }, recent.map(p => e("button", { className: "recent-product-card", key: `recent-${p.id}`, onClick: () => viewProduct(p.id) }, e("div", { className: "recent-product-image", style: { backgroundImage: `url(${p.image})` } }, e(BadgeLabel, { status: p.verificationStatus })), e("div", { className: "recent-product-info" }, e("strong", null, p.title), e("span", null, `₹${Number(p.price || 0).toLocaleString("en-IN")}`)))))
-    ) : null;
-    return e(React.Fragment, null,
-        e("div", { className: "buyer-reference-home" },
-            e("div", { className: "buyer-ref-top" }, e("div", { className: "buyer-ref-brand" }, e("img", { src: "/buyer-logo.jpg", alt: "KalaSutra" }), e("div", { className: "buyer-ref-art" }, "Art", e("br"), "Lives", e("br"), "Here ♡")), e("div", { className: "buyer-ref-top-actions" }, e("button", { "aria-label": "Search", onClick: () => document.querySelector('.buyer-ref-search input')?.focus() }, e(Icon, { name: "search" })), e("button", { "aria-label": "Notifications", onClick: () => setToast("You're all caught up ♡") }, "♧"), e("button", { "aria-label": "Settings", onClick: () => go("buyerProfile") }, "⚙"))),
-            e("div", { className: "buyer-ref-hero" }, e("div", { className: "buyer-ref-copy" }, e("h1", null, "Hello, ", user.name, " ", e("span", null, "✦")), e("p", null, "Discover something made by hand,", e("br"), "made with a story."), e("button", { className: "buyer-ref-cta", onClick: scrollToCraft }, "Explore Handmade ", e("b", null, "→"))), e("div", { className: "buyer-ref-hero-image" }, e("img", { src: "/buyer-hero.jpg", alt: "Artisan making pottery" }), e("div", { className: "buyer-ref-hero-script" }, "People", e("br"), "Crafts", e("br"), "Stories", e("br"), "A Better Tomorrow ♡")), e("div", { className: "buyer-ref-quote" }, "“Handmade", e("br"), "things carry", e("br"), "pieces of", e("br"), "people’s hearts.”", e("span", null, "—"))),
-            e("div", { className: "buyer-ref-search" }, e(Icon, { name: "search" }), e("input", { value: query, onChange: ev => setQuery(ev.target.value), placeholder: "Search crafts, materials, makers…" }), e("button", { className: listening ? "listening" : "", onClick: voiceSearch }, "🎙")),
-            e("div", { className: "buyer-ref-shortcuts" }, e("button", { onClick: () => go("wishlist") }, e(Icon, { name: "heart" }), " Saved"), e("button", { onClick: () => go("buyerReels") }, e(Icon, { name: "reels" }), " Craft Stories"), e("button", { onClick: () => go("cart") }, e(Icon, { name: "cart" }), " Cart", cartCount ? ` (${cartCount})` : "")),
-            e("section", { id: "buyer-explore-craft", className: "buyer-ref-section buyer-explore-section" }, e("div", { className: "buyer-ref-section-head" }, e("h3", null, "EXPLORE BY CRAFT"), e("button", { onClick: () => setQuery("") }, "See all →")), e("div", { className: "buyer-craft-scroller" }, craftTiles)),
-            e("section", { className: "buyer-ref-story" }, e("div", { className: "buyer-ref-story-copy" }, e("span", { className: "buyer-ref-eyebrow" }, "TODAY’S CRAFT STORY"), e("h2", null, "From Jaipur, with hands", e("br"), "that have carried a", e("br"), "tradition forward."), e("p", null, "Meet Radha Devi, a cane craft artisan from Jaipur who turns simple materials into timeless pieces."), e("button", { onClick: () => go("buyerReels") }, "View Story →")), e("div", { className: "buyer-ref-story-image" }, e("img", { src: "/buyer-story.jpg", alt: "Artisan weaving cane" }), e("div", { className: "buyer-ref-story-quote" }, "“Every weave", e("br"), "tells a story", e("br"), "of resilience.”", e("br"), e("small", null, "— Radha Devi")), e("div", { className: "buyer-ref-verified" }, "● Verified Artisan"))),
-            e("section", { className: "buyer-ref-section buyer-craft-stories" }, e("div", { className: "buyer-ref-section-head" }, e("h3", null, "CRAFT STORIES ", e("small", null, "See how it’s made.")), e("button", { onClick: () => go("buyerReels") }, "Explore Reels →")), e("div", { className: "buyer-story-scroller" }, storyTiles)),
-            e("section", { className: "buyer-ref-section buyer-curated" }, e("div", { className: "buyer-ref-section-head" }, e("h3", null, "CURATED FOR YOU ", e("small", null, "Handpicked pieces from verified artisans.")), e("button", { onClick: () => setQuery("") }, "See all →")), e(ErrorBanner, { message: err }), filtered.length === 0 ? e("div", { className: "empty-note" }, "No pieces match your search — try a different craft, material, or region.") : e("div", { className: "grid buyer-reference-grid" }, productCards)),
-            e("section", { className: "buyer-why-handmade" }, e("div", null, e("span", null, "WHY BUY HANDMADE"), e("b", null, "More than products — a better tomorrow.")), e("div", null, e("i", null, "✓"), e("b", null, "Verified Handmade"), e("small", null, "Craft authenticity checked.")), e("div", null, e("i", null, "₹"), e("b", null, "Fair Price"), e("small", null, "Help makers earn fairly.")), e("div", null, e("i", null, "♟"), e("b", null, "Meet the Maker"), e("small", null, "Know the person behind your piece.")), e("div", null, e("i", null, "⌁"), e("b", null, "Craft Legacy"), e("small", null, "Every purchase keeps traditions alive."))),
-            recentSection
-        ),
-        e("div", { className: "floating-cart-wrap" }, cartCount > 0 && e("button", { className: "floating-cart", onClick: () => go("cart") }, e("span", { className: "mini-cart-icon" }, e(Icon, { name: "cart" })), e("span", null, e("strong", null, "View cart"), e("small", null, `${cartCount} item${cartCount > 1 ? "s" : ""}`)), e("b", null, "›")))
-    );
+    async function voiceSearch() { const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SR) {
+        setErr("Voice search is not supported in this browser.");
+        return;
+    } const ok = await requestVoicePermission(); if (!ok) {
+        setErr("Please allow microphone access for voice search.");
+        return;
+    } const r = new SR(); r.lang = "hi-IN"; r.interimResults = false; r.maxAlternatives = 1; r.onstart = () => setListening(true); r.onend = () => setListening(false); r.onerror = () => { setListening(false); setErr("Voice search could not start. Please try again."); }; r.onresult = (e) => setQuery(e.results[0][0].transcript); try {
+        r.start();
+    }
+    catch (_) { } }
+    return React.createElement(React.Fragment, null,
+        React.createElement("div", { className: "buyer-hero-header" },
+            React.createElement("div", null,
+                React.createElement("div", { className: "buyer-kicker" }, "KALASUTRA MARKETPLACE"),
+                React.createElement("h2", null,
+                    "Hello, ",
+                    user.name,
+                    " ",
+                    React.createElement("span", { className: "hello-dot" }, "\u2726")),
+                React.createElement("div", { className: "sub" }, "Discover stories behind every handmade piece.")),
+            React.createElement("button", { className: "buyer-wishlist-head", onClick: () => go("wishlist"), "aria-label": "Saved pieces" },
+                React.createElement(Icon, { name: "heart" }),
+                wishlist.length > 0 && React.createElement("b", null, wishlist.length))),
+        React.createElement("div", { className: "content buyer-content" },
+            React.createElement(ErrorBanner, { message: err }),
+            React.createElement("div", { className: "smart-search" },
+                React.createElement(Icon, { name: "search" }),
+                React.createElement("input", { value: query, onChange: e => setQuery(e.target.value), placeholder: "Search pottery, textiles, wood decor\u2026" }),
+                React.createElement("button", { className: listening ? "voice-search listening" : "voice-search", onClick: voiceSearch }, "\uD83C\uDF99")),
+            React.createElement("div", { className: "buyer-shortcuts" },
+                React.createElement("button", { onClick: () => go("wishlist") },
+                    React.createElement(Icon, { name: "heart" }),
+                    " Saved ",
+                    wishlist.length ? `(${wishlist.length})` : ""),
+                React.createElement("button", { onClick: () => go("buyerReels") },
+                    React.createElement(Icon, { name: "reels" }),
+                    " Maker Reels"),
+                React.createElement("button", { onClick: () => go("cart") },
+                    React.createElement(Icon, { name: "cart" }),
+                    " Cart ",
+                    cartCount ? `(${cartCount})` : "")),
+            React.createElement("div", { className: "section-row" },
+                React.createElement("div", { className: "section-title", style: { margin: 0 } }, query ? `Results for "${query}"` : "For you"),
+                React.createElement("span", { className: "view-all", onClick: () => go("buyerReels") }, "Explore Reels \u2192")),
+            filtered.length === 0 ? React.createElement("div", { className: "empty-note" }, "No pieces match your search \u2014 try a different craft, material, or region.") : React.createElement("div", { className: "grid" }, filtered.map(p => React.createElement("div", { key: p.id, className: "card buyer-product-card", onClick: () => viewProduct(p.id) },
+                React.createElement("div", { className: "thumb", style: { backgroundImage: `url(${p.image})` } },
+                    React.createElement(BadgeLabel, { status: p.verificationStatus }),
+                    React.createElement("button", { className: "card-icon-btn card-heart", onClick: e => { e.stopPropagation(); toggleWishlist(p.id); } }, wishlist.includes(p.id) ? "❤️" : "🤍")),
+                React.createElement("div", { className: "info" },
+                    React.createElement("div", { className: "t" }, p.title),
+                    React.createElement("div", { className: "buyer-card-bottom" },
+                        React.createElement("div", { className: "p" },
+                            "\u20B9",
+                            p.price.toLocaleString("en-IN")),
+                        React.createElement("button", { className: "quick-cart-btn", onClick: e => { e.stopPropagation(); addToCart(p.id); setToast("Added to cart 🛍️"); } }, "\uFF0B Add to cart")))))),
+            recent.length > 0 && React.createElement("section", { className: "recent-viewed-section" },
+                React.createElement("div", { className: "recent-viewed-head" },
+                    React.createElement("div", null,
+                        React.createElement("span", { className: "field-label" }, "YOUR BROWSING TRAIL"),
+                        React.createElement("h3", null, "Recently Viewed")),
+                    React.createElement("button", { onClick: () => { localStorage.removeItem(recentKey); setRecentIds([]); } }, "Clear")),
+                React.createElement("div", { className: "recent-viewed-grid" }, recent.map((p) => React.createElement("button", { className: "recent-product-card", key: `recent-${p.id}`, onClick: () => viewProduct(p.id) },
+                    React.createElement("div", { className: "recent-product-image", style: { backgroundImage: `url(${p.image})` } },
+                        React.createElement(BadgeLabel, { status: p.verificationStatus })),
+                    React.createElement("div", { className: "recent-product-info" },
+                        React.createElement("strong", null, p.title),
+                        React.createElement("span", null,
+                            "\u20B9",
+                            Number(p.price || 0).toLocaleString("en-IN")))))))),
+        React.createElement("div", { className: "floating-cart-wrap" }, cartCount > 0 && React.createElement("button", { className: "floating-cart", onClick: () => go("cart") },
+            React.createElement("span", { className: "mini-cart-icon" },
+                React.createElement(Icon, { name: "cart" })),
+            React.createElement("span", null,
+                React.createElement("strong", null, "View cart"),
+                React.createElement("small", null,
+                    cartCount,
+                    " item",
+                    cartCount > 1 ? "s" : "")),
+            React.createElement("b", null, "\u203A"))));
 }
 // ---------------------------------------------------------------------------
 // BUYER: PRODUCT DETAIL
