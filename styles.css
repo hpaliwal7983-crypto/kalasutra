@@ -1587,33 +1587,3 @@ button, input, select, textarea { max-width:100%; }
   .content { padding-left: 11px !important; padding-right: 11px !important; }
   .artisan-content { padding-left: 14px !important; padding-right: 14px !important; }
 }
-
-/* ================================================================
-   BUYER REFERENCE HOME — visual-only layer over the known-working app.
-   Existing routes/components remain untouched.
-   ================================================================ */
-.buyer-reference-page{flex:1;overflow-y:auto;overflow-x:hidden;background:#f7efe2;padding:0 0 104px;min-height:0}
-.buyer-reference-artboard{position:relative;width:100%;max-width:1024px;margin:0 auto;line-height:0}
-.buyer-reference-image{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
-.buyer-ref-hit{position:absolute;display:block;border:0;background:transparent;padding:0;margin:0;cursor:pointer;z-index:5}
-.buyer-ref-hit:focus-visible{outline:2px solid #7b3f2a;outline-offset:2px;border-radius:18px}
-.buyer-ref-switch{left:73%;top:6.8%;width:21%;height:3.8%}
-.buyer-ref-search-hit{position:absolute;left:9.3%;top:26.0%;width:64%;height:4.7%;z-index:7;display:flex;align-items:center;background:rgba(255,255,255,.96);border:1px solid rgba(70,50,40,.28);border-radius:999px;box-shadow:0 2px 8px rgba(50,35,25,.08);overflow:hidden;line-height:normal}
-.buyer-ref-search-hit .buyer-ref-search-icon{width:48px;display:grid;place-items:center;color:#5a3a2e}.buyer-ref-search-hit svg{width:21px;height:21px}
-.buyer-ref-search-hit input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;color:#3f3029;font-size:clamp(12px,1.65vw,17px);padding:0 4px;font-family:Archivo,sans-serif}
-.buyer-ref-search-hit input::placeholder{color:#8d8782;opacity:1}
-.buyer-ref-mic{width:48px;height:48px;min-width:48px;border:0;background:#2d2926;color:#fff;border-radius:50%;font-size:20px;display:grid;place-items:center;cursor:pointer;margin-right:1px}
-.buyer-ref-mic.listening{background:#7b3f2a;animation:buyerRefPulse 1s infinite}
-@keyframes buyerRefPulse{50%{transform:scale(1.06)}}
-.buyer-ref-saved{left:9.5%;top:31.3%;width:15.2%;height:4.0%}
-.buyer-ref-cart-shortcut{left:43.5%;top:31.3%;width:14.0%;height:4.0%}
-.buyer-ref-explore{left:9.2%;top:17.2%;width:28%;height:4.0%}
-.buyer-ref-craft{top:38.3%;width:8.8%;height:7.8%;border-radius:50%}
-.buyer-ref-craft-1{left:9.0%}.buyer-ref-craft-2{left:19.7%}.buyer-ref-craft-3{left:30.3%}.buyer-ref-craft-4{left:41.0%}.buyer-ref-craft-5{left:51.7%}.buyer-ref-craft-6{left:62.3%}.buyer-ref-craft-7{left:73.0%}
-.buyer-ref-more{left:84.2%;top:38.3%;width:8.5%;height:8.2%;border-radius:50%}
-.buyer-ref-story{left:10%;top:49.0%;width:17%;height:4.2%;border-radius:20px}
-.buyer-ref-products{position:absolute;left:0;right:0;top:72.0%;height:18.5%;z-index:6}
-.buyer-ref-product{top:0;height:82%;width:21.5%;border-radius:18px}.buyer-ref-product-1{left:9.4%}.buyer-ref-product-2{left:30.8%}.buyer-ref-product-3{left:51.8%}.buyer-ref-product-4{left:73.0%}
-.buyer-ref-add{height:4.8%;width:8.9%;top:14.4%;border-radius:12px}.buyer-ref-add-1{left:18.0%}.buyer-ref-add-2{left:39.0%}.buyer-ref-add-3{left:60.0%}.buyer-ref-add-4{left:81.0%}
-.buyer-ref-products button:hover{background:rgba(255,255,255,.04)}
-@media(max-width:700px){.buyer-reference-page{padding-bottom:112px}.buyer-ref-search-hit .buyer-ref-search-icon{width:39px}.buyer-ref-mic{width:40px;height:40px;min-width:40px;font-size:17px}.buyer-ref-products{top:72%;height:18.5%}}

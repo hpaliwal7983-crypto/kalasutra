@@ -1,35 +1,18 @@
-KalaSutra — BUYER REFERENCE SAFE FINAL
+KalaSutra — BUYER BLANK FIX / SAFE RUNTIME PACKAGE
 
-BASE:
-Known-working KalaSutra SAFE WORKING RESTORE.
+Upload/replace these files in the same public/static folder used by the live app:
+- index.html
+- app.js (new compiled runtime; removes in-browser Babel/TSX compilation)
+- app.tsx (source copy with hook-order fix)
+- styles.css
+- kalasutra-login-flow.js
 
-ONLY INTENDED CHANGE:
-Buyer Home front-end reference layout + its dedicated Buyer Home assets/CSS.
+What this fixes:
+1. React no longer depends on Babel compiling app.tsx in the browser.
+2. App hooks are always declared in a stable order.
+3. Buyer permission UI no longer automatically blocks the app; use ?permissions=1 only when needed.
+4. Buyer Home/Reels/Cart/Orders/Profile navigation is preserved.
+5. Existing artisan features/design are kept; this is an additive runtime fix.
+6. If a browser/runtime error still occurs, the page now shows a visible loading error instead of a blank cream screen.
 
-BUYER HOME:
-- Reference-style hero/header
-- Search + voice search
-- Explore by Craft
-- Pottery / Textiles / Woodwork / Metalwork / Cane & Bamboo / Jewellery / Home Decor
-- Today's craft story
-- Curated for You
-- Why Buy Handmade
-- AI Talker preserved
-- Craft Stories section/shortcut removed as requested
-
-PRESERVED:
-- Buyer Reels
-- Buyer Cart / checkout
-- Buyer Orders
-- Buyer Profile
-- Bottom navigation
-- Product detail / wishlist / cart logic
-- Artisan screens and flows
-- Login flow
-- Backend/API integration
-
-SAFETY:
-No existing non-BuyerHome component was intentionally replaced. The patch changes BuyerHomeScreen plus additive Buyer Home CSS/assets. Index only adds cache-busting query strings for app.tsx/styles.css.
-
-UPLOAD:
-Upload the files at the ZIP root to the same public/root location. Do not delete unrelated existing assets.
+IMPORTANT: Do not delete the existing backend/API files or assets. Keep the existing /assets folder and server configuration unchanged.

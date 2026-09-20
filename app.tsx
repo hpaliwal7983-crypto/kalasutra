@@ -1334,78 +1334,13 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
 // BUYER: HOME / EXPLORE
 // ---------------------------------------------------------------------------
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }: any) {
-  const [products, setProducts] = useState<any[]>([]);
-  const [query, setQuery] = useState("");
-  const [listening, setListening] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    apiGet(`/products`).then(setProducts).catch((e) => setErr(e.message));
-  }, []);
-
-  async function voiceSearch() {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { setToast("Voice search is not supported in this browser."); return; }
-    const ok = await requestVoicePermission();
-    if (!ok) { setToast("Please allow microphone access for voice search."); return; }
-    try {
-      const r = new SR();
-      r.lang = "hi-IN"; r.interimResults = false; r.maxAlternatives = 1;
-      r.onstart = () => setListening(true);
-      r.onend = () => setListening(false);
-      r.onerror = () => { setListening(false); setToast("Voice search could not start. Please try again."); };
-      r.onresult = (e: any) => setQuery(e.results?.[0]?.[0]?.transcript || "");
-      r.start();
-    } catch (_) { setListening(false); }
-  }
-
-  const craftButtons = ["Pottery", "Textiles", "Woodwork", "Metalwork", "Cane & Bamboo", "Jewellery", "Home Decor"];
-  const productFor = (i: number) => products[i] || products.find((p: any) => String(p.category || "").toLowerCase().includes(craftButtons[i]?.split(" ")[0].toLowerCase())) || null;
-
-  return (
-    <div className="buyer-reference-page">
-      <ErrorBanner message={err} />
-      <div className="buyer-reference-artboard">
-        <img className="buyer-reference-image" src="/assets/buyer-reference-no-craft.png" alt="KalaSutra handmade marketplace" />
-
-        <button className="buyer-ref-hit buyer-ref-switch" onClick={() => {
-          const el = document.querySelector('.mode-switch-wrap .mode-pill') as HTMLButtonElement | null;
-          el?.click();
-        }} aria-label="Switch to Artisan" />
-
-        <div className="buyer-ref-search-hit">
-          <span className="buyer-ref-search-icon"><Icon name="search" /></span>
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search crafts, materials, makers..." aria-label="Search crafts, materials, makers" />
-          <button className={listening ? "buyer-ref-mic listening" : "buyer-ref-mic"} onClick={voiceSearch} aria-label="Voice search">🎙</button>
-        </div>
-
-        <button className="buyer-ref-hit buyer-ref-saved" onClick={() => go("wishlist")} aria-label="Saved pieces" />
-        <button className="buyer-ref-hit buyer-ref-cart-shortcut" onClick={() => go("cart")} aria-label="Cart" />
-        <button className="buyer-ref-hit buyer-ref-explore" onClick={() => {
-          const el = document.querySelector('.buyer-ref-products');
-          el?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }} aria-label="Explore handmade" />
-
-        {craftButtons.map((craft, i) => (
-          <button key={craft} className={`buyer-ref-hit buyer-ref-craft buyer-ref-craft-${i + 1}`} onClick={() => setQuery(craft)} aria-label={`Explore ${craft}`} />
-        ))}
-        <button className="buyer-ref-hit buyer-ref-more" onClick={() => go("buyerReels")} aria-label="More crafts" />
-        <button className="buyer-ref-hit buyer-ref-story" onClick={() => go("buyerReels")} aria-label="View story" />
-
-        <div className="buyer-ref-products">
-          {[0, 1, 2, 3].map((i) => {
-            const p = productFor(i);
-            return (
-              <React.Fragment key={i}>
-                <button className={`buyer-ref-hit buyer-ref-product buyer-ref-product-${i + 1}`} onClick={() => p && openProduct(p.id)} aria-label={p ? `Open ${p.title}` : "Open product"} />
-                <button className={`buyer-ref-hit buyer-ref-add buyer-ref-add-${i + 1}`} onClick={(e) => { e.stopPropagation(); if (p) { addToCart(p.id); setToast("Added to cart 🛍️"); } }} aria-label="Add to cart" />
-              </React.Fragment>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
+ const [products,setProducts]=useState<any[]>([]),[query,setQuery]=useState(""),[err,setErr]=useState<string|null>(null),[listening,setListening]=useState(false),[recentIds,setRecentIds]=useState<string[]>([]);
+ const recentKey=`kalasutra_recent_products_${user.id}`,loadRecent=()=>setRecentIds(getRecentProductIds(user.id));
+ useEffect(()=>{apiGet(`/products`).then(setProducts).catch(e=>setErr(e.message));loadRecent();const f=()=>loadRecent();window.addEventListener("kalasutra:recent-product",f);return()=>window.removeEventListener("kalasutra:recent-product",f)},[user.id]);
+ const filtered=products.filter(p=>!query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>`${p.title} ${p.category} ${p.craftInfo?.material||""} ${p.craftInfo?.region||""}`.toLowerCase().includes(w))),recent=recentIds.map(id=>products.find(p=>String(p.id)===String(id))).filter(Boolean).slice(0,4);
+ const viewProduct=(id:string)=>{saveRecentProduct(user.id,id);setRecentIds(getRecentProductIds(user.id));openProduct(id)};
+ async function voiceSearch(){const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR){setErr("Voice search is not supported in this browser.");return}const ok=await requestVoicePermission();if(!ok){setErr("Please allow microphone access for voice search.");return}const r=new SR();r.lang="hi-IN";r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>setListening(true);r.onend=()=>setListening(false);r.onerror=()=>{setListening(false);setErr("Voice search could not start. Please try again.")};r.onresult=(e:any)=>setQuery(e.results[0][0].transcript);try{r.start()}catch(_){}}
+ return <><div className="buyer-hero-header"><div><div className="buyer-kicker">KALASUTRA MARKETPLACE</div><h2>Hello, {user.name} <span className="hello-dot">✦</span></h2><div className="sub">Discover stories behind every handmade piece.</div></div><button className="buyer-wishlist-head" onClick={()=>go("wishlist")} aria-label="Saved pieces"><Icon name="heart"/>{wishlist.length>0&&<b>{wishlist.length}</b>}</button></div><div className="content buyer-content"><ErrorBanner message={err}/><div className="smart-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search pottery, textiles, wood decor…"/><button className={listening?"voice-search listening":"voice-search"} onClick={voiceSearch}>🎙</button></div><div className="buyer-shortcuts"><button onClick={()=>go("wishlist")}><Icon name="heart"/> Saved {wishlist.length?`(${wishlist.length})`:""}</button><button onClick={()=>go("buyerReels")}><Icon name="reels"/> Maker Reels</button><button onClick={()=>go("cart")}><Icon name="cart"/> Cart {cartCount?`(${cartCount})`:""}</button></div><div className="section-row"><div className="section-title" style={{margin:0}}>{query?`Results for "${query}"`:"For you"}</div><span className="view-all" onClick={()=>go("buyerReels")}>Explore Reels →</span></div>{filtered.length===0?<div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>:<div className="grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>viewProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>{wishlist.includes(p.id)?"❤️":"🤍"}</button></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{p.price.toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={e=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️")}}>＋ Add to cart</button></div></div></div>)}</div>}{recent.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>viewProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}</div><div className="floating-cart-wrap">{cartCount>0&&<button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{cartCount} item{cartCount>1?"s":""}</small></span><b>›</b></button>}</div></>;
 }
 // ---------------------------------------------------------------------------
 // BUYER: PRODUCT DETAIL
@@ -2033,21 +1968,9 @@ function CertificateScreen({ certificateId }: { certificateId: string }) {
 // ROOT APP — simple state-based router (no react-router dependency needed)
 // ---------------------------------------------------------------------------
 function App() {
-  const certificateId = new URLSearchParams(window.location.search).get('certificate');
-  if (certificateId) return <CertificateScreen certificateId={certificateId} />;
-  // Phone browsers require HTTPS for location and microphone. If someone opens
-  // the LAN HTTP URL directly on a phone, automatically move them to the
-  // bundled secure server before requesting any permissions. Laptop localhost
-  // continues to work exactly as before.
-  useEffect(() => {
-    const host = window.location.hostname;
-    const isPhone = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isLanHttp = isPhone && window.location.protocol === 'http:' && !isLocalHost();
-    if (isLanHttp && host) {
-      window.location.replace(`https://${host}:3443${window.location.pathname}${window.location.search}${window.location.hash}`);
-    }
-  }, []);
-
+  // Keep ALL hooks unconditional and in the same order on every render.
+  // This is important because the certificate QR route can be opened directly
+  // and React must never see a different hook order between renders.
   const [phase, setPhase] = useState("splash"); // splash -> role -> login -> app
   const [user, setUser] = useState<any>(null);
   const [pendingName, setPendingName] = useState("");
@@ -2061,9 +1984,28 @@ function App() {
   const [lastVerifiedProductId, setLastVerifiedProductId] = useState<string | null>(null);
   const [showPermissions, setShowPermissions] = useState(false);
 
+  // Phone browsers require HTTPS for location and microphone. If someone opens
+  // the LAN HTTP URL directly on a phone, automatically move them to the
+  // bundled secure server before requesting any permissions. Laptop localhost
+  // continues to work exactly as before.
   useEffect(() => {
-    if (phase === 'app' && localStorage.getItem('kalasutra_permission_seen') !== '1') setShowPermissions(true);
+    const host = window.location.hostname;
+    const isPhone = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isLanHttp = isPhone && window.location.protocol === 'http:' && !isLocalHost();
+    if (isLanHttp && host) {
+      window.location.replace(`https://${host}:3443${window.location.pathname}${window.location.search}${window.location.hash}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Permissions are opt-in and never block the Buyer UI automatically.
+    // Add ?permissions=1 when you explicitly want the permission sheet.
+    const wantsPermissions = new URLSearchParams(window.location.search).get('permissions') === '1';
+    if (phase === 'app' && wantsPermissions && localStorage.getItem('kalasutra_permission_seen') !== '1') setShowPermissions(true);
   }, [phase]);
+
+  const certificateId = new URLSearchParams(window.location.search).get('certificate');
+  if (certificateId) return <CertificateScreen certificateId={certificateId} />;
 
   function closePermissions() {
     localStorage.setItem('kalasutra_permission_seen', '1');
