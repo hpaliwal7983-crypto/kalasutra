@@ -1320,15 +1320,9 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
     { id: "buyerProfile", label: "Profile", icon: "profile" },
   ];
   return (
-    <div className="bottom-nav buyer-bottom-nav ks-buyer-nav-safe" style={{ zIndex: 1000, pointerEvents: "auto" }}>
+    <div className="bottom-nav buyer-bottom-nav">
       {items.map((it) => (
-        <button
-          type="button"
-          key={it.id}
-          className={`nav-btn ${screen === it.id ? "active" : ""}`}
-          style={{ pointerEvents: "auto", touchAction: "manipulation" }}
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); go(it.id); }}
-        >
+        <button key={it.id} className={`nav-btn ${screen === it.id ? "active" : ""}`} onClick={() => go(it.id)}>
           <span className="nav-icon-wrap"><Icon name={it.icon} />{it.id === "cart" && cartCount > 0 && <b className="nav-badge">{cartCount > 9 ? "9+" : cartCount}</b>}</span><span>{it.label}</span>
         </button>
       ))}
@@ -1974,21 +1968,9 @@ function CertificateScreen({ certificateId }: { certificateId: string }) {
 // ROOT APP — simple state-based router (no react-router dependency needed)
 // ---------------------------------------------------------------------------
 function App() {
-  const certificateId = new URLSearchParams(window.location.search).get('certificate');
-  if (certificateId) return <CertificateScreen certificateId={certificateId} />;
-  // Phone browsers require HTTPS for location and microphone. If someone opens
-  // the LAN HTTP URL directly on a phone, automatically move them to the
-  // bundled secure server before requesting any permissions. Laptop localhost
-  // continues to work exactly as before.
-  useEffect(() => {
-    const host = window.location.hostname;
-    const isPhone = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const isLanHttp = isPhone && window.location.protocol === 'http:' && !isLocalHost();
-    if (isLanHttp && host) {
-      window.location.replace(`https://${host}:3443${window.location.pathname}${window.location.search}${window.location.hash}`);
-    }
-  }, []);
-
+  // Keep ALL hooks unconditional and in the same order on every render.
+  // This is important because the certificate QR route can be opened directly
+  // and React must never see a different hook order between renders.
   const [phase, setPhase] = useState("splash"); // splash -> role -> login -> app
   const [user, setUser] = useState<any>(null);
   const [pendingName, setPendingName] = useState("");
@@ -2002,12 +1984,28 @@ function App() {
   const [lastVerifiedProductId, setLastVerifiedProductId] = useState<string | null>(null);
   const [showPermissions, setShowPermissions] = useState(false);
 
+  // Phone browsers require HTTPS for location and microphone. If someone opens
+  // the LAN HTTP URL directly on a phone, automatically move them to the
+  // bundled secure server before requesting any permissions. Laptop localhost
+  // continues to work exactly as before.
   useEffect(() => {
-    const requested = new URLSearchParams(window.location.search).get('permissions') === '1';
-    if (phase === 'app' && requested && localStorage.getItem('kalasutra_permission_seen') !== '1') {
-      setShowPermissions(true);
+    const host = window.location.hostname;
+    const isPhone = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const isLanHttp = isPhone && window.location.protocol === 'http:' && !isLocalHost();
+    if (isLanHttp && host) {
+      window.location.replace(`https://${host}:3443${window.location.pathname}${window.location.search}${window.location.hash}`);
     }
+  }, []);
+
+  useEffect(() => {
+    // Permissions are opt-in and never block the Buyer UI automatically.
+    // Add ?permissions=1 when you explicitly want the permission sheet.
+    const wantsPermissions = new URLSearchParams(window.location.search).get('permissions') === '1';
+    if (phase === 'app' && wantsPermissions && localStorage.getItem('kalasutra_permission_seen') !== '1') setShowPermissions(true);
   }, [phase]);
+
+  const certificateId = new URLSearchParams(window.location.search).get('certificate');
+  if (certificateId) return <CertificateScreen certificateId={certificateId} />;
 
   function closePermissions() {
     localStorage.setItem('kalasutra_permission_seen', '1');

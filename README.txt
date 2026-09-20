@@ -1,28 +1,18 @@
-KALASUTRA — BUYER FINAL RESTORE
+KalaSutra — BUYER BLANK FIX / SAFE RUNTIME PACKAGE
 
-This package is the restore intended for the current KalaSutra app.
-
-REPLACE THESE THREE FILES TOGETHER:
-1. index.html
-2. app.tsx
-3. styles.css
-
-DO NOT delete or replace:
-- server.js
-- assets/
+Upload/replace these files in the same public/static folder used by the live app:
+- index.html
+- app.js (new compiled runtime; removes in-browser Babel/TSX compilation)
+- app.tsx (source copy with hook-order fix)
+- styles.css
 - kalasutra-login-flow.js
-- any backend files
 
-What was changed, and only what was changed:
-- Removed the automatic permission popup that was covering/intercepting Buyer clicks.
-  The permission center still exists and can be opened explicitly with ?permissions=1.
-- Made Buyer bottom navigation explicitly touch/click safe.
-- Kept the existing Buyer Home, Buyer Reels, Cart, Orders and Buyer Profile components.
-- Kept the existing Artisan components/features.
-- No Buyer component was replaced with a simplified/new design.
-- No diagnostic error overlay is included.
+What this fixes:
+1. React no longer depends on Babel compiling app.tsx in the browser.
+2. App hooks are always declared in a stable order.
+3. Buyer permission UI no longer automatically blocks the app; use ?permissions=1 only when needed.
+4. Buyer Home/Reels/Cart/Orders/Profile navigation is preserved.
+5. Existing artisan features/design are kept; this is an additive runtime fix.
+6. If a browser/runtime error still occurs, the page now shows a visible loading error instead of a blank cream screen.
 
-IMPORTANT:
-Upload/replace all THREE listed files in the same GitHub commit, then wait for
-Render to deploy. Do not mix this package with the earlier diagnostic/clean
-index.html files.
+IMPORTANT: Do not delete the existing backend/API files or assets. Keep the existing /assets folder and server configuration unchanged.
