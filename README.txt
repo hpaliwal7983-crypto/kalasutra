@@ -1,26 +1,25 @@
-KalaSutra — Buyer Craft Photo Add-on
+KalaSutra Buyer Home — Reference Repair
 
-This package is ADDITIVE. It keeps the existing app.tsx/styles.css functionality and adds the exact supplied buyer reference photos.
+This package is an ADDITIVE repair of the Buyer Home only.
 
-Included:
-- app.tsx — updated Buyer Home only
-- styles.css — additive Buyer reference-photo styling
-- assets/buyer-crafts/hero-pottery.jpg — supplied hero photo
-- assets/buyer-crafts/pottery.jpg
-- assets/buyer-crafts/textiles.jpg
-- assets/buyer-crafts/woodwork.jpg
-- assets/buyer-crafts/metalwork.jpg
-- assets/buyer-crafts/cane-bamboo.jpg
-- assets/buyer-crafts/jewellery.jpg
-- assets/buyer-crafts/home-decor.jpg
+Kept:
+- Existing Buyer Reels, Cart/checkout, Orders, Buyer Profile and bottom navigation.
+- Existing Artisan screens/features.
+- Existing AI Talker floating assistant.
+- Existing backend/API, product detail, wishlist, payments and permissions.
 
-Important:
-- No AI/generated image was used.
-- The supplied photos are used as-is; square craft cards use object-fit: contain so the artwork/text is not cropped.
-- The final supplied Craft Stories strip image was intentionally NOT added.
-- No existing Buyer/Artisan functionality was intentionally removed.
+Changed only on Buyer Home:
+- Rebuilt the Buyer Home to closely match the supplied KalaSutra reference image.
+- Uses the supplied/previously uploaded craft imagery; no new AI-generated images were added.
+- Explore by Craft is a clean horizontal/circular section.
+- Hero, search, shortcuts, Today's Craft Story, Curated For You and Why Buy Handmade are restored.
+- The separate CRAFT STORIES reel strip has been removed from Buyer Home as requested.
+- AI Talker remains enabled.
 
-Upload/replace:
-- app.tsx -> public/app.tsx
-- styles.css -> public/styles.css
-- assets/buyer-crafts/* -> public/assets/buyer-crafts/*
+Files to upload/replace:
+1. index.html
+2. app.tsx
+3. styles.css
+4. assets/buyer-home/*
+
+Do not delete existing assets such as assets/logo.png or assets/avatar-artisan.png.
