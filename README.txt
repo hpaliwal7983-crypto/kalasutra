@@ -1,9 +1,13 @@
-KalaSutra Buyer Reference FINAL
+KALASUTRA RENDER PUBLIC FIX
 
-This package keeps the existing KalaSutra app and adds the supplied Buyer Home reference as a visual layer only.
-- Existing routes/features remain in app.tsx.
-- Craft Stories row is not included in the Buyer Home reference image.
-- AI Talker remains a real React component above the Buyer Home.
-- Buyer navigation remains real React buttons.
-- Supplied image assets are included under assets/.
-- Use this package only as a replacement/update to the existing app files; do not delete your backend/server files.
+IMPORTANT:
+The Node server serves frontend files from the repository's /public folder.
+Upload/replace these files INSIDE public/:
+- public/index.html
+- public/app.tsx
+- public/styles.css
+- public/kalasutra-login-flow.js
+- public/assets/
+
+Do NOT put these frontend files only in repository root.
+Keep server/server.js and server/db.json unchanged.
