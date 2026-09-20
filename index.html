@@ -1,50 +1,43 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kala Sutra</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=20260920-ready">
-  <style>
-    #boot-error{display:none;position:fixed;inset:18px;z-index:999999;padding:18px;border-radius:16px;background:#fff4f0;color:#4b241b;font-family:Arial,sans-serif;white-space:pre-wrap;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.22)}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Kala Sutra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css?v=20260920-buyerfix">
 </head>
 <body>
-  <div id="root"></div>
-  <div id="boot-error"></div>
-
-  <script>
-    window.addEventListener('error', function(e){
-      var box=document.getElementById('boot-error');
-      if(!box)return;
-      box.style.display='block';
-      box.textContent='KALASUTRA START ERROR\n\n'+(e.message||'Unknown error')+'\n\nFile: '+(e.filename||'')+'\nLine: '+(e.lineno||'')+'\nColumn: '+(e.colno||'');
-    });
-    window.addEventListener('unhandledrejection', function(e){
-      var box=document.getElementById('boot-error');
-      if(!box)return;
-      box.style.display='block';
-      box.textContent='KALASUTRA PROMISE ERROR\n\n'+String(e.reason||'Unknown error');
-    });
-  </script>
-
-  <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <script src="/kalasutra-login-flow.js?v=20260920-ready"></script>
-  <script src="/app.js?v=20260920-ready"></script>
-
-  <script>
-    setTimeout(function(){
-      var root=document.getElementById('root');
-      var box=document.getElementById('boot-error');
-      if(root && root.children.length===0 && box && box.style.display!=='block'){
-        box.style.display='block';
-        box.textContent='KALASUTRA BOOT ERROR\n\nThe React app did not mount. Please refresh once.';
-      }
-    },5000);
-  </script>
+<div id="root"></div>
+<div id="ks-load-error" style="display:none;position:fixed;inset:0;z-index:999999;background:#e9dfc7;align-items:center;justify-content:center;padding:24px;font-family:Arial,sans-serif;color:#241c1b;text-align:center">
+  <div style="max-width:380px;background:#f4eeda;border:1px solid #b9a894;border-radius:22px;padding:24px;box-shadow:0 18px 45px rgba(36,28,27,.16)">
+    <div style="font-size:28px;margin-bottom:8px">KalaSutra</div>
+    <strong style="font-size:18px">App loading issue</strong>
+    <p id="ks-load-error-text" style="font-size:13px;line-height:1.5;color:#66584d">Please tap Reload once.</p>
+    <button onclick="location.reload()" style="border:0;border-radius:14px;padding:13px 20px;background:#5b2d20;color:#fff;font-weight:800">Reload KalaSutra</button>
+  </div>
+</div>
+<script>
+(function(){
+  window.addEventListener('error', function(e){
+    var box=document.getElementById('ks-load-error');
+    var msg=document.getElementById('ks-load-error-text');
+    if(box){box.style.display='flex';}
+    if(msg && e && e.message){msg.textContent='A loading error occurred: '+e.message;}
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var box=document.getElementById('ks-load-error');
+    var msg=document.getElementById('ks-load-error-text');
+    if(box){box.style.display='flex';}
+    if(msg){msg.textContent='A loading request failed. Please tap Reload once.';}
+  });
+})();
+</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="./kalasutra-login-flow.js?v=20260920-buyerfix"></script>
+<script src="/app.js?v=20260920-buyerfix"></script>
 </body>
 </html>
