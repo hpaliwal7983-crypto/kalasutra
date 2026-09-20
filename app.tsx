@@ -1333,15 +1333,24 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
 // ---------------------------------------------------------------------------
 // BUYER: HOME / EXPLORE
 // ---------------------------------------------------------------------------
+// Reference-matched Buyer Home. The supplied reference is used as a visual
+// artboard; all real React interactions remain layered on top of it.
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }: any) {
   const [products, setProducts] = useState<any[]>([]);
   const [query, setQuery] = useState("");
   const [listening, setListening] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [recentIds, setRecentIds] = useState<string[]>([]);
+  const recentKey = `kalasutra_recent_products_${user.id}`;
 
+  function loadRecent() { setRecentIds(getRecentProductIds(user.id)); }
   useEffect(() => {
     apiGet(`/products`).then(setProducts).catch((e) => setErr(e.message));
-  }, []);
+    loadRecent();
+    const refresh = () => loadRecent();
+    window.addEventListener("kalasutra:recent-product", refresh);
+    return () => window.removeEventListener("kalasutra:recent-product", refresh);
+  }, [user.id]);
 
   async function voiceSearch() {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1361,12 +1370,13 @@ function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cart
 
   const craftButtons = ["Pottery", "Textiles", "Woodwork", "Metalwork", "Cane & Bamboo", "Jewellery", "Home Decor"];
   const productFor = (i: number) => products[i] || products.find((p: any) => String(p.category || "").toLowerCase().includes(craftButtons[i]?.split(" ")[0].toLowerCase())) || null;
+  const viewProduct = (id: string) => { saveRecentProduct(user.id, id); loadRecent(); openProduct(id); };
 
   return (
     <div className="buyer-reference-page">
       <ErrorBanner message={err} />
       <div className="buyer-reference-artboard">
-        <img className="buyer-reference-image" src="/assets/buyer-reference-no-craft-v2.png" alt="KalaSutra handmade marketplace" />
+        <img className="buyer-reference-image" src="./assets/buyer-reference-no-craft.png" alt="KalaSutra handmade marketplace" />
 
         <button className="buyer-ref-hit buyer-ref-switch" onClick={() => {
           const el = document.querySelector('.mode-switch-wrap .mode-pill') as HTMLButtonElement | null;
@@ -1397,7 +1407,7 @@ function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cart
             const p = productFor(i);
             return (
               <React.Fragment key={i}>
-                <button className={`buyer-ref-hit buyer-ref-product buyer-ref-product-${i + 1}`} onClick={() => p && openProduct(p.id)} aria-label={p ? `Open ${p.title}` : "Open product"} />
+                <button className={`buyer-ref-hit buyer-ref-product buyer-ref-product-${i + 1}`} onClick={() => p && viewProduct(p.id)} aria-label={p ? `Open ${p.title}` : "Open product"} />
                 <button className={`buyer-ref-hit buyer-ref-add buyer-ref-add-${i + 1}`} onClick={(e) => { e.stopPropagation(); if (p) { addToCart(p.id); setToast("Added to cart 🛍️"); } }} aria-label="Add to cart" />
               </React.Fragment>
             );
@@ -1407,7 +1417,7 @@ function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cart
     </div>
   );
 }
-// ---------------------------------------------------------------------------
+
 // BUYER: PRODUCT DETAIL
 // ---------------------------------------------------------------------------
 function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWishlist, addToCart, userId }: any) {

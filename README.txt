@@ -1,17 +1,9 @@
-KalaSutra Buyer Front — REFERENCE UPDATE
+KalaSutra Buyer Reference FINAL
 
-This package is an additive update to the previously working blank-screen-fixed build.
-
-What was added:
-- Buyer Home front page redesigned to closely follow the supplied reference screenshot.
-- Explore by Craft section with the exact craft photos supplied in the conversation, cropped from the supplied references.
-- Pottery, Textiles, Woodwork, Metalwork, Cane & Bamboo, Jewellery, Home Decor + More.
-- Craft tiles are interactive and filter the existing buyer product grid without removing existing functionality.
-- Added Today’s Craft Story, Craft Stories, Curated for You and Why Buy Handmade visual sections.
-- Existing Buyer navigation, cart, wishlist, product detail, orders, reels, profile, AI Talker and Artisan functionality are preserved.
-
-UPLOAD:
-Replace the files/folders in the existing static/public app with this package.
-Do not delete backend/API files that are not included here.
-
-This ZIP is based on the last working blank-screen-fixed version.
+This package keeps the existing KalaSutra app and adds the supplied Buyer Home reference as a visual layer only.
+- Existing routes/features remain in app.tsx.
+- Craft Stories row is not included in the Buyer Home reference image.
+- AI Talker remains a real React component above the Buyer Home.
+- Buyer navigation remains real React buttons.
+- Supplied image assets are included under assets/.
+- Use this package only as a replacement/update to the existing app files; do not delete your backend/server files.
