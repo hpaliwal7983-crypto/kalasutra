@@ -2,42 +2,29 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kala Sutra</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/styles.css?v=20260920-buyerfix">
+<link rel="stylesheet" href="/styles.css?v=buyer-reference-safe-20260920">
 </head>
 <body>
 <div id="root"></div>
-<div id="ks-load-error" style="display:none;position:fixed;inset:0;z-index:999999;background:#e9dfc7;align-items:center;justify-content:center;padding:24px;font-family:Arial,sans-serif;color:#241c1b;text-align:center">
-  <div style="max-width:380px;background:#f4eeda;border:1px solid #b9a894;border-radius:22px;padding:24px;box-shadow:0 18px 45px rgba(36,28,27,.16)">
-    <div style="font-size:28px;margin-bottom:8px">KalaSutra</div>
-    <strong style="font-size:18px">App loading issue</strong>
-    <p id="ks-load-error-text" style="font-size:13px;line-height:1.5;color:#66584d">Please tap Reload once.</p>
-    <button onclick="location.reload()" style="border:0;border-radius:14px;padding:13px 20px;background:#5b2d20;color:#fff;font-weight:800">Reload KalaSutra</button>
-  </div>
-</div>
-<script>
-(function(){
-  window.addEventListener('error', function(e){
-    var box=document.getElementById('ks-load-error');
-    var msg=document.getElementById('ks-load-error-text');
-    if(box){box.style.display='flex';}
-    if(msg && e && e.message){msg.textContent='A loading error occurred: '+e.message;}
-  });
-  window.addEventListener('unhandledrejection', function(e){
-    var box=document.getElementById('ks-load-error');
-    var msg=document.getElementById('ks-load-error-text');
-    if(box){box.style.display='flex';}
-    if(msg){msg.textContent='A loading request failed. Please tap Reload once.';}
-  });
-})();
-</script>
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+
+<!--
+  KalaSutra runs React straight in the browser with no build step
+  (no npm install, no Vite/webpack). React, ReactDOM and Babel are
+  loaded from a public CDN here, and Babel compiles our TypeScript-
+  flavoured JSX (app.tsx) on the fly in the browser. This needs an
+  internet connection in the browser (same as the Google Fonts above)
+  but needs NOTHING installed on your computer besides Node.js to run
+  the backend server.
+-->
+<script crossorigin src="https://unpkg.com/react@18.3.1/umd/react.development.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-<script src="./kalasutra-login-flow.js?v=20260920-buyerfix"></script>
-<script src="/app.js?v=20260920-buyerfix"></script>
+
+<script type="text/babel" data-presets="react,typescript" src="/app.tsx?v=buyer-reference-safe-20260920"></script>
 </body>
 </html>

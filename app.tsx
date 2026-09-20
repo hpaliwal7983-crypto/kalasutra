@@ -1334,52 +1334,79 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
 // BUYER: HOME / EXPLORE
 // ---------------------------------------------------------------------------
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }: any) {
- const [products,setProducts]=useState<any[]>([]),[query,setQuery]=useState(""),[err,setErr]=useState<string|null>(null),[listening,setListening]=useState(false),[recentIds,setRecentIds]=useState<string[]>([]);
- const recentKey=`kalasutra_recent_products_${user.id}`,loadRecent=()=>setRecentIds(getRecentProductIds(user.id));
- useEffect(()=>{apiGet(`/products`).then(setProducts).catch(e=>setErr(e.message));loadRecent();const f=()=>loadRecent();window.addEventListener("kalasutra:recent-product",f);return()=>window.removeEventListener("kalasutra:recent-product",f)},[user.id]);
- const filtered=products.filter(p=>!query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>`${p.title} ${p.category} ${p.craftInfo?.material||""} ${p.craftInfo?.region||""}`.toLowerCase().includes(w))),recent=recentIds.map(id=>products.find(p=>String(p.id)===String(id))).filter(Boolean).slice(0,4);
- const viewProduct=(id:string)=>{saveRecentProduct(user.id,id);setRecentIds(getRecentProductIds(user.id));openProduct(id)};
- async function voiceSearch(){const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR){setErr("Voice search is not supported in this browser.");return}const ok=await requestVoicePermission();if(!ok){setErr("Please allow microphone access for voice search.");return}const r=new SR();r.lang="hi-IN";r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>setListening(true);r.onend=()=>setListening(false);r.onerror=()=>{setListening(false);setErr("Voice search could not start. Please try again.")};r.onresult=(e:any)=>setQuery(e.results[0][0].transcript);try{r.start()}catch(_) {}}
- const craftItems=[
-  ["Pottery","/assets/explore-pottery.jpg"],["Textiles","/assets/explore-textiles.jpg"],["Woodwork","/assets/explore-woodwork.jpg"],["Metalwork","/assets/explore-metalwork.jpg"],["Cane & Bamboo","/assets/explore-cane.jpg"],["Jewellery","/assets/explore-jewellery.jpg"],["Home Decor","/assets/explore-home-decor.jpg"]
- ];
- const craftQuery=(name:string)=>{setQuery(name);document.getElementById("buyer-explore-craft")?.scrollIntoView({behavior:"smooth",block:"start"});};
- const scrollToCraft=()=>document.getElementById("buyer-explore-craft")?.scrollIntoView({behavior:"smooth",block:"start"});
- const storyCards=["Cane Lamps from Jaipur","The Art of Pottery","Block Printing Tradition","Meet the Maker","From Forest to Home","Handcrafted Jewellery"];
- return <>
-  <div className="buyer-reference-home">
-   <div className="buyer-ref-top">
-    <div className="buyer-ref-brand"><img src="/assets/buyer-logo.jpg" alt="KalaSutra"/><div className="buyer-ref-art">Art<br/>Lives<br/>Here ♡</div></div>
-    <div className="buyer-ref-top-actions"><button aria-label="Search" onClick={()=>document.querySelector<HTMLInputElement>('.buyer-ref-search input')?.focus()}><Icon name="search"/></button><button aria-label="Notifications" onClick={()=>setToast("You're all caught up ♡")}>♧</button><button aria-label="Settings" onClick={()=>go("buyerProfile")}>⚙</button></div>
-   </div>
-   <div className="buyer-ref-hero">
-    <div className="buyer-ref-copy"><h1>Hello, {user.name} <span>✦</span></h1><p>Discover something made by hand,<br/>made with a story.</p><button className="buyer-ref-cta" onClick={scrollToCraft}>Explore Handmade <b>→</b></button></div>
-    <div className="buyer-ref-hero-image"><img src="/assets/buyer-hero.jpg" alt="Artisan making pottery"/><div className="buyer-ref-hero-script">People<br/>Crafts<br/>Stories<br/>A Better Tomorrow ♡</div></div>
-    <div className="buyer-ref-quote">“Handmade<br/>things carry<br/>pieces of<br/>people’s hearts.”<span>—</span></div>
-   </div>
-   <div className="buyer-ref-search" ref={el=>{if(el)el.classList.add('buyer-ref-search')}}>
-    <Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search crafts, materials, makers…"/><button className={listening?"listening":""} onClick={voiceSearch}>🎙</button>
-   </div>
-   <div className="buyer-ref-shortcuts"><button onClick={()=>go("wishlist")}><Icon name="heart"/> Saved</button><button onClick={()=>go("buyerReels")}><Icon name="reels"/> Craft Stories</button><button onClick={()=>go("cart")}><Icon name="cart"/> Cart{cartCount?` (${cartCount})`:""}</button></div>
-   <section id="buyer-explore-craft" className="buyer-ref-section buyer-explore-section">
-    <div className="buyer-ref-section-head"><h3>EXPLORE BY CRAFT</h3><button onClick={()=>setQuery("")}>See all →</button></div>
-    <div className="buyer-craft-scroller">{craftItems.map(([name,img])=><button className="buyer-craft-tile" key={name} onClick={()=>craftQuery(name)}><span><img src={img} alt={name}/></span><b>{name}</b></button>)}<button className="buyer-craft-more" onClick={()=>setQuery("")}><span>›</span><b>More</b></button></div>
-   </section>
-   <section className="buyer-ref-story">
-    <div className="buyer-ref-story-copy"><span className="buyer-ref-eyebrow">TODAY’S CRAFT STORY</span><h2>From Jaipur, with hands<br/>that have carried a<br/>tradition forward.</h2><p>Meet Radha Devi, a cane craft artisan from Jaipur who turns simple materials into timeless pieces.</p><button onClick={()=>go("buyerReels")}>View Story →</button></div>
-    <div className="buyer-ref-story-image"><img src="/assets/buyer-story.jpg" alt="Artisan weaving cane"/><div className="buyer-ref-story-quote">“Every weave<br/>tells a story<br/>of resilience.”<br/><small>— Radha Devi</small></div><div className="buyer-ref-verified">● Verified Artisan</div></div>
-   </section>
-   <section className="buyer-ref-section buyer-craft-stories"><div className="buyer-ref-section-head"><h3>CRAFT STORIES <small>See how it’s made.</small></h3><button onClick={()=>go("buyerReels")}>Explore Reels →</button></div><div className="buyer-story-scroller">{storyCards.map((title,i)=><button key={title} onClick={()=>go("buyerReels")}><img src={`/assets/craft-story-${i+1}.jpg`} alt=""/><span className="play">▶</span><b>{title}</b></button>)}</div></section>
-   <section className="buyer-ref-section buyer-curated"><div className="buyer-ref-section-head"><h3>CURATED FOR YOU <small>Handpicked pieces from verified artisans.</small></h3><button onClick={()=>setQuery("")}>See all →</button></div>
-    <ErrorBanner message={err}/>{filtered.length===0?<div className="empty-note">No pieces match your search — try a different craft, material, or region.</div>:<div className="grid buyer-reference-grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>viewProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={e=>{e.stopPropagation();toggleWishlist(p.id)}}>{wishlist.includes(p.id)?"❤️":"🤍"}</button></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{p.price.toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={e=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️")}}>＋ Add to cart</button></div></div></div>)}</div>}
-   </section>
-   <section className="buyer-why-handmade"><div><span>WHY BUY HANDMADE</span><b>More than products — a better tomorrow.</b></div><div><i>✓</i><b>Verified Handmade</b><small>Craft authenticity checked.</small></div><div><i>₹</i><b>Fair Price</b><small>Help makers earn fairly.</small></div><div><i>♟</i><b>Meet the Maker</b><small>Know the person behind your piece.</small></div><div><i>⌁</i><b>Craft Legacy</b><small>Every purchase keeps traditions alive.</small></div></section>
-   {recent.length>0&&<section className="recent-viewed-section"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={()=>{localStorage.removeItem(recentKey);setRecentIds([])}}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p:any)=><button className="recent-product-card" key={`recent-${p.id}`} onClick={()=>viewProduct(p.id)}><div className="recent-product-image" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price||0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}
-  </div>
-  <div className="floating-cart-wrap">{cartCount>0&&<button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{cartCount} item{cartCount>1?"s":""}</small></span><b>›</b></button>}</div>
- </>;
-}
+  const [products, setProducts] = useState<any[]>([]);
+  const [query, setQuery] = useState("");
+  const [listening, setListening] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
+  useEffect(() => {
+    apiGet(`/products`).then(setProducts).catch((e) => setErr(e.message));
+  }, []);
+
+  async function voiceSearch() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { setToast("Voice search is not supported in this browser."); return; }
+    const ok = await requestVoicePermission();
+    if (!ok) { setToast("Please allow microphone access for voice search."); return; }
+    try {
+      const r = new SR();
+      r.lang = "hi-IN"; r.interimResults = false; r.maxAlternatives = 1;
+      r.onstart = () => setListening(true);
+      r.onend = () => setListening(false);
+      r.onerror = () => { setListening(false); setToast("Voice search could not start. Please try again."); };
+      r.onresult = (e: any) => setQuery(e.results?.[0]?.[0]?.transcript || "");
+      r.start();
+    } catch (_) { setListening(false); }
+  }
+
+  const craftButtons = ["Pottery", "Textiles", "Woodwork", "Metalwork", "Cane & Bamboo", "Jewellery", "Home Decor"];
+  const productFor = (i: number) => products[i] || products.find((p: any) => String(p.category || "").toLowerCase().includes(craftButtons[i]?.split(" ")[0].toLowerCase())) || null;
+
+  return (
+    <div className="buyer-reference-page">
+      <ErrorBanner message={err} />
+      <div className="buyer-reference-artboard">
+        <img className="buyer-reference-image" src="/assets/buyer-reference-no-craft-v2.png" alt="KalaSutra handmade marketplace" />
+
+        <button className="buyer-ref-hit buyer-ref-switch" onClick={() => {
+          const el = document.querySelector('.mode-switch-wrap .mode-pill') as HTMLButtonElement | null;
+          el?.click();
+        }} aria-label="Switch to Artisan" />
+
+        <div className="buyer-ref-search-hit">
+          <span className="buyer-ref-search-icon"><Icon name="search" /></span>
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search crafts, materials, makers..." aria-label="Search crafts, materials, makers" />
+          <button className={listening ? "buyer-ref-mic listening" : "buyer-ref-mic"} onClick={voiceSearch} aria-label="Voice search">🎙</button>
+        </div>
+
+        <button className="buyer-ref-hit buyer-ref-saved" onClick={() => go("wishlist")} aria-label="Saved pieces" />
+        <button className="buyer-ref-hit buyer-ref-cart-shortcut" onClick={() => go("cart")} aria-label="Cart" />
+        <button className="buyer-ref-hit buyer-ref-explore" onClick={() => {
+          const el = document.querySelector('.buyer-ref-products');
+          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }} aria-label="Explore handmade" />
+
+        {craftButtons.map((craft, i) => (
+          <button key={craft} className={`buyer-ref-hit buyer-ref-craft buyer-ref-craft-${i + 1}`} onClick={() => setQuery(craft)} aria-label={`Explore ${craft}`} />
+        ))}
+        <button className="buyer-ref-hit buyer-ref-more" onClick={() => go("buyerReels")} aria-label="More crafts" />
+        <button className="buyer-ref-hit buyer-ref-story" onClick={() => go("buyerReels")} aria-label="View story" />
+
+        <div className="buyer-ref-products">
+          {[0, 1, 2, 3].map((i) => {
+            const p = productFor(i);
+            return (
+              <React.Fragment key={i}>
+                <button className={`buyer-ref-hit buyer-ref-product buyer-ref-product-${i + 1}`} onClick={() => p && openProduct(p.id)} aria-label={p ? `Open ${p.title}` : "Open product"} />
+                <button className={`buyer-ref-hit buyer-ref-add buyer-ref-add-${i + 1}`} onClick={(e) => { e.stopPropagation(); if (p) { addToCart(p.id); setToast("Added to cart 🛍️"); } }} aria-label="Add to cart" />
+              </React.Fragment>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 // ---------------------------------------------------------------------------
 // BUYER: PRODUCT DETAIL
 // ---------------------------------------------------------------------------
@@ -2006,22 +2033,8 @@ function CertificateScreen({ certificateId }: { certificateId: string }) {
 // ROOT APP — simple state-based router (no react-router dependency needed)
 // ---------------------------------------------------------------------------
 function App() {
-  // Keep ALL hooks unconditional and in the same order on every render.
-  // This is important because the certificate QR route can be opened directly
-  // and React must never see a different hook order between renders.
-  const [phase, setPhase] = useState("splash"); // splash -> role -> login -> app
-  const [user, setUser] = useState<any>(null);
-  const [pendingName, setPendingName] = useState("");
-  const [pendingRole, setPendingRole] = useState("buyer");
-  const [screen, setScreen] = useState("dashboard");
-  const [toast, setToastState] = useState<string | null>(null);
-  const [activeProductId, setActiveProductId] = useState<string | null>(null);
-  const [screenStack, setScreenStack] = useState<string[]>([]);
-  const [wishlist, setWishlist] = useState<string[]>([]);
-  const [cartCount, setCartCount] = useState(0);
-  const [lastVerifiedProductId, setLastVerifiedProductId] = useState<string | null>(null);
-  const [showPermissions, setShowPermissions] = useState(false);
-
+  const certificateId = new URLSearchParams(window.location.search).get('certificate');
+  if (certificateId) return <CertificateScreen certificateId={certificateId} />;
   // Phone browsers require HTTPS for location and microphone. If someone opens
   // the LAN HTTP URL directly on a phone, automatically move them to the
   // bundled secure server before requesting any permissions. Laptop localhost
@@ -2035,15 +2048,22 @@ function App() {
     }
   }, []);
 
-  useEffect(() => {
-    // Permissions are opt-in and never block the Buyer UI automatically.
-    // Add ?permissions=1 when you explicitly want the permission sheet.
-    const wantsPermissions = new URLSearchParams(window.location.search).get('permissions') === '1';
-    if (phase === 'app' && wantsPermissions && localStorage.getItem('kalasutra_permission_seen') !== '1') setShowPermissions(true);
-  }, [phase]);
+  const [phase, setPhase] = useState("splash"); // splash -> role -> login -> app
+  const [user, setUser] = useState<any>(null);
+  const [pendingName, setPendingName] = useState("");
+  const [pendingRole, setPendingRole] = useState("buyer");
+  const [screen, setScreen] = useState("dashboard");
+  const [toast, setToastState] = useState<string | null>(null);
+  const [activeProductId, setActiveProductId] = useState<string | null>(null);
+  const [screenStack, setScreenStack] = useState<string[]>([]);
+  const [wishlist, setWishlist] = useState<string[]>([]);
+  const [cartCount, setCartCount] = useState(0);
+  const [lastVerifiedProductId, setLastVerifiedProductId] = useState<string | null>(null);
+  const [showPermissions, setShowPermissions] = useState(false);
 
-  const certificateId = new URLSearchParams(window.location.search).get('certificate');
-  if (certificateId) return <CertificateScreen certificateId={certificateId} />;
+  useEffect(() => {
+    if (phase === 'app' && localStorage.getItem('kalasutra_permission_seen') !== '1') setShowPermissions(true);
+  }, [phase]);
 
   function closePermissions() {
     localStorage.setItem('kalasutra_permission_seen', '1');
