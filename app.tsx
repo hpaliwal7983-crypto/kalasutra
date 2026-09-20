@@ -1336,194 +1336,74 @@ function BuyerNav({ screen, go, cartCount }: { screen: string; go: (s: string) =
 function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount, addToCart, setToast }: any) {
   const [products, setProducts] = useState<any[]>([]);
   const [query, setQuery] = useState("");
-  const [err, setErr] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
-  const [recentIds, setRecentIds] = useState<string[]>([]);
-
-  const recentKey = `kalasutra_recent_products_${user.id}`;
-  const loadRecent = () => setRecentIds(getRecentProductIds(user.id));
+  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     apiGet(`/products`).then(setProducts).catch((e) => setErr(e.message));
-    loadRecent();
-    const f = () => loadRecent();
-    window.addEventListener("kalasutra:recent-product", f);
-    return () => window.removeEventListener("kalasutra:recent-product", f);
-  }, [user.id]);
-
-  const craftItems = [
-    { key: "Pottery", label: "Pottery", img: "/assets/buyer-home/craft-pottery.jpg" },
-    { key: "Textiles", label: "Textiles", img: "/assets/buyer-home/craft-textiles.jpg" },
-    { key: "Woodwork", label: "Woodwork", img: "/assets/buyer-home/craft-woodwork.jpg" },
-    { key: "Metalwork", label: "Metalwork", img: "/assets/buyer-home/craft-metalwork.jpg" },
-    { key: "Cane & Bamboo", label: "Cane & Bamboo", img: "/assets/buyer-home/craft-cane.jpg" },
-    { key: "Jewellery", label: "Jewellery", img: "/assets/buyer-home/craft-jewellery.jpg" },
-    { key: "Home Decor", label: "Home Decor", img: "/assets/buyer-home/craft-decor.jpg" },
-  ];
-
-  const curated = [
-    { title: "Handwoven Cane Dome Pendant Lamp", maker: "Radha Devi", place: "Jaipur, Rajasthan", price: 1499, img: "/assets/buyer-home/product-1.jpg" },
-    { title: "Terracotta Minimal Vase", maker: "Suresh Prajapat", place: "Jaipur, Rajasthan", price: 899, img: "/assets/buyer-home/product-2.jpg" },
-    { title: "Handcarved Wooden Serving Bowl", maker: "Mohan Lal", place: "Udaipur, Rajasthan", price: 1200, img: "/assets/buyer-home/product-3.jpg" },
-    { title: "Block Print Cushion Cover", maker: "Fatima Bano", place: "Sanganer, Rajasthan", price: 699, img: "/assets/buyer-home/product-4.jpg" },
-  ];
-
-  const filtered = products.filter((p) => {
-    if (!query.trim()) return true;
-    return query.toLowerCase().split(" ").filter(Boolean).every((w) =>
-      `${p.title} ${p.category} ${p.craftInfo?.material || ""} ${p.craftInfo?.region || ""}`.toLowerCase().includes(w)
-    );
-  });
-
-  const recent = recentIds.map((id) => products.find((p) => String(p.id) === String(id))).filter(Boolean).slice(0, 4);
-
-  function viewProduct(id: string) {
-    saveRecentProduct(user.id, id);
-    setRecentIds(getRecentProductIds(user.id));
-    openProduct(id);
-  }
+  }, []);
 
   async function voiceSearch() {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { setErr("Voice search is not supported in this browser."); return; }
+    if (!SR) { setToast("Voice search is not supported in this browser."); return; }
     const ok = await requestVoicePermission();
-    if (!ok) { setErr("Please allow microphone access for voice search."); return; }
-    const r = new SR();
-    r.lang = "hi-IN";
-    r.interimResults = false;
-    r.maxAlternatives = 1;
-    r.onstart = () => setListening(true);
-    r.onend = () => setListening(false);
-    r.onerror = () => { setListening(false); setErr("Voice search could not start. Please try again."); };
-    r.onresult = (e: any) => setQuery(e.results?.[0]?.[0]?.transcript || "");
-    try { r.start(); } catch (_) {}
+    if (!ok) { setToast("Please allow microphone access for voice search."); return; }
+    try {
+      const r = new SR();
+      r.lang = "hi-IN"; r.interimResults = false; r.maxAlternatives = 1;
+      r.onstart = () => setListening(true);
+      r.onend = () => setListening(false);
+      r.onerror = () => { setListening(false); setToast("Voice search could not start. Please try again."); };
+      r.onresult = (e: any) => setQuery(e.results?.[0]?.[0]?.transcript || "");
+      r.start();
+    } catch (_) { setListening(false); }
   }
 
-  function chooseCraft(name: string) {
-    setQuery(name === "Cane & Bamboo" ? "Cane" : name);
-    setTimeout(() => document.getElementById("buyer-curated")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
-  }
-
-  function curatedAction(index: number) {
-    const actual = products[index];
-    if (!actual) { setToast("This handcrafted piece is part of the curated showcase."); return; }
-    viewProduct(String(actual.id));
-  }
+  const craftButtons = ["Pottery", "Textiles", "Woodwork", "Metalwork", "Cane & Bamboo", "Jewellery", "Home Decor"];
+  const productFor = (i: number) => products[i] || products.find((p: any) => String(p.category || "").toLowerCase().includes(craftButtons[i]?.split(" ")[0].toLowerCase())) || null;
 
   return (
-    <div className="buyer-home-reference">
-      <div className="buyer-home-frame buyer-home-frame-left" />
-      <div className="buyer-home-frame buyer-home-frame-right" />
+    <div className="buyer-reference-page">
+      <ErrorBanner message={err} />
+      <div className="buyer-reference-artboard">
+        <img className="buyer-reference-image" src="/assets/buyer-reference-no-craft.png" alt="KalaSutra handmade marketplace" />
 
-      <header className="buyer-reference-header">
-        <div className="buyer-reference-brand-row">
-          <div className="buyer-reference-brand">
-            <img src="/assets/logo.png" alt="KalaSutra" />
-            <span>Art<br />Lives<br />Here ♡</span>
-          </div>
-          <div className="buyer-reference-tools">
-            <button aria-label="Search" onClick={() => document.getElementById("buyer-search")?.focus()}><Icon name="search" /></button>
-            <button aria-label="Notifications"><Icon name="bell" /></button>
-            <button aria-label="Settings" onClick={() => setToast("KalaSutra settings")}>⚙</button>
-          </div>
+        <button className="buyer-ref-hit buyer-ref-switch" onClick={() => {
+          const el = document.querySelector('.mode-switch-wrap .mode-pill') as HTMLButtonElement | null;
+          el?.click();
+        }} aria-label="Switch to Artisan" />
+
+        <div className="buyer-ref-search-hit">
+          <span className="buyer-ref-search-icon"><Icon name="search" /></span>
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search crafts, materials, makers..." aria-label="Search crafts, materials, makers" />
+          <button className={listening ? "buyer-ref-mic listening" : "buyer-ref-mic"} onClick={voiceSearch} aria-label="Voice search">🎙</button>
         </div>
 
-        <div className="buyer-reference-hero">
-          <div className="buyer-reference-copy">
-            <h1>Hello, {user.name || "Harsh"} <span>✦</span></h1>
-            <p>Discover something made by hand,<br />made with a story.</p>
-            <button onClick={() => document.getElementById("buyer-crafts")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Explore Handmade <b>→</b></button>
-          </div>
-          <div className="buyer-reference-hero-photo">
-            <img src="/assets/buyer-home/hero-photo.jpg" alt="Handmade pottery" />
-          </div>
-          <div className="buyer-reference-quote">“Handmade<br />things carry<br />pieces of<br />people’s hearts.”<i>—</i></div>
+        <button className="buyer-ref-hit buyer-ref-saved" onClick={() => go("wishlist")} aria-label="Saved pieces" />
+        <button className="buyer-ref-hit buyer-ref-cart-shortcut" onClick={() => go("cart")} aria-label="Cart" />
+        <button className="buyer-ref-hit buyer-ref-explore" onClick={() => {
+          const el = document.querySelector('.buyer-ref-products');
+          el?.scrollIntoView({ behavior: "smooth", block: "start" });
+        }} aria-label="Explore handmade" />
+
+        {craftButtons.map((craft, i) => (
+          <button key={craft} className={`buyer-ref-hit buyer-ref-craft buyer-ref-craft-${i + 1}`} onClick={() => setQuery(craft)} aria-label={`Explore ${craft}`} />
+        ))}
+        <button className="buyer-ref-hit buyer-ref-more" onClick={() => go("buyerReels")} aria-label="More crafts" />
+        <button className="buyer-ref-hit buyer-ref-story" onClick={() => go("buyerReels")} aria-label="View story" />
+
+        <div className="buyer-ref-products">
+          {[0, 1, 2, 3].map((i) => {
+            const p = productFor(i);
+            return (
+              <React.Fragment key={i}>
+                <button className={`buyer-ref-hit buyer-ref-product buyer-ref-product-${i + 1}`} onClick={() => p && openProduct(p.id)} aria-label={p ? `Open ${p.title}` : "Open product"} />
+                <button className={`buyer-ref-hit buyer-ref-add buyer-ref-add-${i + 1}`} onClick={(e) => { e.stopPropagation(); if (p) { addToCart(p.id); setToast("Added to cart 🛍️"); } }} aria-label="Add to cart" />
+              </React.Fragment>
+            );
+          })}
         </div>
-      </header>
-
-      <main className="buyer-reference-content">
-        <ErrorBanner message={err} />
-
-        <div className="buyer-reference-search-row">
-          <div className="buyer-reference-search" id="buyer-search-wrap">
-            <Icon name="search" />
-            <input id="buyer-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search crafts, materials, makers..." />
-            <button className={listening ? "listening" : ""} onClick={voiceSearch} aria-label="Voice search">🎙</button>
-          </div>
-          <div className="buyer-reference-ai-hint">Ask me to find<br />a craft ✨</div>
-        </div>
-
-        <div className="buyer-reference-shortcuts">
-          <button onClick={() => go("wishlist")}><Icon name="heart" /> Saved</button>
-          <button onClick={() => go("cart")}><Icon name="cart" /> Cart{cartCount ? ` (${cartCount})` : ""}</button>
-        </div>
-
-        <section className="buyer-craft-section" id="buyer-crafts">
-          <div className="buyer-section-head"><h2>EXPLORE BY CRAFT</h2><button onClick={() => setQuery("")}>See all →</button></div>
-          <div className="buyer-craft-scroller">
-            {craftItems.map((c) => (
-              <button className="buyer-craft-item" key={c.key} onClick={() => chooseCraft(c.key)}>
-                <span><img src={c.img} alt={c.label} /></span>
-                <b>{c.label}</b>
-              </button>
-            ))}
-            <button className="buyer-craft-item buyer-craft-more" onClick={() => setToast("More crafts are coming to KalaSutra ✦")}><span>›</span><b>More</b></button>
-          </div>
-        </section>
-
-        <section className="buyer-todays-story">
-          <div className="buyer-today-copy">
-            <span className="buyer-eyebrow">TODAY’S CRAFT STORY</span>
-            <h2>From Jaipur, with hands<br />that have carried a<br />tradition forward.</h2>
-            <p>Meet Radha Devi, a cane craft artisan from Jaipur<br />who turns simple materials into timeless pieces.</p>
-            <button onClick={() => setToast("Radha Devi's craft story opened ✦")}>View Story <b>→</b></button>
-          </div>
-          <div className="buyer-today-photo"><img src="/assets/buyer-home/todays-story.jpg" alt="Radha Devi crafting" /></div>
-          <div className="buyer-today-note"><em>“Every weave<br />tells a story<br />of resilience.”</em><b>— Radha Devi</b><span>⌖ Jaipur, Rajasthan</span><strong>✓ Verified Artisan</strong></div>
-        </section>
-
-        <section className="buyer-curated-section" id="buyer-curated">
-          <div className="buyer-section-head"><div><h2>CURATED FOR YOU</h2><span>Handpicked pieces from verified artisans.</span></div><button onClick={() => setToast("More curated pieces coming soon →")}>See all →</button></div>
-          <div className="buyer-curated-grid">
-            {curated.map((p, i) => (
-              <article className="buyer-reference-product" key={p.title} onClick={() => curatedAction(i)}>
-                <div className="buyer-reference-product-image">
-                  <img src={p.img} alt={p.title} />
-                  <span className="buyer-verified">● Verified Handmade</span>
-                  <button className="buyer-product-heart" onClick={(e) => { e.stopPropagation(); const actual = products[i]; if (actual) toggleWishlist(actual.id); else setToast("Saved for your handmade inspiration ♡"); }}>{products[i] && wishlist.includes(products[i].id) ? "♥" : "♡"}</button>
-                </div>
-                <div className="buyer-reference-product-info">
-                  <h3>{p.title}</h3><p>by {p.maker}</p><small>{p.place}</small>
-                  <div><strong>₹{p.price.toLocaleString("en-IN")}</strong><button onClick={(e) => { e.stopPropagation(); const actual = products[i]; if (actual) { addToCart(actual.id); setToast("Added to cart 🛍️"); } else setToast("This showcase piece is ready for your curated collection."); }}>＋ Add to cart</button></div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {query.trim() && (
-          <section className="buyer-search-results">
-            <div className="buyer-section-head"><h2>RESULTS FOR “{query}”</h2><button onClick={() => setQuery("")}>Clear</button></div>
-            {filtered.length === 0 ? <div className="buyer-search-empty">No pieces match this search yet — try another craft, material, or region.</div> : <div className="grid buyer-live-grid">{filtered.slice(0, 8).map((p) => (
-              <div key={p.id} className="card buyer-product-card" onClick={() => viewProduct(p.id)}><div className="thumb" style={{ backgroundImage: `url(${p.image})` }}><BadgeLabel status={p.verificationStatus} /></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div className="p">₹{Number(p.price).toLocaleString("en-IN")}</div><button className="quick-cart-btn" onClick={(e) => { e.stopPropagation(); addToCart(p.id); setToast("Added to cart 🛍️"); }}>＋ Add to cart</button></div></div></div>
-            ))}</div>}
-          </section>
-        )}
-
-        <section className="buyer-why-section">
-          <div><span className="buyer-eyebrow">WHY BUY HANDMADE?</span><h2>More than products — a better tomorrow.</h2></div>
-          <div className="buyer-why-grid">
-            <div><span>◈</span><b>Verified<br />Handmade</b><small>Craft authenticity checked.</small></div>
-            <div><span>₹</span><b>Fair Price</b><small>Help makers earn fairly.</small></div>
-            <div><span>♟</span><b>Meet the Maker</b><small>Know the person behind your piece.</small></div>
-            <div><span>◒</span><b>Craft Legacy</b><small>Every purchase keeps traditions alive.</small></div>
-          </div>
-        </section>
-
-        {recent.length > 0 && <section className="recent-viewed-section buyer-reference-recent"><div className="recent-viewed-head"><div><span className="field-label">YOUR BROWSING TRAIL</span><h3>Recently Viewed</h3></div><button onClick={() => { localStorage.removeItem(recentKey); setRecentIds([]); }}>Clear</button></div><div className="recent-viewed-grid">{recent.map((p: any) => <button className="recent-product-card" key={`recent-${p.id}`} onClick={() => viewProduct(p.id)}><div className="recent-product-image" style={{ backgroundImage: `url(${p.image})` }}><BadgeLabel status={p.verificationStatus} /></div><div className="recent-product-info"><strong>{p.title}</strong><span>₹{Number(p.price || 0).toLocaleString("en-IN")}</span></div></button>)}</div></section>}
-      </main>
-
-      {cartCount > 0 && <div className="floating-cart-wrap"><button className="floating-cart" onClick={() => go("cart")}><span className="mini-cart-icon"><Icon name="cart" /></span><span><strong>View cart</strong><small>{cartCount} item{cartCount > 1 ? "s" : ""}</small></span><b>›</b></button></div>}
+      </div>
     </div>
   );
 }
