@@ -1,13 +1,11 @@
-KALASUTRA RENDER PUBLIC FIX
+KALASUTRA PRE-REFERENCE RESTORE
 
-IMPORTANT:
-The Node server serves frontend files from the repository's /public folder.
-Upload/replace these files INSIDE public/:
-- public/index.html
-- public/app.tsx
-- public/styles.css
-- public/kalasutra-login-flow.js
-- public/assets/
+This package restores the earlier KalaSutra frontend source:
+- public/app.tsx = earlier 99,666-byte app(1).tsx base
+- public/styles.css = earlier 58,723-byte styles.css base
+- public/app.js = precompiled version of that base app
+- public/index.html = production loader using app.js
+- public/kalasutra-login-flow.js = earlier login animation helper
 
-Do NOT put these frontend files only in repository root.
-Keep server/server.js and server/db.json unchanged.
+Keep the existing public/assets folder. Do NOT delete or replace assets.
+Replace only the files listed above inside your existing public/ folder.
