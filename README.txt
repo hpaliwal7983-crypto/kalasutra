@@ -1,18 +1,17 @@
-KalaSutra — BUYER BLANK FIX / SAFE RUNTIME PACKAGE
+KalaSutra Buyer Front — REFERENCE UPDATE
 
-Upload/replace these files in the same public/static folder used by the live app:
-- index.html
-- app.js (new compiled runtime; removes in-browser Babel/TSX compilation)
-- app.tsx (source copy with hook-order fix)
-- styles.css
-- kalasutra-login-flow.js
+This package is an additive update to the previously working blank-screen-fixed build.
 
-What this fixes:
-1. React no longer depends on Babel compiling app.tsx in the browser.
-2. App hooks are always declared in a stable order.
-3. Buyer permission UI no longer automatically blocks the app; use ?permissions=1 only when needed.
-4. Buyer Home/Reels/Cart/Orders/Profile navigation is preserved.
-5. Existing artisan features/design are kept; this is an additive runtime fix.
-6. If a browser/runtime error still occurs, the page now shows a visible loading error instead of a blank cream screen.
+What was added:
+- Buyer Home front page redesigned to closely follow the supplied reference screenshot.
+- Explore by Craft section with the exact craft photos supplied in the conversation, cropped from the supplied references.
+- Pottery, Textiles, Woodwork, Metalwork, Cane & Bamboo, Jewellery, Home Decor + More.
+- Craft tiles are interactive and filter the existing buyer product grid without removing existing functionality.
+- Added Today’s Craft Story, Craft Stories, Curated for You and Why Buy Handmade visual sections.
+- Existing Buyer navigation, cart, wishlist, product detail, orders, reels, profile, AI Talker and Artisan functionality are preserved.
 
-IMPORTANT: Do not delete the existing backend/API files or assets. Keep the existing /assets folder and server configuration unchanged.
+UPLOAD:
+Replace the files/folders in the existing static/public app with this package.
+Do not delete backend/API files that are not included here.
+
+This ZIP is based on the last working blank-screen-fixed version.
