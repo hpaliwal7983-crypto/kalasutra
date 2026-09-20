@@ -1587,3 +1587,115 @@ button, input, select, textarea { max-width:100%; }
   .content { padding-left: 11px !important; padding-right: 11px !important; }
   .artisan-content { padding-left: 14px !important; padding-right: 14px !important; }
 }
+
+/* ================================================================
+   BUYER HOME — REFERENCE-MATCHED LAYOUT
+   Additive patch only. Existing Buyer/Artisan screens are untouched.
+================================================================ */
+.screen-buyerHome.app-shell{
+  width:min(100%,900px)!important;
+  max-width:900px!important;
+  background:#f7eddf!important;
+  border-radius:0 0 30px 30px;
+  overflow-x:hidden;
+}
+.screen-buyerHome .buyer-reference-home{
+  min-height:100dvh;
+  padding:0 18px 116px;
+  background:
+    radial-gradient(circle at 0 24%,rgba(181,145,106,.12),transparent 18%),
+    radial-gradient(circle at 100% 58%,rgba(181,145,106,.10),transparent 18%),
+    linear-gradient(180deg,#f8efdf 0%,#f5eadb 100%);
+  color:#3d2d25;
+  font-family:'Archivo',sans-serif;
+}
+.screen-buyerHome .buyer-ref-hero{
+  position:relative;
+  min-height:350px;
+  padding:20px 26px 0;
+  overflow:hidden;
+  border-radius:0 0 28px 28px;
+  background:linear-gradient(135deg,#fffaf3 0%,#f2dfc9 100%);
+}
+.screen-buyerHome .buyer-ref-hero:before,.screen-buyerHome .buyer-ref-hero:after{
+  content:"";position:absolute;pointer-events:none;opacity:.34;
+  border-radius:50%;border:1px solid #a87858;
+}
+.screen-buyerHome .buyer-ref-hero:before{width:180px;height:180px;left:-128px;top:80px;box-shadow:26px 48px 0 -22px #a87858,46px 84px 0 -28px #a87858;}
+.screen-buyerHome .buyer-ref-hero:after{width:230px;height:230px;right:-190px;bottom:-80px;box-shadow:-28px -46px 0 -20px #a87858;}
+.buyer-ref-topline{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:5;min-height:78px}
+.buyer-brand-block{display:flex;align-items:flex-start;gap:24px}
+.buyer-ref-logo{width:118px;height:auto;object-fit:contain;display:block}
+.buyer-ref-artline{font-family:'Fraunces',serif;font-style:italic;color:#a7684f;font-size:21px;line-height:1.02;transform:rotate(-7deg);margin-top:6px}
+.buyer-ref-actions{display:flex;gap:10px;align-items:center}
+.buyer-ref-actions button{width:39px;height:39px;border:0;border-radius:50%;background:rgba(255,250,243,.74);color:#3a3029;display:flex;align-items:center;justify-content:center;font-size:21px;cursor:pointer;box-shadow:0 3px 12px rgba(67,49,37,.07)}
+.buyer-ref-actions svg{width:22px;height:22px}
+.buyer-ref-hero-copy{display:grid;grid-template-columns:44% 56%;min-height:252px;position:relative;z-index:2;align-items:center}
+.buyer-ref-copy-left{padding:4px 0 28px;position:relative;z-index:3}
+.buyer-ref-copy-left h1{font-family:'Fraunces',serif;font-size:33px;line-height:1.05;margin:0 0 8px;color:#35261f;letter-spacing:-.6px}
+.buyer-ref-copy-left h1 span{color:#a64831;font-size:25px}
+.buyer-ref-copy-left p{font-family:'Fraunces',serif;font-size:18px;line-height:1.2;margin:0 0 17px;color:#5a4336}
+.buyer-ref-cta{border:0;border-radius:25px;background:#793d27;color:#fff8ef;font-weight:800;font-size:14px;padding:13px 22px;box-shadow:0 9px 20px rgba(100,52,35,.18);cursor:pointer}
+.buyer-ref-cta b{font-size:18px;margin-left:8px}
+.buyer-ref-hero-photo{height:260px;overflow:hidden;position:relative;align-self:end;border-radius:0 0 30px 0;margin-right:-26px}
+.buyer-ref-hero-photo img{width:100%;height:100%;object-fit:cover;object-position:center center;display:block;filter:saturate(.92)}
+.screen-buyerHome .mode-switch-wrap{top:108px!important;right:32px!important;z-index:90!important}
+.screen-buyerHome .mode-pill{background:rgba(255,252,247,.96)!important;border:1px solid #8e7c6b!important;color:#302923!important;padding:10px 16px!important;font-size:11px!important;box-shadow:0 5px 13px rgba(53,42,34,.09)}
+.buyer-ref-search-area{position:relative;z-index:10;margin:-3px 28px 0;padding:0 0 10px}
+.buyer-ref-search{height:56px;border:1px solid #c9b9aa;background:rgba(255,255,255,.94);border-radius:30px;display:flex;align-items:center;gap:10px;padding:0 9px 0 18px;box-shadow:0 8px 18px rgba(77,57,43,.09)}
+.buyer-ref-search>svg{width:21px;height:21px;color:#593e31;flex:none}
+.buyer-ref-search input{flex:1;border:0;outline:0;background:transparent;font-size:14px;color:#47382f;min-width:0}
+.buyer-ref-search input::placeholder{color:#92857a}
+.buyer-ref-mic{width:43px;height:43px;border:0;border-radius:50%;background:#3a3029;color:white;font-size:18px;cursor:pointer;flex:none}.buyer-ref-mic.listening{animation:micPulse 1s infinite}
+.buyer-ref-shortcuts{display:flex;gap:12px;margin-top:11px}
+.buyer-ref-shortcuts button{height:47px;border:1px solid #cdbcae;border-radius:24px;background:#fffaf4;color:#302821;padding:0 22px;display:flex;align-items:center;gap:9px;font-weight:700;font-size:12px;cursor:pointer;box-shadow:0 5px 12px rgba(72,52,39,.07)}
+.buyer-ref-shortcuts svg{width:20px;height:20px}
+.buyer-ref-section{padding:9px 28px 0}
+.buyer-ref-section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:11px;color:#693e2c}
+.buyer-ref-section-head>div{font-size:15px;font-weight:900;letter-spacing:2.3px}
+.buyer-ref-section-head small{font-size:11px;letter-spacing:0;font-weight:500;color:#6f6258;margin-left:8px}
+.buyer-ref-section-head button{border:0;background:transparent;color:#46372e;font-weight:600;font-size:11px;cursor:pointer;white-space:nowrap}
+.buyer-craft-scroller{display:flex;gap:14px;overflow-x:auto;scrollbar-width:none;padding:1px 0 9px}
+.buyer-craft-scroller::-webkit-scrollbar{display:none}
+.buyer-craft-item{border:0;background:transparent;min-width:91px;display:flex;flex-direction:column;align-items:center;gap:7px;color:#2e251f;cursor:pointer;padding:0}
+.buyer-craft-item>span{width:82px;height:82px;border-radius:50%;background:#efe3d3;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 10px rgba(74,52,38,.07)}
+.buyer-craft-item img{width:100%;height:100%;object-fit:cover}
+.buyer-craft-item b{font-size:10px;line-height:1.1;text-align:center;font-weight:700;max-width:90px}
+.buyer-more-craft>span{font-size:42px;color:#684837;border:1px solid #d4c2b1;background:#fdf7ee}
+.buyer-more-craft b{font-size:10px}
+.buyer-today-story{margin:8px 28px 15px;border:1px solid #dfcdbb;border-radius:21px;overflow:hidden;background:#fff2e8;display:grid;grid-template-columns:48% 52%;min-height:220px;box-shadow:0 8px 18px rgba(75,51,38,.06)}
+.buyer-today-copy{padding:17px 15px 15px 19px}
+.buyer-ref-eyebrow{font-size:11px;letter-spacing:2.5px;font-weight:900;color:#7a4835;margin-bottom:7px}
+.buyer-today-copy h2{font-family:'Fraunces',serif;font-size:22px;line-height:1.05;margin:0 0 8px;color:#382a23}
+.buyer-today-copy p{font-size:10.5px;line-height:1.35;color:#725e50;margin:0 0 10px}
+.buyer-today-copy button{border:0;border-radius:20px;background:#753b28;color:#fff;padding:9px 15px;font-weight:800;font-size:10px;cursor:pointer}
+.buyer-today-copy button b{font-size:15px;margin-left:5px}
+.buyer-today-photo{position:relative;min-height:220px;overflow:hidden}
+.buyer-today-photo>img{width:100%;height:100%;object-fit:cover;object-position:center;display:block}
+.buyer-story-quote{position:absolute;right:10px;top:13px;width:38%;font-family:'Fraunces',serif;font-size:13px;font-style:italic;line-height:1.12;color:#6b3f2e;background:rgba(255,245,236,.82);padding:10px;border-radius:12px}
+.buyer-story-quote small{display:block;font-family:'Archivo',sans-serif;font-size:8px;font-style:normal;margin-top:7px;line-height:1.35}.buyer-story-quote span{color:#8c5840}
+.buyer-verified-pill{position:absolute;right:11px;bottom:10px;background:#fff;color:#27754c;border-radius:18px;padding:8px 11px;font-size:8px;font-weight:800;box-shadow:0 5px 12px rgba(41,62,47,.15)}
+.buyer-curated{padding-top:2px}
+.buyer-curated-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.buyer-curated-card{background:#fffaf5;border:1px solid #d9c9bb;border-radius:14px;overflow:hidden;box-shadow:0 6px 14px rgba(68,48,37,.07);cursor:pointer;min-width:0}
+.buyer-curated-img{height:128px;position:relative;overflow:hidden;background:#eadbc9}.buyer-curated-img>img{width:100%;height:100%;object-fit:cover;display:block}.buyer-verified-tag{position:absolute;left:7px;top:7px;background:#eaf8ed;color:#187348;border-radius:13px;padding:5px 7px;font-size:7px;font-weight:800}.buyer-heart{position:absolute;right:7px;top:7px;width:31px;height:31px;border:0;border-radius:50%;background:#fff;color:#87412e;font-size:19px;cursor:pointer;box-shadow:0 3px 8px rgba(50,35,26,.12)}
+.buyer-curated-info{padding:8px 9px 9px}.buyer-curated-info h3{font-size:11px;line-height:1.15;margin:0 0 5px;min-height:26px;color:#322720}.buyer-curated-info p{font-size:8px;line-height:1.25;color:#716158;margin:0 0 8px;min-height:25px}.buyer-curated-info>div{display:flex;align-items:center;justify-content:space-between;gap:5px}.buyer-curated-info strong{font-family:'Fraunces',serif;color:#963e28;font-size:15px;white-space:nowrap}.buyer-curated-info>div>button{border:0;border-radius:13px;background:#2e6c4b;color:#fff;padding:7px 8px;font-size:7.5px;font-weight:800;white-space:nowrap;cursor:pointer}
+.buyer-why-handmade{margin:15px 28px 0;border:1px solid #e0cebc;border-radius:16px;background:rgba(255,247,238,.85);display:grid;grid-template-columns:25% 75%;overflow:hidden}
+.buyer-why-title{padding:16px 13px;display:flex;flex-direction:column;gap:6px;justify-content:center}.buyer-why-title b{font-size:14px;letter-spacing:2px;color:#6c3d2d}.buyer-why-title span{font-family:'Fraunces',serif;font-size:10px;color:#6e6055}
+.buyer-why-items{display:grid;grid-template-columns:repeat(4,1fr)}
+.buyer-why-items>div{padding:12px 8px;display:grid;grid-template-columns:31px 1fr;column-gap:6px;align-items:center;border-left:1px solid #ead9ca}.buyer-why-items i{grid-row:span 2;width:29px;height:29px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#f2e0d3;color:#925038;font-style:normal;font-weight:900}.buyer-why-items b{font-size:8.5px;line-height:1.15}.buyer-why-items small{font-size:7px;line-height:1.2;color:#77695f}
+.screen-buyerHome .buyer-bottom-nav{width:min(820px,calc(100% - 72px))!important;height:70px!important;bottom:max(13px,env(safe-area-inset-bottom))!important}
+.screen-buyerHome .ai-fab{right:calc((100vw - min(900px,100vw))/2 + 22px);bottom:96px}
+@media(max-width:760px){
+  .screen-buyerHome.app-shell{width:100%!important;max-width:none!important}
+  .screen-buyerHome .buyer-reference-home{padding-left:10px;padding-right:10px}
+  .screen-buyerHome .buyer-ref-hero{padding-left:16px;padding-right:16px}
+  .buyer-ref-hero-copy{grid-template-columns:46% 54%}.buyer-ref-copy-left h1{font-size:27px}.buyer-ref-copy-left p{font-size:15px}.buyer-ref-hero-photo{height:220px}
+  .buyer-ref-search-area,.buyer-ref-section{margin-left:16px;margin-right:16px;padding-left:0;padding-right:0}.buyer-today-story,.buyer-why-handmade{margin-left:16px;margin-right:16px}
+  .buyer-curated-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.buyer-curated-img{height:145px}.buyer-why-handmade{grid-template-columns:1fr}.buyer-why-items{grid-template-columns:repeat(2,1fr)}.buyer-why-title{padding-bottom:8px}.buyer-why-items>div:nth-child(odd){border-left:0}.buyer-why-items>div{border-top:1px solid #ead9ca}
+  .screen-buyerHome .buyer-bottom-nav{width:calc(100% - 22px)!important}.screen-buyerHome .ai-fab{right:18px}
+}
+@media(max-width:480px){
+  .screen-buyerHome .buyer-ref-hero{min-height:330px}.buyer-ref-logo{width:93px}.buyer-ref-artline{font-size:17px}.buyer-ref-actions{gap:5px}.buyer-ref-actions button{width:34px;height:34px}.buyer-ref-hero-copy{grid-template-columns:48% 52%;min-height:235px}.buyer-ref-copy-left h1{font-size:24px}.buyer-ref-copy-left p{font-size:13px}.buyer-ref-cta{font-size:11px;padding:10px 14px}.buyer-ref-hero-photo{height:205px;margin-right:-16px}.buyer-ref-search-area{margin-left:9px;margin-right:9px}.buyer-ref-search{height:50px}.buyer-ref-shortcuts{gap:7px}.buyer-ref-shortcuts button{padding:0 12px;height:43px;font-size:10px}.buyer-ref-section{margin-left:9px;margin-right:9px}.buyer-craft-item{min-width:76px}.buyer-craft-item>span{width:68px;height:68px}.buyer-craft-item b{font-size:9px}.buyer-today-story{margin-left:9px;margin-right:9px;grid-template-columns:1fr;min-height:0}.buyer-today-copy{padding:15px}.buyer-today-photo{height:180px;min-height:180px}.buyer-story-quote{width:44%;font-size:11px}.buyer-curated-grid{gap:7px}.buyer-curated-info{padding:7px}.buyer-curated-info h3{font-size:10px}.buyer-curated-info strong{font-size:13px}.buyer-curated-info>div>button{padding:6px 6px;font-size:7px}.buyer-curated-img{height:125px}.buyer-why-handmade{margin-left:9px;margin-right:9px}
+  .screen-buyerHome .mode-switch-wrap{top:86px!important;right:14px!important}.screen-buyerHome .mode-pill{padding:8px 10px!important;font-size:9px!important}
+}
