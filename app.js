@@ -871,6 +871,26 @@ function ArtisanDashboard({ user, go, setToast }) {
             React.createElement(AITalker, { embedded: true, role: "artisan", go: go }))));
 }
 // ---------------------------------------------------------------------------
+// CONSISTENT ARTISAN IDENTITY — shared visual across buyer/product/add/reel
+// ---------------------------------------------------------------------------
+function ArtisanIdentityChip({ artisan, user, compact = false, tone = "light" }) {
+    const id = artisan?.id || user?.id || "default";
+    let stored = null;
+    try { stored = localStorage.getItem(`kalasutra_avatar_${id}`); } catch (_) {}
+    const avatar = stored || artisan?.profile?.avatar || artisan?.profile?.photo || user?.profile?.avatar || user?.profile?.photo || "/assets/avatar-artisan.png";
+    const name = artisan?.name || user?.name || "KalaSutra Artisan";
+    const location = artisan?.profile?.location || user?.profile?.location || "Jaipur, Rajasthan";
+    return React.createElement("div", { className: `artisan-identity-chip ${compact ? "compact" : ""} ${tone}` },
+        React.createElement("img", { src: avatar, alt: name }),
+        React.createElement("div", { className: "artisan-identity-copy" },
+            React.createElement("strong", null, name),
+            React.createElement("span", null, location),
+            !compact && React.createElement("small", null, "✓ Verified Artisan")),
+        compact && React.createElement("span", { className: "artisan-identity-check" }, "✓")
+    );
+}
+
+// ---------------------------------------------------------------------------
 // ARTISAN: ADD PRODUCT  →  SCAN/VERIFY
 // ---------------------------------------------------------------------------
 function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
@@ -1054,6 +1074,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                 React.createElement("img", { src: "/assets/logo.png", className: "addpiece-logo", alt: "KalaSutra" }),
                 React.createElement("button", { className: "addpiece-switch", onClick: () => go("buyerHome") }, "Switch to Buyer")),
             React.createElement("div", { className: "addpiece-content" },
+                React.createElement(ArtisanIdentityChip, { user: user, tone: "addpiece-identity" }),
                 React.createElement(ErrorBanner, { message: err }),
                 step === "form" && React.createElement(React.Fragment, null,
                     React.createElement("section", { className: "addpiece-heading" },
@@ -1426,6 +1447,8 @@ function CreateReelScreen({ user, go, setToast, prefillProductId }) {
             React.createElement("button", { onClick: () => setCameraSettings(v => !v), title: "Camera settings" }, "\u2699"),
             React.createElement("button", { onClick: flipCamera, title: "Flip camera" }, "\u21BB"),
             React.createElement("button", { onClick: () => setToast('Draft saved locally') }, "Save Draft")),
+        React.createElement("div", { className: "reel-create-identity-wrap" },
+            React.createElement(ArtisanIdentityChip, { user: user, tone: "reel-identity" })),
         React.createElement("div", { className: "reel-create-layout" },
             React.createElement("section", { className: "reel-camera-panel" },
                 React.createElement("div", { className: "reel-viewfinder" },
@@ -1947,7 +1970,7 @@ function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cart
     const storyTiles = storyCards.map((title, i) => e("button", { key: title, onClick: () => go("buyerReels") }, e("img", { src: `/assets/craft-story-${i + 1}.jpg`, alt: "" }), e("span", { className: "play" }, "▶"), e("b", null, title)));
     const productCards = filtered.map(p => e("div", { key: p.id, className: "card buyer-product-card", onClick: () => viewProduct(p.id) },
         e("div", { className: "thumb", style: { backgroundImage: `url(${p.image})` } }, e(BadgeLabel, { status: p.verificationStatus }), e("button", { className: "card-icon-btn card-heart", onClick: ev => { ev.stopPropagation(); toggleWishlist(p.id); } }, wishlist.includes(p.id) ? "❤️" : "🤍")),
-        e("div", { className: "info" }, e("div", { className: "t" }, p.title), e("div", { className: "buyer-card-bottom" }, e("div", { className: "p" }, `₹${p.price.toLocaleString("en-IN")}`), e("button", { className: "quick-cart-btn", onClick: ev => { ev.stopPropagation(); addToCart(p.id); setToast("Added to cart 🛍️"); } }, "＋ Add to cart")))));
+        e("div", { className: "info" }, e("div", { className: "t" }, p.title), e("div", { className: "buyer-card-artisan" }, `by ${p.artisan?.name || "Verified artisan"}`), e("div", { className: "buyer-card-bottom" }, e("div", { className: "p" }, `₹${p.price.toLocaleString("en-IN")}`), e("button", { className: "quick-cart-btn", onClick: ev => { ev.stopPropagation(); addToCart(p.id); setToast("Added to cart 🛍️"); } }, "＋ Add to cart")))));
     const recentSection = recent.length > 0 ? e("section", { className: "recent-viewed-section" },
         e("div", { className: "recent-viewed-head" }, e("div", null, e("span", { className: "field-label" }, "YOUR BROWSING TRAIL"), e("h3", null, "Recently Viewed")), e("button", { onClick: () => { localStorage.removeItem(recentKey); setRecentIds([]); } }, "Clear")),
         e("div", { className: "recent-viewed-grid" }, recent.map(p => e("button", { className: "recent-product-card", key: `recent-${p.id}`, onClick: () => viewProduct(p.id) }, e("div", { className: "recent-product-image", style: { backgroundImage: `url(${p.image})` } }, e(BadgeLabel, { status: p.verificationStatus })), e("div", { className: "recent-product-info" }, e("strong", null, p.title), e("span", null, `₹${Number(p.price || 0).toLocaleString("en-IN")}`)))))
@@ -1959,7 +1982,7 @@ function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cart
             e("div", { className: "buyer-ref-search" }, e(Icon, { name: "search" }), e("input", { value: query, onChange: ev => setQuery(ev.target.value), placeholder: "Search crafts, materials, makers…" }), e("button", { className: listening ? "listening" : "", onClick: voiceSearch }, "🎙")),
             e("div", { className: "buyer-ref-shortcuts" }, e("button", { onClick: () => go("wishlist") }, e(Icon, { name: "heart" }), " Saved"), e("button", { onClick: () => go("buyerReels") }, e(Icon, { name: "reels" }), " Craft Stories"), e("button", { onClick: () => go("cart") }, e(Icon, { name: "cart" }), " Cart", cartCount ? ` (${cartCount})` : "")),
             e("section", { id: "buyer-explore-craft", className: "buyer-ref-section buyer-explore-section" }, e("div", { className: "buyer-ref-section-head" }, e("h3", null, "EXPLORE BY CRAFT"), e("button", { onClick: () => setQuery("") }, "See all →")), e("div", { className: "buyer-craft-scroller" }, craftTiles)),
-            e("section", { className: "buyer-ref-story" }, e("div", { className: "buyer-ref-story-copy" }, e("span", { className: "buyer-ref-eyebrow" }, "TODAY’S CRAFT STORY"), e("h2", null, "From Jaipur, with hands", e("br"), "that have carried a", e("br"), "tradition forward."), e("p", null, "Meet Radha Devi, a cane craft artisan from Jaipur who turns simple materials into timeless pieces."), e("button", { onClick: () => go("buyerReels") }, "View Story →")), e("div", { className: "buyer-ref-story-image" }, e("img", { src: "/assets/buyer-story.jpg", alt: "Artisan weaving cane" }), e("div", { className: "buyer-ref-story-quote" }, "“Every weave", e("br"), "tells a story", e("br"), "of resilience.”", e("br"), e("small", null, "— Radha Devi")), e("div", { className: "buyer-ref-verified" }, "● Verified Artisan"))),
+            e("section", { className: "buyer-ref-story" }, e("div", { className: "buyer-ref-story-copy" }, e("span", { className: "buyer-ref-eyebrow" }, "TODAY’S CRAFT STORY"), e("h2", null, "From Jaipur, with hands", e("br"), "that have carried a", e("br"), "tradition forward."), e("p", null, "Meet Radha Devi, a cane craft artisan from Jaipur who turns simple materials into timeless pieces."), e("div", { className: "buyer-story-artisan-row" }, e("img", { src: "/assets/avatar-artisan.png", alt: "Radha Devi" }), e("div", null, e("strong", null, "Radha Devi"), e("span", null, "Jaipur, Rajasthan · ✓ Verified Artisan"))), e("button", { onClick: () => go("buyerReels") }, "View Story →")), e("div", { className: "buyer-ref-story-image" }, e("img", { src: "/assets/buyer-story.jpg", alt: "Artisan weaving cane" }), e("div", { className: "buyer-ref-story-quote" }, "“Every weave", e("br"), "tells a story", e("br"), "of resilience.”", e("br"), e("small", null, "— Radha Devi")), e("div", { className: "buyer-ref-verified" }, "● Verified Artisan"))),
             e("section", { className: "buyer-ref-section buyer-craft-stories" }, e("div", { className: "buyer-ref-section-head" }, e("h3", null, "CRAFT STORIES ", e("small", null, "See how it’s made.")), e("button", { onClick: () => go("buyerReels") }, "Explore Reels →")), e("div", { className: "buyer-story-scroller" }, storyTiles)),
             e("section", { className: "buyer-ref-section buyer-curated" }, e("div", { className: "buyer-ref-section-head" }, e("h3", null, "CURATED FOR YOU ", e("small", null, "Handpicked pieces from verified artisans.")), e("button", { onClick: () => setQuery("") }, "See all →")), e(ErrorBanner, { message: err }), filtered.length === 0 ? e("div", { className: "empty-note" }, "No pieces match your search — try a different craft, material, or region.") : e("div", { className: "grid buyer-reference-grid" }, productCards)),
             e("section", { className: "buyer-why-handmade" }, e("div", null, e("span", null, "WHY BUY HANDMADE"), e("b", null, "More than products — a better tomorrow.")), e("div", null, e("i", null, "✓"), e("b", null, "Verified Handmade"), e("small", null, "Craft authenticity checked.")), e("div", null, e("i", null, "₹"), e("b", null, "Fair Price"), e("small", null, "Help makers earn fairly.")), e("div", null, e("i", null, "♟"), e("b", null, "Meet the Maker"), e("small", null, "Know the person behind your piece.")), e("div", null, e("i", null, "⌁"), e("b", null, "Craft Legacy"), e("small", null, "Every purchase keeps traditions alive."))),
@@ -2077,10 +2100,9 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
                             "Indian Hands \u2661")),
                     React.createElement("div", { className: "gallery-dots" }, gallery.slice(0, 5).map((_, i) => React.createElement("i", { key: i, className: gallery[i] === selectedImage ? "active" : "" }))),
                     React.createElement("div", { className: "story-card" },
-                        React.createElement("em", null, "\u201CEvery weave tells a story of tradition, creativity and a brighter tomorrow.\u201D"),
-                        React.createElement("b", null,
-                            "\u2013 ",
-                            product.artisan?.name || "KalaSutra artisan"),
+                        React.createElement("div", { className: "story-card-head" },
+                            React.createElement("em", null, "\u201CEvery weave tells a story of tradition, creativity and a brighter tomorrow.\u201D"),
+                            React.createElement(ArtisanIdentityChip, { artisan: product.artisan, compact: true, tone: "story-identity" })),
                         React.createElement("div", { className: "story-benefits" },
                             React.createElement("span", null,
                                 "\u2301",
@@ -2093,12 +2115,7 @@ function ProductDetailScreen({ productId, go, back, setToast, wishlist, toggleWi
                                 React.createElement("b", null, "Adds Warmth"))))),
                 React.createElement("section", { className: "product-info-panel" },
                     React.createElement("div", { className: "artisan-line" },
-                        React.createElement("div", { className: "mini-artisan" }, "\uD83E\uDDF5"),
-                        React.createElement("div", null,
-                            React.createElement("b", null, product.artisan?.name || "KalaSutra artisan"),
-                            React.createElement("span", null,
-                                "\u2316 ",
-                                product.artisan?.profile?.location || "India")),
+                        React.createElement(ArtisanIdentityChip, { artisan: product.artisan, compact: true, tone: "product-identity" }),
                         React.createElement("span", { className: "verified-pill" }, "\u2713 Verified Artisan")),
                     React.createElement("h1", null, product.title),
                     React.createElement("div", { className: "rating-line" },
@@ -2898,6 +2915,7 @@ function ReelsFeedScreen({ openProduct, setToast }) {
             React.createElement("div", { className: "reel-gradient" }),
             React.createElement("div", { className: "reel-overlay" },
                 React.createElement("div", { className: "reel-info" },
+                    React.createElement(ArtisanIdentityChip, { artisan: r.artisan, compact: true, tone: "reel-feed-identity" }),
                     React.createElement("strong", null,
                         "@",
                         r.artisan?.name?.toLowerCase().replace(/\s+/g, ".") || "artisan"),
