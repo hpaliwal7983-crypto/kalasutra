@@ -1960,7 +1960,15 @@ function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cart
     const recent = recentIds.map(id => products.find(p => String(p.id) === String(id))).filter(Boolean).slice(0, 4);
     const viewProduct = (id) => { saveRecentProduct(user.id, id); setRecentIds(getRecentProductIds(user.id)); openProduct(id); };
     async function voiceSearch() { const SR = window.SpeechRecognition || window.webkitSpeechRecognition; if (!SR) { setErr("Voice search is not supported in this browser."); return; } const ok = await requestVoicePermission(); if (!ok) { setErr("Please allow microphone access for voice search."); return; } const r = new SR(); r.lang = "hi-IN"; r.interimResults = false; r.maxAlternatives = 1; r.onstart = () => setListening(true); r.onend = () => setListening(false); r.onerror = () => { setListening(false); setErr("Voice search could not start. Please try again."); }; r.onresult = (ev) => setQuery(ev.results[0][0].transcript); try { r.start(); } catch (_) {} }
-    const craftItems = [["Pottery", "/assets/explore-pottery.jpg"], ["Textiles", "/assets/explore-textiles.jpg"], ["Woodwork", "/assets/explore-woodwork.jpg"], ["Metalwork", "/assets/explore-metalwork.jpg"], ["Cane & Bamboo", "/assets/explore-cane.jpg"], ["Jewellery", "/assets/explore-jewellery.jpg"], ["Home Decor", "/assets/explore-home-decor.jpg"]];
+    const craftItems = [
+  ["Pottery", "/explore-pottery.jpg"],
+  ["Textiles", "/explore-textiles.jpg"],
+  ["Woodwork", "/explore-woodwork.jpg"],
+  ["Metalwork", "/explore-metalwork.jpg"],
+  ["Cane & Bamboo", "/explore-cane.jpg"],
+  ["Jewellery", "/explore-jewellery.jpg"],
+  ["Home Decor", "/explore-home-decor.jpg"]
+];
     const craftQuery = name => { setQuery(name); document.getElementById("buyer-explore-craft")?.scrollIntoView({ behavior: "smooth", block: "start" }); };
     const scrollToCraft = () => document.getElementById("buyer-explore-craft")?.scrollIntoView({ behavior: "smooth", block: "start" });
     const storyCards = ["Cane Lamps from Jaipur", "The Art of Pottery", "Block Printing Tradition", "Meet the Maker", "From Forest to Home", "Handcrafted Jewellery"];
