@@ -1,614 +1,94 @@
-/**
- * KalaSutra backend — deliberately zero external dependencies.
- * Uses only Node's built-in "http" and "fs" modules so it runs with
- * nothing more than: node server/server.js
- *
- * Data is stored in server/db.json (a plain JSON file acting as our
- * demo database — easy to open and inspect in any text editor).
- */
 const http = require('http');
 const https = require('https');
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-// Load local .env automatically so Razorpay keys survive every restart.
-// This uses Node's built-in fs only; no dotenv package is required.
-function loadLocalEnv() {
-  const envPath = path.join(__dirname, '..', '.env');
-  try {
-    const text = fs.readFileSync(envPath, 'utf8');
-    for (const rawLine of text.split(/\r?\n/)) {
-      const line = rawLine.trim();
-      if (!line || line.startsWith('#')) continue;
-      const eq = line.indexOf('=');
-      if (eq < 1) continue;
-      const key = line.slice(0, eq).trim();
-      let value = line.slice(eq + 1).trim();
-      if ((value.startsWith('\"') && value.endsWith('\"')) || (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-      if (!process.env[key]) process.env[key] = value;
-    }
-  } catch (_) {
-    // .env is optional; the server can still run for COD/demo mode.
-  }
-}
-loadLocalEnv();
-
-const PORT = Number(process.env.PORT) || 3000;
-const HTTPS_PORT = 3443;
-const IS_HOSTED = Boolean(process.env.PORT || process.env.RENDER);
-const CERT_DIR = path.join(__dirname, 'certs');
+const PORT = Number(process.env.PORT || 3000);
+const ROOT = path.join(__dirname, '..');
 const DB_PATH = path.join(__dirname, 'db.json');
-const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
-// ---------- tiny JSON "database" helpers ----------
-function readDB() {
-  const data = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
-  let changed = false;
-  let max = 0;
-  for (const p of (data.products || [])) {
-    const m = String(p.uniqueProductId || '').match(/(\d{6})$/);
-    if (m) max = Math.max(max, Number(m[1]));
-  }
-  for (const [i, p] of (data.products || []).entries()) {
-    if (!p.uniqueProductId) { p.uniqueProductId = `KS-ART-${String(Math.max(i + 1, ++max)).padStart(6, '0')}`; changed = true; }
-    if (!Array.isArray(p.customizations)) { p.customizations = []; changed = true; }
-  }
-  if (!Array.isArray(data.customizations)) { data.customizations = []; changed = true; }
-  if (changed) fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
-  return data;
+function readDB(){ try{return JSON.parse(fs.readFileSync(DB_PATH,'utf8'));}catch(_){return {users:[],products:[],wishlist:[],cart:[],orders:[],reels:[],reviews:[],reviewQueue:[],_meta:{nextId:1}};} }
+function writeDB(db){fs.writeFileSync(DB_PATH,JSON.stringify(db,null,2));}
+function id(db,prefix){return `${prefix}${db._meta.nextId++}`;}
+function uniqueProductId(db){let n=(db._meta.nextProduct||1); db._meta.nextProduct=n+1; return `KS-ART-${String(n).padStart(6,'0')}`;}
+function json(res,status,data){const b=JSON.stringify(data);res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Access-Control-Allow-Origin':'*','Cache-Control':'no-store'});res.end(b);}
+function body(req){return new Promise((resolve,reject)=>{let a=[],n=0;req.on('data',c=>{n+=c.length;if(n>30*1024*1024){reject(new Error('Upload too large (30MB demo limit)'));req.destroy();return;}a.push(c)});req.on('end',()=>{try{resolve(a.length?JSON.parse(Buffer.concat(a).toString()):{})}catch(e){reject(new Error('Invalid JSON'))}});req.on('error',reject)});}
+function sendFile(res,file){fs.readFile(file,(e,d)=>{if(e){res.writeHead(404);res.end('Not found');return;}const ext=path.extname(file).toLowerCase();const types={'.html':'text/html','.css':'text/css','.tsx':'text/plain','.js':'text/javascript','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.mp4':'video/mp4','.webm':'video/webm'};res.writeHead(200,{'Content-Type':types[ext]||'application/octet-stream'});res.end(d);});}
+function staticFile(req,res){let u=decodeURIComponent(req.url.split('?')[0]);if(u==='/'||u==='')return sendFile(res,path.join(ROOT,'index.html'));let rel=u.replace(/^\/+/, '');if(rel.includes('..')){res.writeHead(403);return res.end('Forbidden');}let file=path.join(ROOT,rel);if(fs.existsSync(file)&&fs.statSync(file).isFile())return sendFile(res,file);file=path.join(ROOT,'public',rel.replace(/^public\//,''));if(fs.existsSync(file)&&fs.statSync(file).isFile())return sendFile(res,file);res.writeHead(404);res.end('Not found');}
+function verifyProduct(product){
+  const proof=!!product.craftInfo?.verificationProof;
+  const owned=product.craftInfo?.ownershipDeclared!==false;
+  const gallery=Array.isArray(product.gallery)?product.gallery.length:0;
+  const duplicate=!!product.duplicateFlag;
+  const processMatch=proof?Math.min(99,88+Math.floor(Math.random()*11)):55;
+  let risk=0; if(!proof)risk+=35; if(!owned)risk+=35; if(gallery<2)risk+=12; if(duplicate)risk+=45;
+  risk=Math.min(100,risk+Math.floor(Math.random()*7));
+  const confidence=Math.max(.55,Math.min(.99,1-risk/140));
+  const status=risk>=60?'needs_review':'verified';
+  return {status,confidence,notes:[gallery>=2?'Multiple photos supplied':'Add more photos','Making-process proof checked','Ownership declaration recorded'],trustScore:Math.max(60,Math.round(100-risk*.45)),riskScore:risk,productProcessMatch:processMatch,isDemo:true,duplicateFlag:duplicate};
 }
-function writeDB(data) {
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
-}
-function newId(db, prefix) {
-  const id = `${prefix}${db._meta.nextId}`;
-  db._meta.nextId += 1;
-  return id;
-}
-
-// ---------- demo verification logic ----------
-// NOTE: This is clearly a DEMO stand-in for a real computer-vision
-// verification model. It simulates the 4-layer KalaSutra Anti-Fake
-// protocol using simple weighted randomness so the demo is stable
-// and never crashes, while still feeling realistic (mostly verified,
-// sometimes needs review, rarely rejected).
-function runDemoVerification() {
-  const r = Math.random();
-  let status, confidence, notes;
-  if (r < 0.65) {
-    status = 'verified';
-    confidence = Math.round((0.85 + Math.random() * 0.14) * 100) / 100;
-    notes = ['No industrial symmetry detected', 'No matches found in global databases', 'Not required for this listing'];
-  } else if (r < 0.9) {
-    status = 'needs_review';
-    confidence = Math.round((0.55 + Math.random() * 0.2) * 100) / 100;
-    notes = ['No industrial symmetry detected', 'No matches found in global databases', 'Additional making-process proof requested'];
-  } else {
-    status = 'rejected';
-    confidence = Math.round((0.1 + Math.random() * 0.2) * 100) / 100;
-    notes = ['Clinical symmetry detected — likely machine-made', 'No matches found in global databases', 'Not eligible without manual appeal'];
-  }
-  return { status, confidence, notes, isDemo: true };
-}
-
-// ---------- request helpers ----------
-function sendJSON(res, statusCode, payload) {
-  const body = JSON.stringify(payload);
-  res.writeHead(statusCode, {
-    'Content-Type': 'application/json',
-    'Content-Length': Buffer.byteLength(body),
-    'Access-Control-Allow-Origin': '*',
-  });
-  res.end(body);
-}
-function readBody(req) {
-  return new Promise((resolve, reject) => {
-    let chunks = [];
-    let size = 0;
-    req.on('data', (c) => {
-      size += c.length;
-      // Guard against runaway uploads (e.g. a huge base64 video) crashing the demo server.
-      if (size > 25 * 1024 * 1024) {
-        reject(new Error('Upload too large for this demo (25MB limit)'));
-        req.destroy();
-        return;
-      }
-      chunks.push(c);
-    });
-    req.on('end', () => {
-      if (chunks.length === 0) return resolve({});
-      try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString('utf8')));
-      } catch (e) {
-        reject(new Error('Invalid JSON in request body'));
-      }
-    });
-    req.on('error', reject);
-  });
+async function api(req,res,url){
+  const parts=url.pathname.split('/').filter(Boolean); const resource=parts[1]; const itemId=parts[2]; const db=readDB();
+  try{
+    if(resource==='ai' && parts[2]==='chat' && req.method==='POST'){
+      const b=await body(req);
+      const key=process.env.OPENAI_API_KEY;
+      if(!key) return json(res,503,{error:'OPENAI_API_KEY is not configured on the server'});
+      const messages=Array.isArray(b.messages)?b.messages.slice(-10):[];
+      const system=`You are Karigar AI, the warm conversational copilot inside KalaSutra, an Indian artisan marketplace. You are clearly an AI, but speak naturally like a helpful friend. Reply in the user's language and keep replies short and conversational. Never dump menus or formal scripts. When the user asks to do something in the app, choose exactly one action from: none, addProduct, createReel, orders, profile, dashboard, myProducts, myReels, wishlist, cart, buyerHome. For Add Product, guide one step at a time: photo, story, category/material/region, fair price, making-proof video, verification, publish. Do not claim an action happened unless the app is actually navigating. Return ONLY valid JSON: {"reply":"...","action":"one allowed action"}. Role: ${String(b.role||'artisan')}. Current screen: ${String(b.screen||'')}.`;
+      const payload={model:process.env.OPENAI_MODEL||'gpt-5.6-luna',input:[{role:'system',content:system},...messages.map(m=>({role:m.role,content:String(m.content||'')}))],max_output_tokens:220};
+      const rr=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const raw=await rr.text();
+      if(!rr.ok) return json(res,502,{error:`OpenAI request failed (${rr.status})`});
+      const out=JSON.parse(raw);
+      const text=out.output_text || (out.output||[]).flatMap(x=>x.content||[]).map(x=>x.text||'').join('');
+      let parsed; try{parsed=JSON.parse(text)}catch(_){parsed={reply:text||'Bilkul. Chaliye step by step karte hain.',action:'none'}}
+      const allowed=['none','addProduct','createReel','orders','profile','dashboard','myProducts','myReels','wishlist','cart','buyerHome'];
+      if(!allowed.includes(parsed.action)) parsed.action='none';
+      return json(res,200,{reply:String(parsed.reply||''),action:parsed.action});
+    }
+    if(resource==='users'){
+      if(req.method==='POST'){const b=await body(req);let u=db.users.find(x=>x.contact===b.contact&&x.role===b.role);if(!u){u={id:id(db,'u'),name:b.name||'New User',contact:b.contact||'',role:b.role||'buyer',profile:b.role==='artisan'?{craft:'',location:'',bio:'',trustScore:100,photo:null}:{location:'',photo:null}};db.users.push(u)}else if(b.name)u.name=b.name;writeDB(db);return json(res,200,u)}
+      if(itemId&&req.method==='PUT'){const b=await body(req);const u=db.users.find(x=>x.id===itemId);if(!u)return json(res,404,{error:'User not found'});u.profile={...(u.profile||{}),...(b.profile||{})};if(b.name)u.name=b.name;writeDB(db);return json(res,200,u)}
+    }
+    if(resource==='products'){
+      if(req.method==='GET'&&!itemId)return json(res,200,db.products.map(p=>({...p,artisan:db.users.find(u=>u.id===p.artisanId)})));
+      if(req.method==='GET'&&itemId){const p=db.products.find(x=>x.id===itemId);if(!p)return json(res,404,{error:'Product not found'});return json(res,200,{...p,artisan:db.users.find(u=>u.id===p.artisanId),reviews:db.reviews.filter(r=>r.productId===p.id)})}
+      if(req.method==='POST'){const b=await body(req);const gallery=Array.isArray(b.gallery)?b.gallery:(Array.isArray(b.craftInfo?.gallery)?b.craftInfo.gallery:[]);const hash=crypto.createHash('sha256').update(String(b.image||'')).digest('hex');const duplicate=db.products.some(p=>p.imageHash&&p.imageHash===hash);const p={id:id(db,'p'),uniqueProductId:uniqueProductId(db),artisanId:b.artisanId,title:b.title||'Untitled handmade piece',description:b.description||'',price:Number(b.price)||0,category:b.category||'Other',image:b.image||null,gallery,verificationStatus:'unverified',availability:true,craftInfo:{...(b.craftInfo||{}),gallery,ownershipDeclared:b.craftInfo?.ownershipDeclared!==false},imageHash:hash,duplicateFlag:duplicate,trustScore:100,riskScore:0,productProcessMatch:0};db.products.unshift(p);writeDB(db);return json(res,201,p)}
+    }
+    if(resource==='scan'&&req.method==='POST'){const b=await body(req);const p=db.products.find(x=>x.id===b.productId);if(!p)return json(res,404,{error:'Product not found'});const r=verifyProduct(p);Object.assign(p,{verificationStatus:r.status,trustScore:r.trustScore,riskScore:r.riskScore,productProcessMatch:r.productProcessMatch,verificationDate:new Date().toISOString()});if(r.status==='needs_review')db.reviewQueue.unshift({id:id(db,'rvq'),productId:p.id,riskScore:r.riskScore,reason:'AI detected risk signals; human review required.',status:'pending'});writeDB(db);return json(res,200,r)}
+    if(resource==='risk'&&req.method==='POST'){const b=await body(req);const p=db.products.find(x=>x.id===b.productId);if(!p)return json(res,404,{error:'Product not found'});return json(res,200,{riskScore:p.riskScore||0,level:(p.riskScore||0)>59?'high':(p.riskScore||0)>29?'medium':'low',reasons:p.duplicateFlag?['Possible duplicate/image reuse']:['No critical duplicate signal']})}
+    if(resource==='wishlist'){
+      const q=url.searchParams.get('userId'); if(req.method==='GET')return json(res,200,db.wishlist.filter(w=>w.userId===q).map(w=>db.products.find(p=>p.id===w.productId)).filter(Boolean));
+      const b=await body(req);if(req.method==='POST'){if(!db.wishlist.some(w=>w.userId===b.userId&&w.productId===b.productId))db.wishlist.push({userId:b.userId,productId:b.productId});writeDB(db);return json(res,200,{ok:true})} if(req.method==='DELETE'){db.wishlist=db.wishlist.filter(w=>!(w.userId===b.userId&&w.productId===b.productId));writeDB(db);return json(res,200,{ok:true})}
+    }
+    if(resource==='cart'){
+      const q=url.searchParams.get('userId'); if(req.method==='GET')return json(res,200,db.cart.filter(c=>c.userId===q).map(c=>({...c,product:db.products.find(p=>p.id===c.productId)})));
+      const b=await body(req);if(req.method==='POST'){const c=db.cart.find(x=>x.userId===b.userId&&x.productId===b.productId);if(c)c.qty++;else db.cart.push({userId:b.userId,productId:b.productId,qty:1});writeDB(db);return json(res,200,{ok:true})}if(req.method==='DELETE'){db.cart=db.cart.filter(c=>!(c.userId===b.userId&&c.productId===b.productId));writeDB(db);return json(res,200,{ok:true})}
+    }
+    if(resource==='orders'&&req.method==='GET'){const q=url.searchParams.get('userId');const out=db.orders.filter(o=>o.buyerId===q).map(o=>({...o,artisanItems:o.products||[]}));return json(res,200,out)}
+    if(resource==='checkout'&&itemId==='cod'&&req.method==='POST'){const b=await body(req);const items=db.cart.filter(c=>c.userId===b.buyerId);const products=items.map(c=>{const p=db.products.find(x=>x.id===c.productId);return {productId:c.productId,title:p?.title||'Handmade piece',price:p?.price||0,qty:c.qty}});if(!products.length)return json(res,400,{error:'Cart is empty'});const order={id:id(db,'o'),buyerId:b.buyerId,products,amount:products.reduce((s,p)=>s+p.price*p.qty,0),status:'placed',date:new Date().toISOString(),address:b.address||{},paymentMethod:'cod'};db.orders.unshift(order);db.cart=db.cart.filter(c=>c.userId!==b.buyerId);writeDB(db);return json(res,201,order)}
+    if(resource==='payment'&&itemId==='config'&&req.method==='GET')return json(res,200,{configured:!!(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET),keyId:process.env.RAZORPAY_KEY_ID||null});
+    if(resource==='payment'&&itemId==='create-order'&&req.method==='POST')return json(res,503,{error:'Online payment is not configured. Use Cash on Delivery for the demo, or add Razorpay keys on the server.'});
+    if(resource==='payment'&&itemId==='verify'&&req.method==='POST')return json(res,200,{ok:true});
+    if(resource==='reels'){
+      if(req.method==='GET'){const q=url.searchParams.get('artisanId');let rs=q?db.reels.filter(r=>r.artisanId===q):db.reels;return json(res,200,rs.map(r=>({...r,artisan:db.users.find(u=>u.id===r.artisanId),product:db.products.find(p=>p.id===r.productId)})))}
+      if(req.method==='POST'){const b=await body(req);const r={id:id(db,'r'),...b,createdAt:new Date().toISOString(),likes:0,comments:0};db.reels.unshift(r);writeDB(db);return json(res,201,r)}
+      if(itemId&&req.method==='PUT'){const b=await body(req);const r=db.reels.find(x=>x.id===itemId);if(!r)return json(res,404,{error:'Reel not found'});Object.assign(r,b);writeDB(db);return json(res,200,r)}
+      if(itemId&&req.method==='DELETE'){db.reels=db.reels.filter(x=>x.id!==itemId);writeDB(db);return json(res,200,{ok:true})}
+    }
+    if(resource==='reviews'){
+      if(req.method==='GET'){const productId=url.searchParams.get('productId');if(productId)return json(res,200,db.reviews.filter(r=>r.productId===productId));return json(res,200,db.reviewQueue.filter(x=>x.status==='pending').map(x=>({...x,product:db.products.find(p=>p.id===x.productId)})))}
+      if(req.method==='POST'){const b=await body(req);const r={id:id(db,'rev'),productId:b.productId,buyerId:b.buyerId,buyerName:b.buyerName||'Buyer',stars:Math.max(1,Math.min(5,Number(b.stars)||5)),text:String(b.text||''),createdAt:new Date().toISOString()};db.reviews.unshift(r);writeDB(db);return json(res,201,r)}
+      if(itemId&&req.method==='PUT'){const b=await body(req);const r=db.reviewQueue.find(x=>x.id===itemId);if(!r)return json(res,404,{error:'Review item not found'});r.status=b.status||r.status;r.note=b.note||'';writeDB(db);return json(res,200,r)}
+    }
+    if(resource==='customizations'&&req.method==='POST'){const b=await body(req);const c={id:id(db,'c'),customizationId:`KS-CUST-${String(db._meta.nextId).padStart(5,'0')}`,...b,createdAt:new Date().toISOString()};db.customizations=db.customizations||[];db.customizations.unshift(c);writeDB(db);return json(res,201,c)}
+    if(resource==='certificate'&&itemId){const p=db.products.find(x=>x.uniqueProductId===decodeURIComponent(itemId)||x.id===decodeURIComponent(itemId));if(!p)return json(res,404,{error:'Certificate unavailable'});return json(res,200,{product:{...p,artisan:db.users.find(u=>u.id===p.artisanId),customizations:(db.customizations||[]).filter(c=>c.productId===p.id)}})}
+    if(resource==='location'&&itemId==='reverse')return json(res,200,{area:'',city:'',pincode:'',displayName:''});
+    return json(res,404,{error:'API route not found'});
+  }catch(e){console.error(e);return json(res,500,{error:e.message||'Server error'});}
 }
 
-const MIME = {
-  '.html': 'text/html', '.js': 'text/javascript', '.jsx': 'text/javascript',
-  '.tsx': 'text/javascript', '.ts': 'text/javascript',
-  '.css': 'text/css', '.json': 'application/json', '.png': 'image/png',
-  '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.svg': 'image/svg+xml',
-  '.mp4': 'video/mp4', '.webm': 'video/webm',
-};
-function serveStatic(req, res) {
-  let filePath = req.url.split('?')[0];
-  if (filePath === '/') filePath = '/index.html';
-  const fullPath = path.join(PUBLIC_DIR, filePath);
-  // prevent path traversal outside /public
-  if (!fullPath.startsWith(PUBLIC_DIR)) {
-    res.writeHead(403); res.end('Forbidden'); return;
-  }
-  fs.readFile(fullPath, (err, data) => {
-    if (err) { res.writeHead(404); res.end('Not found'); return; }
-    const ext = path.extname(fullPath);
-    res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream' });
-    res.end(data);
-  });
-}
-
-
-// Razorpay REST helper. The secret key never leaves this Node.js server.
-function razorpayRequest(method, endpoint, payload) {
-  return new Promise((resolve, reject) => {
-    const auth = Buffer.from(`${process.env.RAZORPAY_KEY_ID}:${process.env.RAZORPAY_KEY_SECRET}`).toString('base64');
-    const data = JSON.stringify(payload || {});
-    const req = require('https').request({
-      hostname: 'api.razorpay.com', path: endpoint, method,
-      headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
-    }, (r) => {
-      let out = '';
-      r.on('data', c => out += c);
-      r.on('end', () => {
-        let parsed; try { parsed = JSON.parse(out); } catch (_) { parsed = { error: { description: out || 'Razorpay request failed' } }; }
-        if (r.statusCode >= 200 && r.statusCode < 300) resolve(parsed);
-        else reject(new Error(parsed?.error?.description || `Razorpay returned ${r.statusCode}`));
-      });
-    });
-    req.on('error', reject);
-    req.write(data); req.end();
-  });
-}
-
-// ---------- API router ----------
-async function handleAPI(req, res, urlParts) {
-  const db = readDB();
-  const [, , resource, id] = urlParts; // /api/<resource>/<id>
-
-  try {
-    // ----- USERS (demo login / signup — no real auth/OTP backend needed) -----
-    if (resource === 'users' && req.method === 'POST') {
-      const body = await readBody(req);
-      let user = db.users.find(u => u.contact === body.contact && u.role === body.role);
-      if (!user) {
-        user = {
-          id: newId(db, 'u'),
-          name: body.name || 'New User',
-          contact: body.contact || '',
-          role: body.role || 'buyer',
-          profile: body.role === 'artisan'
-            ? { craft: '', location: '', bio: '', trustScore: 100 }
-            : { location: '' },
-        };
-        db.users.push(user);
-        writeDB(db);
-      } else if (body.name) {
-        user.name = body.name;
-        writeDB(db);
-      }
-      return sendJSON(res, 200, user);
-    }
-
-    // ----- PRODUCTS -----
-    if (resource === 'products' && req.method === 'GET' && !id) {
-      return sendJSON(res, 200, db.products);
-    }
-    if (resource === 'products' && req.method === 'GET' && id) {
-      const product = db.products.find(p => p.id === id);
-      if (!product) return sendJSON(res, 404, { error: 'Product not found' });
-      const artisan = db.users.find(u => u.id === product.artisanId);
-      return sendJSON(res, 200, { ...product, artisan });
-    }
-    if (resource === 'products' && req.method === 'POST' && !id) {
-      const body = await readBody(req);
-      const nextProductNumber = Math.max(0, ...(db.products || []).map(p => Number(String(p.uniqueProductId || '').match(/(\d{6})$/)?.[1] || 0))) + 1;
-      const product = {
-        id: newId(db, 'p'),
-        uniqueProductId: `KS-ART-${String(nextProductNumber).padStart(6, '0')}`,
-        customizations: [],
-        artisanId: body.artisanId,
-        title: body.title || 'Untitled product',
-        description: body.description || '',
-        price: Number(body.price) || 0,
-        category: body.category || 'Other',
-        image: body.image || null, // base64 data URL from the browser, or null
-        verificationStatus: 'unverified',
-        availability: true,
-        craftInfo: body.craftInfo || {},
-      };
-      db.products.unshift(product);
-      writeDB(db);
-      return sendJSON(res, 201, product);
-    }
-    if (resource === 'products' && id && req.method === 'PUT') {
-      const body = await readBody(req);
-      const product = db.products.find(p => p.id === id);
-      if (!product) return sendJSON(res, 404, { error: 'Product not found' });
-      Object.assign(product, body);
-      writeDB(db);
-      return sendJSON(res, 200, product);
-    }
-
-    // ----- SCAN / VERIFY (demo AI verification) -----
-    if (resource === 'scan' && req.method === 'POST') {
-      const body = await readBody(req);
-      const product = db.products.find(p => p.id === body.productId);
-      const result = runDemoVerification();
-      if (product) {
-        product.verificationStatus = result.status;
-        product.verificationDate = new Date().toISOString();
-        product.trustScore = Math.round(result.confidence * 100);
-        product.verificationLayers = { imageCheck: true, makingProof: true, productProcessMatch: Math.round(result.confidence * 100), originalityGuard: true, ownershipProof: true };
-        writeDB(db);
-      }
-      return sendJSON(res, 200, result);
-    }
-
-    // ----- WISHLIST -----
-    if (resource === 'wishlist' && req.method === 'GET') {
-      const userId = urlParts[3] || new URL(req.url, 'http://x').searchParams.get('userId');
-      const items = db.wishlist.filter(w => w.userId === userId)
-        .map(w => db.products.find(p => p.id === w.productId)).filter(Boolean);
-      return sendJSON(res, 200, items);
-    }
-    if (resource === 'wishlist' && req.method === 'POST') {
-      const body = await readBody(req);
-      const exists = db.wishlist.some(w => w.userId === body.userId && w.productId === body.productId);
-      if (!exists) { db.wishlist.push({ userId: body.userId, productId: body.productId }); writeDB(db); }
-      return sendJSON(res, 200, { ok: true });
-    }
-    if (resource === 'wishlist' && req.method === 'DELETE') {
-      const body = await readBody(req);
-      db.wishlist = db.wishlist.filter(w => !(w.userId === body.userId && w.productId === body.productId));
-      writeDB(db);
-      return sendJSON(res, 200, { ok: true });
-    }
-
-    // ----- CART -----
-    if (resource === 'cart' && req.method === 'GET') {
-      const userId = urlParts[3] || new URL(req.url, 'http://x').searchParams.get('userId');
-      const items = db.cart.filter(c => c.userId === userId).map(c => ({
-        ...c, product: db.products.find(p => p.id === c.productId),
-      }));
-      return sendJSON(res, 200, items);
-    }
-    if (resource === 'cart' && req.method === 'POST') {
-      const body = await readBody(req);
-      const existing = db.cart.find(c => c.userId === body.userId && c.productId === body.productId);
-      if (existing) existing.qty += 1;
-      else db.cart.push({ userId: body.userId, productId: body.productId, qty: 1 });
-      writeDB(db);
-      return sendJSON(res, 200, { ok: true });
-    }
-    if (resource === 'cart' && req.method === 'DELETE') {
-      const body = await readBody(req);
-      db.cart = db.cart.filter(c => !(c.userId === body.userId && c.productId === body.productId));
-      writeDB(db);
-      return sendJSON(res, 200, { ok: true });
-    }
-
-    // ----- ORDERS -----
-    if (resource === 'orders' && req.method === 'GET') {
-      const userId = urlParts[3] || new URL(req.url, 'http://x').searchParams.get('userId');
-      const user = db.users.find(u => u.id === userId);
-      if (user?.role === 'artisan') {
-        const orders = db.orders.filter(o => (o.products || []).some(item => {
-          const p = db.products.find(pp => pp.id === item.productId);
-          return p && p.artisanId === userId;
-        })).map(o => ({ ...o, artisanItems: (o.products || []).filter(item => { const p = db.products.find(pp => pp.id === item.productId); return p && p.artisanId === userId; }) }));
-        return sendJSON(res, 200, orders);
-      }
-      const orders = db.orders.filter(o => o.buyerId === userId);
-      return sendJSON(res, 200, orders);
-    }
-    if (resource === 'orders' && req.method === 'POST') {
-      const body = await readBody(req);
-      const cartItems = db.cart.filter(c => c.userId === body.buyerId);
-      const products = cartItems.map(c => {
-        const p = db.products.find(pp => pp.id === c.productId);
-        return { productId: c.productId, title: p ? p.title : 'Unknown', price: p ? p.price : 0, qty: c.qty };
-      });
-      const amount = products.reduce((sum, p) => sum + p.price * p.qty, 0);
-      const order = {
-        id: newId(db, 'o'),
-        buyerId: body.buyerId,
-        products,
-        amount,
-        status: 'placed',
-        date: new Date().toISOString(),
-      };
-      db.orders.unshift(order);
-      db.cart = db.cart.filter(c => c.userId !== body.buyerId); // clear cart (demo checkout)
-      writeDB(db);
-      return sendJSON(res, 201, order);
-    }
-
-
-    // ----- DIGITAL CERTIFICATE & CUSTOMIZATION -----
-    if (resource === 'certificate' && req.method === 'GET' && id) {
-      const product = db.products.find(p => p.uniqueProductId === id || p.id === id);
-      if (!product) return sendJSON(res, 404, { error: 'Product certificate not found' });
-      const artisan = db.users.find(u => u.id === product.artisanId) || null;
-      return sendJSON(res, 200, {
-        product: { ...product, artisan },
-        certificate: { productId: product.uniqueProductId, verificationResult: product.verificationStatus, verificationDate: product.verificationDate || null, status: product.verificationStatus }
-      });
-    }
-    if (resource === 'customizations' && req.method === 'POST') {
-      const body = await readBody(req);
-      const product = db.products.find(p => p.id === body.productId);
-      if (!product) return sendJSON(res, 404, { error: 'Product not found' });
-      const request = String(body.request || '').trim();
-      if (!request) return sendJSON(res, 400, { error: 'Please describe the customization' });
-      if (!Array.isArray(db.customizations)) db.customizations = [];
-      const next = Math.max(0, ...db.customizations.map(c => Number(c.customizationId) || 0)) + 1;
-      const customization = {
-        id: newId(db, 'c'), customizationId: String(next).padStart(4, '0'),
-        productId: product.id, uniqueProductId: product.uniqueProductId, buyerId: body.buyerId,
-        request, charge: Number(body.charge) || 100, status: 'requested', createdAt: new Date().toISOString()
-      };
-      db.customizations.unshift(customization);
-      product.customizations = product.customizations || [];
-      product.customizations.unshift(customization);
-      writeDB(db);
-      return sendJSON(res, 201, customization);
-    }
-
-    // ----- PAYMENTS / CHECKOUT -----
-    // Location helper: reverse-geocode the browser's GPS coordinates so
-    // delivery fields can be filled automatically. Uses OpenStreetMap Nominatim.
-    if (resource === 'location' && id === 'reverse' && req.method === 'GET') {
-      const u = new URL(req.url, 'http://localhost');
-      const lat = Number(u.searchParams.get('lat'));
-      const lon = Number(u.searchParams.get('lon'));
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-        return sendJSON(res, 400, { error: 'Valid latitude and longitude are required.' });
-      }
-      try {
-        const qs = new URLSearchParams({ format: 'jsonv2', lat: String(lat), lon: String(lon), addressdetails: '1' });
-        const geo = await new Promise((resolve, reject) => {
-          const r = require('https').request({
-            hostname: 'nominatim.openstreetmap.org', path: `/reverse?${qs.toString()}`, method: 'GET',
-            headers: { 'User-Agent': 'KalaSutra-Hackathon-Demo/1.0 (location lookup)' }
-          }, (rr) => {
-            let out = '';
-            rr.on('data', c => out += c);
-            rr.on('end', () => {
-              try {
-                const parsed = JSON.parse(out);
-                if (rr.statusCode >= 200 && rr.statusCode < 300) resolve(parsed);
-                else reject(new Error(parsed?.error || 'Reverse geocoding failed'));
-              } catch (_) { reject(new Error('Invalid location response')); }
-            });
-          });
-          r.on('error', reject); r.end();
-        });
-        const a = geo.address || {};
-        return sendJSON(res, 200, {
-          displayName: geo.display_name || '',
-          area: a.neighbourhood || a.suburb || a.residential || a.village || a.town || '',
-          city: a.city || a.town || a.village || a.municipality || a.county || '',
-          pincode: a.postcode || '',
-          state: a.state || '',
-          country: a.country || ''
-        });
-      } catch (e) {
-        return sendJSON(res, 502, { error: 'Could not read the location address right now.' });
-      }
-    }
-
-    if (resource === 'payment' && id === 'config' && req.method === 'GET') {
-      return sendJSON(res, 200, {
-        configured: Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
-        keyId: process.env.RAZORPAY_KEY_ID || null,
-        currency: 'INR'
-      });
-    }
-
-    if (resource === 'payment' && id === 'create-order' && req.method === 'POST') {
-      const body = await readBody(req);
-      const buyerId = body.buyerId;
-      const cartItems = db.cart.filter(c => c.userId === buyerId);
-      if (!cartItems.length) return sendJSON(res, 400, { error: 'Your cart is empty' });
-      if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
-        return sendJSON(res, 503, { error: 'Razorpay is not configured. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to the server environment.' });
-      }
-      const products = cartItems.map(c => {
-        const p = db.products.find(pp => pp.id === c.productId);
-        return { productId: c.productId, title: p ? p.title : 'Unknown', price: p ? Number(p.price) : 0, qty: c.qty };
-      });
-      const amount = products.reduce((sum, p) => sum + p.price * p.qty, 0);
-      if (amount <= 0) return sendJSON(res, 400, { error: 'Invalid cart amount' });
-      const receipt = `KS_${Date.now()}_${crypto.randomBytes(3).toString('hex')}`;
-      const razorOrder = await razorpayRequest('POST', '/v1/orders', {
-        amount: Math.round(amount * 100), currency: 'INR', receipt, notes: { buyerId: String(buyerId) }
-      });
-      return sendJSON(res, 200, { keyId: process.env.RAZORPAY_KEY_ID, orderId: razorOrder.id, amount, currency: 'INR', receipt });
-    }
-
-    if (resource === 'payment' && id === 'verify' && req.method === 'POST') {
-      const body = await readBody(req);
-      if (!process.env.RAZORPAY_KEY_SECRET) return sendJSON(res, 503, { error: 'Razorpay secret is not configured on the server' });
-      const expected = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
-        .update(`${body.razorpay_order_id}|${body.razorpay_payment_id}`).digest('hex');
-      if (expected !== body.razorpay_signature) return sendJSON(res, 400, { error: 'Payment signature verification failed' });
-      const cartItems = db.cart.filter(c => c.userId === body.buyerId);
-      if (!cartItems.length) return sendJSON(res, 400, { error: 'Your cart is empty' });
-      const products = cartItems.map(c => {
-        const p = db.products.find(pp => pp.id === c.productId);
-        return { productId: c.productId, title: p ? p.title : 'Unknown', price: p ? Number(p.price) : 0, qty: c.qty };
-      });
-      const amount = products.reduce((sum, p) => sum + p.price * p.qty, 0);
-      const order = {
-        id: newId(db, 'o'), buyerId: body.buyerId, products, amount,
-        status: 'paid', paymentMethod: 'razorpay', paymentId: body.razorpay_payment_id,
-        razorpayOrderId: body.razorpay_order_id, address: body.address || {},
-        date: new Date().toISOString()
-      };
-      db.orders.unshift(order);
-      db.cart = db.cart.filter(c => c.userId !== body.buyerId);
-      writeDB(db);
-      return sendJSON(res, 201, order);
-    }
-
-    if (resource === 'checkout' && id === 'cod' && req.method === 'POST') {
-      const body = await readBody(req);
-      const cartItems = db.cart.filter(c => c.userId === body.buyerId);
-      if (!cartItems.length) return sendJSON(res, 400, { error: 'Your cart is empty' });
-      const products = cartItems.map(c => {
-        const p = db.products.find(pp => pp.id === c.productId);
-        return { productId: c.productId, title: p ? p.title : 'Unknown', price: p ? Number(p.price) : 0, qty: c.qty };
-      });
-      const amount = products.reduce((sum, p) => sum + p.price * p.qty, 0);
-      const order = {
-        id: newId(db, 'o'), buyerId: body.buyerId, products, amount,
-        status: 'placed', paymentMethod: 'cod', address: body.address || {},
-        date: new Date().toISOString()
-      };
-      db.orders.unshift(order);
-      db.cart = db.cart.filter(c => c.userId !== body.buyerId);
-      writeDB(db);
-      return sendJSON(res, 201, order);
-    }
-
-    // ----- REELS -----
-    if (resource === 'reels' && req.method === 'GET' && !id) {
-      const artisanId = new URL(req.url, 'http://x').searchParams.get('artisanId');
-      let reels = db.reels;
-      if (artisanId) reels = reels.filter(r => r.artisanId === artisanId);
-      const enriched = reels.map(r => ({
-        ...r,
-        product: db.products.find(p => p.id === r.productId) || null,
-        artisan: db.users.find(u => u.id === r.artisanId) || null,
-      }));
-      return sendJSON(res, 200, enriched);
-    }
-    if (resource === 'reels' && req.method === 'POST' && !id) {
-      const body = await readBody(req);
-      const reel = {
-        id: newId(db, 'r'),
-        artisanId: body.artisanId,
-        productId: body.productId || null,
-        video: body.video || null, // base64 data URL, or null for a demo/no-clip reel
-        thumbEmoji: body.thumbEmoji || '🎨',
-        caption: body.caption || '',
-        category: body.category || 'Other',
-        tags: body.tags || [],
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        comments: 0,
-      };
-      db.reels.unshift(reel);
-      writeDB(db);
-      return sendJSON(res, 201, reel);
-    }
-    if (resource === 'reels' && id && req.method === 'PUT') {
-      const body = await readBody(req);
-      const reel = db.reels.find(r => r.id === id);
-      if (!reel) return sendJSON(res, 404, { error: 'Reel not found' });
-      Object.assign(reel, body);
-      writeDB(db);
-      return sendJSON(res, 200, reel);
-    }
-    if (resource === 'reels' && id && req.method === 'DELETE') {
-      db.reels = db.reels.filter(r => r.id !== id);
-      writeDB(db);
-      return sendJSON(res, 200, { ok: true });
-    }
-
-    return sendJSON(res, 404, { error: 'Unknown API route' });
-  } catch (err) {
-    // Any unexpected error becomes a clean JSON 500, never a server crash.
-    console.error('API error:', err.message);
-    return sendJSON(res, 500, { error: 'Something went wrong on the server (demo mode): ' + err.message });
-  }
-}
-
-function appHandler(req, res, isSecure = false) {
-  // If a phone opens the LAN HTTP address, redirect it to the bundled HTTPS
-  // endpoint. This is important because iOS/Android block geolocation and
-  // microphone permission prompts on ordinary HTTP network addresses.
-  const hostHeader = String(req.headers.host || '');
-  const hostOnly = hostHeader.split(':')[0];
-  const isLanRequest = hostOnly && !['localhost', '127.0.0.1', '[::1]'].includes(hostOnly);
-  const userAgent = String(req.headers['user-agent'] || '');
-  const isPhone = /iPhone|iPad|iPod|Android/i.test(userAgent);
-  if (!IS_HOSTED && isPhone && isLanRequest && !isSecure && req.headers['x-forwarded-proto'] !== 'https') {
-    res.writeHead(302, { Location: `https://${hostOnly}:${HTTPS_PORT}${req.url}` });
-    return res.end();
-  }
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204, {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    });
-    return res.end();
-  }
-  const urlParts = req.url.split('?')[0].split('/'); // ['', 'api', 'products', 'p1']
-  if (urlParts[1] === 'api') {
-    handleAPI(req, res, urlParts);
-  } else {
-    serveStatic(req, res);
-  }
-}
-
-const server = http.createServer(appHandler);
-
-function getLanIPv4() {
-  const nets = os.networkInterfaces();
-  for (const name of Object.keys(nets)) {
-    for (const n of (nets[name] || [])) {
-      if (n.family === 'IPv4' && !n.internal && !n.address.startsWith('169.254.')) return n.address;
-    }
-  }
-  return '127.0.0.1';
-}
-
-function reportServerError(label, err, port) {
-  if (err.code === 'EADDRINUSE') console.error(`\nPort ${port} is already in use (${label}).\n`);
-  else console.error(`${label} server error:`, err);
-}
-
-server.on('error', (err) => reportServerError('HTTP', err, PORT));
-server.listen(PORT, () => {
-  console.log('\n========================================');
-  console.log('  KalaSutra demo server is running!');
-  console.log(`  Laptop: http://localhost:${PORT}`);
-  console.log(`  Phone (same Wi-Fi): http://${getLanIPv4()}:${PORT}`);
-  console.log('  Phone location: use the HTTPS link below.');
-  console.log('  Press Ctrl+C in this window to stop it.');
-  console.log('========================================\n');
-});
-
-// HTTPS is provided for phone browsers because browser geolocation requires a secure context.
-// A local self-signed certificate is bundled for hackathon/demo use.
-if (!IS_HOSTED) try {
-  const key = fs.readFileSync(path.join(CERT_DIR, 'local-key.pem'));
-  const cert = fs.readFileSync(path.join(CERT_DIR, 'local-cert.pem'));
-  const secureServer = https.createServer({ key, cert }, (req, res) => appHandler(req, res, true));
-  secureServer.on('error', (err) => reportServerError('HTTPS', err, HTTPS_PORT));
-  secureServer.listen(HTTPS_PORT, () => {
-    console.log(`  Phone secure URL: https://${getLanIPv4()}:${HTTPS_PORT}`);
-    console.log('========================================\n');
-  });
-} catch (err) {
-  console.error('HTTPS setup unavailable; HTTP server is still running.', err.message);
-}
+const server=http.createServer((req,res)=>{if(req.method==='OPTIONS'){res.writeHead(204,{'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'GET,POST,PUT,DELETE,OPTIONS','Access-Control-Allow-Headers':'Content-Type'});return res.end();}const url=new URL(req.url,`http://${req.headers.host||'localhost'}`);if(url.pathname.startsWith('/api/'))return api(req,res,url);return staticFile(req,res)});
+server.listen(PORT,'0.0.0.0',()=>console.log(`KalaSutra running on http://0.0.0.0:${PORT}`));
