@@ -290,7 +290,6 @@ function PermissionCenter({ onClose }) {
 // AI TALKER — voice-first assistant used across the prototype/demo
 // ---------------------------------------------------------------------------
 function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
-    if (window.__KALASUTRA_MODERN_AI__) return null;
     const [open, setOpen] = useState(embedded ? true : !compact);
     const [listening, setListening] = useState(false);
     const [message, setMessage] = useState("Namaste! Main aapki kaise madad karoon?");
@@ -3027,38 +3026,6 @@ function App() {
     const [cartCount, setCartCount] = useState(0);
     const [lastVerifiedProductId, setLastVerifiedProductId] = useState(null);
     const [showPermissions, setShowPermissions] = useState(false);
-    useEffect(() => {
-        window.__KALASUTRA_USER_ID__ = user?.id || null;
-        const onAIAction = (event) => {
-            const action = event.detail?.action;
-            const value = event.detail?.value || "";
-            const artisan = user?.role === "artisan";
-            const map = {
-                ADD_PRODUCT: "addProduct", SHOW_ORDERS: "orders", CREATE_REEL: "createReel",
-                OPEN_ARTISAN_PROFILE: "profile", OPEN_BUYER_PROFILE: "buyerProfile", OPEN_MY_PRODUCTS: "myProducts",
-                OPEN_CART: "cart", OPEN_WISHLIST: "wishlist", OPEN_HOME: artisan ? "dashboard" : "buyerHome"
-            };
-            if (map[action]) { setScreen(map[action]); return; }
-            const growth = { OPEN_FAIR_PRICE: "Fair Price AI", OPEN_MARKET_MATCH: "Direct Market Match", OPEN_CRAFT_PASSPORT: "Craft Passport", OPEN_MATERIAL_HUB: "Material Hub", OPEN_DESIGN_LAB: "Design Lab", OPEN_CRAFT_GURUKUL: "Craft Gurukul" };
-            if (growth[action] && artisan) {
-                setScreen("dashboard");
-                window.setTimeout(() => {
-                    const target = Array.from(document.querySelectorAll("button")).find(b => (b.textContent || "").toLowerCase().includes(growth[action].toLowerCase()));
-                    if (target) target.click();
-                }, 140);
-                return;
-            }
-            if (action === "SEARCH_PRODUCTS" && user?.role === "buyer") {
-                setScreen("buyerHome");
-                window.setTimeout(() => {
-                    const input = document.querySelector(".buyer-ref-search input");
-                    if (input && value) { const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set; setter?.call(input, value); input.dispatchEvent(new Event('input', { bubbles: true })); input.focus(); }
-                }, 160);
-            }
-        };
-        window.addEventListener("kalasutra:ai-action", onAIAction);
-        return () => window.removeEventListener("kalasutra:ai-action", onAIAction);
-    }, [user?.id, user?.role]);
     // Phone browsers require HTTPS for location and microphone. If someone opens
     // the LAN HTTP URL directly on a phone, automatically move them to the
     // bundled secure server before requesting any permissions. Laptop localhost

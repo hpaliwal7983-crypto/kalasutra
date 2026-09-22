@@ -1739,3 +1739,6 @@ button, input, select, textarea { max-width:100%; }
   .reel-create-identity-wrap{width:100%;padding:8px 12px 0;box-sizing:border-box;margin-top:0}
   .addpiece-identity{margin-left:10px;margin-right:10px;width:auto}
 }
+
+.role-language-picker{width:min(680px,calc(100% - 40px));margin:16px auto 0;padding:11px 12px;border:1px solid rgba(93,67,50,.16);border-radius:18px;background:rgba(255,251,245,.72);box-shadow:0 8px 24px rgba(75,48,31,.06)}
+.role-language-picker>span{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#766254;margin-bottom:8px}.role-language-chips{display:flex;gap:6px;flex-wrap:wrap}.role-language-chips button{border:1px solid #decbb9;background:#fffaf4;color:#5a4639;border-radius:999px;padding:7px 9px;font-size:9px;cursor:pointer}.role-language-chips button.active{background:#5b3024;color:#fff;border-color:#5b3024}@media(max-width:560px){.role-language-picker{width:calc(100% - 32px);margin-top:13px}.role-language-chips{max-height:92px;overflow:auto}}
