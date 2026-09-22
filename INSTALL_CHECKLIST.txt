@@ -1,0 +1,10 @@
+KARIGAR AI COPILOT V7 CHECKLIST
+
+[ ] Replace ONLY existing AITalker function in app.js with integration/AITalker.replacement.js
+[ ] Append integration/karigar-ai-copilot.css to existing styles.css
+[ ] Optional: register server/karigar-ai-route.js in existing Express server/server.js
+[ ] Keep OPENAI_API_KEY only in Render Environment
+[ ] Do NOT replace index.html
+[ ] Test Artisan greeting -> mic -> Add Product
+[ ] Test photos -> details -> making video -> review -> confirmation
+[ ] Test language selection after role selection
