@@ -292,169 +292,978 @@ function PermissionCenter({ onClose }) {
 function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
     const [open, setOpen] = useState(embedded ? true : !compact);
     const [listening, setListening] = useState(false);
-    const [message, setMessage] = useState("Namaste! Main aapki kaise madad karoon?");
+    const [status, setStatus] = useState("READY");
+    const [message, setMessage] = useState(
+        role === "artisan"
+            ? "Namaste! Main Karigar AI hoon. Aap craft banaiye, baaki system main sambhalunga."
+            : "Namaste! Main aapki craft journey mein help karunga."
+    );
+    const [heard, setHeard] = useState("");
     const recognitionRef = useRef(null);
-    function speak(text) {
+    const startedRef = useRef(false);
+
+    function speak(text, lang = "hi-IN") {
         setMessage(text);
+        setStatus("SPEAKING");
+
         try {
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance(text);
-                u.lang = "hi-IN";
-                u.rate = 0.95;
-                window.speechSynthesis.speak(u);
-            }
-        }
-        catch (_) { }
-    }
-    function startListening() {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) {
-            speak("Voice input is not available in this browser. Aap type karke bhi mujhse baat kar sakte hain.");
-            return;
-        }
-        const recognition = new SR();
-        recognition.lang = "hi-IN";
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        recognition.onstart = () => setListening(true);
-        recognition.onend = () => setListening(false);
-        recognition.onerror = () => { setListening(false); speak("Sorry, main aapki awaaz samajh nahi paaya. Dobara try karein."); };
-        recognition.onresult = (event) => {
-            const heard = event.results?.[0]?.[0]?.transcript || "";
-            setListening(false);
-            if (heard) {
-                const q = heard.toLowerCase();
-                if (q.includes("cart") || q.includes("खरीद") || q.includes("buy") || q.includes("add")) {
-                    speak("Bilkul! Main aapko product choose karke cart mein add karne mein help karta hoon.");
-                }
-                else if (q.includes("reel") || q.includes("रील")) {
-                    speak("Aap verified craft ki making Reel bana sakte hain aur buyers ko uski kahani dikha sakte hain.");
-                }
-                else if (q.includes("verify") || q.includes("verification") || q.includes("जांच")) {
-                    speak("Product verification ke liye pehle photo, phir aapki voice story aur making proof clip chahiye.");
-                    if (role === 'artisan')
-                        go?.('addProduct');
-                }
-                else if (q.includes("profile") || q.includes("प्रोफाइल")) {
-                    speak("Bilkul, main aapka profile khol raha hoon.");
-                    go?.(role === 'artisan' ? 'profile' : 'buyerProfile');
-                }
-                else if (q.includes("order") || q.includes("ऑर्डर")) {
-                    speak("Bilkul, main aapke orders khol raha hoon.");
-                    go?.('orders');
-                }
-                else if (q.includes("home") || q.includes("होम") || q.includes("explore") || q.includes("देखना")) {
-                    speak("Chaliye, Explore kholte hain.");
-                    go?.(role === 'artisan' ? 'dashboard' : 'buyerHome');
-                }
-                else if (q.includes("wishlist") || q.includes("saved") || q.includes("पसंद")) {
-                    speak("Aapki saved pieces list khol raha hoon.");
-                    if (role === 'buyer')
-                        go?.('wishlist');
-                }
-                else if (q.includes("add a piece") || q.includes("product") || q.includes("उत्पाद")) {
-                    speak("Chaliye, Add a Piece kholte hain. Main photo, story aur verification mein guide karunga.");
-                    if (role === 'artisan')
-                        go?.('addProduct');
-                }
-                else {
-                    speak(`Aapne kaha: ${heard}. Main aapki KalaSutra journey mein help karta hoon.`);
-                }
-            }
-        };
-        requestVoicePermission().then((ok) => {
-            if (!ok) {
-                speak('Microphone permission allow karein, phir dobara try karein.');
+            if (!window.speechSynthesis) {
+                setStatus("READY");
                 return;
             }
-            recognitionRef.current = recognition;
-            try {
-                recognition.start();
-            }
-            catch (_) { }
-        });
+
+            window.speechSynthesis.cancel();
+
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = lang;
+            u.rate = 0.95;
+            u.pitch = 1.02;
+
+            u.onend = () => setStatus("READY");
+            u.onerror = () => setStatus("READY");
+
+            window.speechSynthesis.speak(u);
+        } catch (_) {
+            setStatus("READY");
+        }
     }
-    useEffect(() => () => {
+
+    function detectLanguage(text) {
+        if (!text) return "hi-IN";
+
+        if (/[ऀ-ॿ]/.test(text)) return "hi-IN";
+        if (/[઀-૿]/.test(text)) return "gu-IN";
+        if (/[਀-੿]/.test(text)) return "pa-IN";
+        if (/[অ-৾]/.test(text)) return "bn-IN";
+        if (/[அ-௺]/.test(text)) return "ta-IN";
+        if (/[అ-౿]/.test(text)) return "te-IN";
+        if (/[ಕ-ೞ]/.test(text)) return "kn-IN";
+        if (/[അ-ൿ]/.test(text)) return "ml-IN";
+        if (/[଀-୿]/.test(text)) return "or-IN";
+        if (/[؀-ۿ]/.test(text)) return "ur-IN";
+
+        const q = text.toLowerCase();
+
+        if (
+            q.includes("what") ||
+            q.includes("show") ||
+            q.includes("open") ||
+            q.includes("create") ||
+            q.includes("make") ||
+            q.includes("my") ||
+            q.includes("orders") ||
+            q.includes("earning") ||
+            q.includes("reel") ||
+            q.includes("product")
+        ) {
+            return "en-IN";
+        }
+
+        return "hi-IN";
+    }
+
+    function openGrowthModule(title) {
+        if (role !== "artisan") {
+            speak(title + " artisan workspace mein available hai.");
+            return;
+        }
+
+        speak(title + " khol raha hoon. Aap bas bolte rahiye.");
+
+        if (go) {
+            go("dashboard");
+        }
+
+        window.setTimeout(() => {
+            const buttons = Array.from(document.querySelectorAll("button"));
+
+            const target = buttons.find(
+                button =>
+                    (button.textContent || "")
+                        .toLowerCase()
+                        .includes(title.toLowerCase())
+            );
+
+            if (target) {
+                target.click();
+            }
+        }, 450);
+    }
+
+    function handleCommand(text) {
+        const q = (text || "").toLowerCase().trim();
+        const artisan = role === "artisan";
+
+        setHeard(text);
+
+        if (!q) {
+            speak("Main sun raha hoon. Aap jo karna chahte hain bas bol dijiye.");
+            return;
+        }
+
+        /* ADD PRODUCT */
+
+        if (
+            q.includes("add product") ||
+            q.includes("add a piece") ||
+            q.includes("new product") ||
+            q.includes("product add") ||
+            q.includes("naya product") ||
+            q.includes("product banana") ||
+            q.includes("उत्पाद") ||
+            q.includes("प्रोडक्ट") ||
+            q.includes("पीस")
+        ) {
+            speak(
+                "Bilkul! Chaliye aapka naya product add karte hain. Main photo, story aur verification mein guide karunga."
+            );
+
+            if (artisan && go) {
+                go("addProduct");
+            }
+
+            return;
+        }
+
+        /* CREATE REEL */
+
+        if (
+            q.includes("reel") ||
+            q.includes("रील") ||
+            q.includes("video bana") ||
+            q.includes("video banao")
+        ) {
+            speak(
+                "Bilkul! Create Reel khol raha hoon. Aapke craft ki story ko Reel mein turn karte hain."
+            );
+
+            if (artisan && go) {
+                go("createReel");
+            }
+
+            return;
+        }
+
+        /* ORDERS */
+
+        if (
+            q.includes("order") ||
+            q.includes("orders") ||
+            q.includes("ऑर्डर")
+        ) {
+            speak(
+                artisan
+                    ? "Bilkul! Orders aur earnings khol raha hoon."
+                    : "Bilkul! Aapke orders khol raha hoon."
+            );
+
+            if (go) {
+                go("orders");
+            }
+
+            return;
+        }
+
+        /* EARNINGS */
+
+        if (
+            q.includes("earning") ||
+            q.includes("earnings") ||
+            q.includes("income") ||
+            q.includes("kamai") ||
+            q.includes("कमाई")
+        ) {
+            speak("Bilkul! Aapki earnings khol raha hoon.");
+
+            if (artisan && go) {
+                go("orders");
+            }
+
+            return;
+        }
+
+        /* FAIR PRICE */
+
+        if (
+            q.includes("fair price") ||
+            q.includes("fair pricing") ||
+            q.includes("price suggest") ||
+            q.includes("sahi price") ||
+            q.includes("fair daam") ||
+            q.includes("कीमत") ||
+            q.includes("daam")
+        ) {
+            openGrowthModule("Fair Price AI");
+            return;
+        }
+
+        /* MATERIAL HUB */
+
+        if (
+            q.includes("material") ||
+            q.includes("raw material") ||
+            q.includes("kaccha maal") ||
+            q.includes("सामान") ||
+            q.includes("मटेरियल") ||
+            q.includes("कच्चा माल")
+        ) {
+            openGrowthModule("Material Hub");
+            return;
+        }
+
+        /* DESIGN LAB */
+
+        if (
+            q.includes("design") ||
+            q.includes("design idea") ||
+            q.includes("डिजाइन") ||
+            q.includes("नया डिजाइन")
+        ) {
+            openGrowthModule("Design Lab");
+            return;
+        }
+
+        /* CRAFT PASSPORT */
+
+        if (
+            q.includes("passport") ||
+            q.includes("craft passport") ||
+            q.includes("पासपोर्ट")
+        ) {
+            openGrowthModule("Craft Passport");
+            return;
+        }
+
+        /* DIRECT MARKET MATCH */
+
+        if (
+            q.includes("buyer") ||
+            q.includes("buyers") ||
+            q.includes("buyer dhundo") ||
+            q.includes("buyer dhoondo") ||
+            q.includes("market") ||
+            q.includes("बायर") ||
+            q.includes("बाज़ार")
+        ) {
+            openGrowthModule("Direct Market Match");
+            return;
+        }
+
+        /* CRAFT GURUKUL */
+
+        if (
+            q.includes("gurukul") ||
+            q.includes("sikhana") ||
+            q.includes("sikhani") ||
+            q.includes("teach") ||
+            q.includes("teaching") ||
+            q.includes("सिखाना") ||
+            q.includes("सीखना")
+        ) {
+            openGrowthModule("Craft Gurukul");
+            return;
+        }
+
+        /* PROFILE */
+
+        if (
+            q.includes("profile") ||
+            q.includes("प्रोफाइल")
+        ) {
+            speak("Bilkul! Profile khol raha hoon.");
+
+            if (go) {
+                go(artisan ? "profile" : "buyerProfile");
+            }
+
+            return;
+        }
+
+        /* MY PRODUCTS */
+
+        if (
+            q.includes("my products") ||
+            q.includes("mere products") ||
+            q.includes("meri products")
+        ) {
+            speak("Bilkul! Aapke products khol raha hoon.");
+
+            if (artisan && go) {
+                go("myProducts");
+            }
+
+            return;
+        }
+
+        /* HOME */
+
+        if (
+            q.includes("home") ||
+            q.includes("dashboard") ||
+            q.includes("होम")
+        ) {
+            speak("Chaliye, aapka KalaSutra home kholte hain.");
+
+            if (go) {
+                go(artisan ? "dashboard" : "buyerHome");
+            }
+
+            return;
+        }
+
+        /* CART */
+
+        if (
+            !artisan &&
+            (
+                q.includes("cart") ||
+                q.includes("कार्ट")
+            )
+        ) {
+            speak("Bilkul! Aapka cart khol raha hoon.");
+
+            if (go) {
+                go("cart");
+            }
+
+            return;
+        }
+
+        /* WISHLIST */
+
+        if (
+            !artisan &&
+            (
+                q.includes("wishlist") ||
+                q.includes("saved") ||
+                q.includes("पसंद")
+            )
+        ) {
+            speak("Aapki saved crafts list khol raha hoon.");
+
+            if (go) {
+                go("wishlist");
+            }
+
+            return;
+        }
+
+        /* UNKNOWN COMMAND */
+
+        speak(
+            "Maine suna: " +
+            text +
+            ". Main Karigar AI hoon. Aap bas bataiye ki aapko kya karna hai."
+        );
+    }
+
+    function startListening() {
+        const SR =
+            window.SpeechRecognition ||
+            window.webkitSpeechRecognition;
+
+        if (!SR) {
+            setStatus("VOICE UNAVAILABLE");
+
+            speak(
+                "Is browser mein voice recognition available nahi hai. Aap supported browser mein KalaSutra kholkar voice try kar sakte hain."
+            );
+
+            return;
+        }
+
         try {
             recognitionRef.current?.stop();
+        } catch (_) {}
+
+        const recognition = new SR();
+
+        recognition.lang =
+            navigator.language &&
+            navigator.language.includes("-")
+                ? navigator.language
+                : "hi-IN";
+
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.continuous = false;
+
+        recognition.onstart = () => {
+            setListening(true);
+            setStatus("LISTENING");
+            setMessage("🎙️ Main sun raha hoon… bas boliye.");
+        };
+
+        recognition.onend = () => {
+            setListening(false);
+            setStatus("READY");
+        };
+
+        recognition.onerror = () => {
+            setListening(false);
+            setStatus("READY");
+            setMessage(
+                "Awaaz clear nahi mili. Main ready hoon — dobara bol sakte hain."
+            );
+        };
+
+        recognition.onresult = event => {
+            const text =
+                event.results?.[0]?.[0]?.transcript || "";
+
+            setListening(false);
+            setStatus("THINKING");
+
+            const lang = detectLanguage(text);
+
+            try {
+                localStorage.setItem(
+                    "kalasutra_ai_language",
+                    lang
+                );
+            } catch (_) {}
+
+            window.setTimeout(() => {
+                handleCommand(text);
+            }, 180);
+        };
+
+        recognitionRef.current = recognition;
+
+        try {
+            recognition.start();
+        } catch (_) {
+            setListening(false);
+            setStatus("READY");
         }
-        catch (_) { }
+    }
+
+    /* STARTUP EXPERIENCE */
+
+    useEffect(() => {
+        if (
+            !embedded ||
+            role !== "artisan" ||
+            startedRef.current
+        ) {
+            return;
+        }
+
+        startedRef.current = true;
+
+        const welcome =
+            "Namaste! Main Karigar AI hoon. Aap craft banaiye, baaki system main sambhalunga. Aap jis language mein baat karna chahein, mujhse usi mein baat kijiye.";
+
+        setMessage(welcome);
+
+        const timer = window.setTimeout(() => {
+            speak(welcome, "hi-IN");
+
+            window.setTimeout(() => {
+                try {
+                    if (
+                        window.SpeechRecognition ||
+                        window.webkitSpeechRecognition
+                    ) {
+                        startListening();
+                    }
+                } catch (_) {}
+            }, 2300);
+        }, 700);
+
+        return () => {
+            window.clearTimeout(timer);
+        };
+    }, [embedded, role]);
+
+    useEffect(() => {
+        return () => {
+            try {
+                recognitionRef.current?.stop();
+            } catch (_) {}
+
+            try {
+                window.speechSynthesis?.cancel();
+            } catch (_) {}
+        };
     }, []);
-    if (embedded)
-        return (React.createElement("div", { className: "ai-talker ai-talker-embedded" },
-            React.createElement("div", { className: "ai-talker-head" },
-                React.createElement("div", { className: "ai-talker-avatar-wrap" },
-                    React.createElement("img", { src: "/assets/avatar-artisan.png", alt: "AI Talker" })),
-                React.createElement("div", { className: "ai-talker-title" },
-                    React.createElement("strong", null, "\u2726 AI Talker"),
-                    React.createElement("span", null, "Your voice-first KalaSutra guide")),
-                React.createElement("button", { className: "ai-lang-pill", onClick: () => speak("Hindi selected") }, "\u25CE \u0939\u093F\u0902\u0926\u0940\u2304")),
-            React.createElement("div", { className: "ai-embedded-main" },
-                React.createElement("div", { className: "ai-embedded-message" },
-                    React.createElement("strong", null, "Namaste! \uD83D\uDE4F"),
-                    React.createElement("br", null),
-                    role === 'artisan' ? 'Main aapki listing aur orders mein madad karoon?' : 'Main aapko handicraft dhoondhne mein madad karoon?',
-                    React.createElement("span", { className: "embedded-wave" }, "\u25AE\u25AE\u25AE\u25AE\u25AE\u25AE")),
-                React.createElement("div", { className: "ai-embedded-actions" }, role === 'artisan' ? React.createElement(React.Fragment, null,
-                    React.createElement("button", { onClick: () => { speak("Take a photo of your product. Ab Add a Piece kholte hain."); go?.('addProduct'); } },
-                        React.createElement("span", null, "\u2315"),
-                        " Add",
-                        React.createElement("br", null),
-                        "a piece"),
-                    React.createElement("button", { onClick: () => { speak("Aapke orders aur earnings yahan milenge."); go?.('orders'); } },
-                        React.createElement("span", null, "\u25A3"),
-                        " Orders &",
-                        React.createElement("br", null),
-                        "earnings")) : React.createElement(React.Fragment, null,
-                    React.createElement("button", { onClick: () => speak("What kind of handicraft are you looking for?") },
-                        React.createElement("span", null, "\u2315"),
-                        " Find a",
-                        React.createElement("br", null),
-                        "craft"),
-                    React.createElement("button", { onClick: () => { speak("Main aapko saved products aur cart tak le ja sakta hoon."); go?.('cart'); } },
-                        React.createElement("span", null, "\u25A3"),
-                        " Open",
-                        React.createElement("br", null),
-                        "cart")))),
-            React.createElement("button", { className: "ai-speak-pill", onClick: startListening }, "\u2669\u00A0 Tap to speak"),
-            React.createElement("div", { className: "ai-quote" }, "\u201CEvery craft has a story. Let\u2019s tell yours.\u201D \u2661")));
-    if (!open)
-        return (React.createElement("button", { className: "ai-fab", "aria-label": "Open AI Talker", onClick: () => setOpen(true) },
-            React.createElement("img", { src: "/assets/avatar-artisan.png", alt: "AI Talker" }),
-            React.createElement("span", { className: "ai-fab-dot" })));
-    return (React.createElement("div", { className: `ai-talker ${compact ? "ai-talker-compact" : ""}` },
-        React.createElement("div", { className: "ai-talker-head" },
-            React.createElement("div", { className: "ai-talker-avatar-wrap" },
-                React.createElement("img", { src: "/assets/avatar-artisan.png", alt: "AI Talker" }),
-                React.createElement("span", { className: "ai-live-dot" })),
-            React.createElement("div", { className: "ai-talker-title" },
-                React.createElement("strong", null, "AI Talker"),
-                React.createElement("span", null, "Voice-first KalaSutra guide")),
-            React.createElement("button", { className: "ai-close", onClick: () => { setOpen(false); try {
-                    recognitionRef.current?.stop();
+
+    /* FLOATING MODE */
+
+    if (!open) {
+        return React.createElement(
+            "button",
+            {
+                className: "ai-fab",
+                "aria-label": "Open Karigar AI",
+                onClick: () => {
+                    setOpen(true);
+                    speak(
+                        "Namaste! Main Karigar AI hoon. Aap bas boliye."
+                    );
                 }
-                catch (_) { } } }, "\u2715")),
-        React.createElement("div", { className: "ai-talker-body" },
-            React.createElement("div", { className: "ai-message" }, message),
-            React.createElement("div", { className: "ai-wave", "aria-hidden": "true" },
-                React.createElement("i", null),
-                React.createElement("i", null),
-                React.createElement("i", null),
-                React.createElement("i", null),
-                React.createElement("i", null),
-                React.createElement("i", null),
-                React.createElement("i", null)),
-            React.createElement("div", { className: "ai-talker-actions" },
-                React.createElement("button", { className: `ai-mic ${listening ? "listening" : ""}`, onClick: startListening, "aria-label": "Talk to AI" }, listening ? "●" : "🎙️"),
-                React.createElement("button", { className: "ai-send", onClick: () => speak("Bilkul! Chaliye aapka agla step shuru karte hain."), "aria-label": "Send" }, "\u27A4")),
-            React.createElement("div", { className: "ai-quick-row" }, role === 'artisan' ? React.createElement(React.Fragment, null,
-                React.createElement("button", { onClick: () => { speak("Take a photo of your product. Chaliye Add a Piece shuru karte hain."); go?.('addProduct'); } }, "Add a piece"),
-                React.createElement("button", { onClick: () => { speak("Aapke New Orders, Processing, Shipped, Delivered aur Earnings yahan hain."); go?.('orders'); } }, "My orders")) : React.createElement(React.Fragment, null,
-                React.createElement("button", { onClick: () => speak("What kind of handicraft are you looking for?") }, "Find a craft"),
-                React.createElement("button", { onClick: () => { speak("Opening your cart."); go?.('cart'); } }, "Open cart"))))));
+            },
+
+            React.createElement("img", {
+                src: "/assets/avatar-artisan.png",
+                alt: "Karigar AI"
+            }),
+
+            React.createElement("span", {
+                className: "ai-fab-dot"
+            })
+        );
+    }
+
+    /* MAIN KARIGAR AI */
+
+    return React.createElement(
+        "div",
+        {
+            className:
+                "ai-talker ai-talker-embedded",
+            style: {
+                borderRadius: 28,
+                overflow: "hidden",
+                background:
+                    "linear-gradient(145deg,#fffaf2,#f7eee2)",
+                border:
+                    "1px solid rgba(111,78,55,.16)",
+                boxShadow:
+                    "0 18px 50px rgba(72,48,31,.16)"
+            }
+        },
+
+        /* HEADER */
+
+        React.createElement(
+            "div",
+            {
+                className: "ai-talker-head",
+                style: {
+                    padding: "18px",
+                    background:
+                        "linear-gradient(135deg,rgba(120,72,42,.10),rgba(255,255,255,.65))"
+                }
+            },
+
+            React.createElement(
+                "div",
+                {
+                    className:
+                        "ai-talker-avatar-wrap",
+                    style: {
+                        width: 58,
+                        height: 58
+                    }
+                },
+
+                React.createElement("img", {
+                    src:
+                        "/assets/avatar-artisan.png",
+                    alt:
+                        "Karigar AI"
+                })
+            ),
+
+            React.createElement(
+                "div",
+                {
+                    className:
+                        "ai-talker-title"
+                },
+
+                React.createElement(
+                    "strong",
+                    null,
+                    "✦ Karigar AI"
+                ),
+
+                React.createElement(
+                    "span",
+                    null,
+                    "Your always-on artisan co-pilot"
+                )
+            ),
+
+            React.createElement(
+                "span",
+                {
+                    style: {
+                        marginLeft: "auto",
+                        padding:
+                            "7px 10px",
+                        borderRadius: 999,
+                        background:
+                            listening
+                                ? "#238b5b"
+                                : "rgba(111,78,55,.10)",
+                        color:
+                            listening
+                                ? "#fff"
+                                : "#6f4e37",
+                        fontSize: 11,
+                        fontWeight: 800
+                    }
+                },
+                listening
+                    ? "● LISTENING"
+                    : status
+            )
+        ),
+
+        /* BODY */
+
+        React.createElement(
+            "div",
+            {
+                style: {
+                    padding:
+                        "8px 18px 20px"
+                }
+            },
+
+            React.createElement(
+                "div",
+                {
+                    style: {
+                        padding: "18px",
+                        borderRadius: 22,
+                        background: "#fff",
+                        border:
+                            "1px solid rgba(111,78,55,.10)"
+                    }
+                },
+
+                React.createElement(
+                    "div",
+                    {
+                        style: {
+                            fontSize: 11,
+                            fontWeight: 800,
+                            letterSpacing: 1.2,
+                            color: "#9b765b",
+                            marginBottom: 8
+                        }
+                    },
+                    "KARIGAR AI • READY TO HELP"
+                ),
+
+                React.createElement(
+                    "div",
+                    {
+                        style: {
+                            fontSize: 20,
+                            lineHeight: 1.35,
+                            fontWeight: 800,
+                            color: "#3e2a20"
+                        }
+                    },
+
+                    role === "artisan"
+                        ? "Aap bas boliye. Main KalaSutra sambhal lunga. ✨"
+                        : "Aap bas boliye. Main aapki craft journey mein help karunga. ✨"
+                ),
+
+                React.createElement(
+                    "p",
+                    {
+                        style: {
+                            margin:
+                                "9px 0 0",
+                            color:
+                                "#715c4e",
+                            lineHeight: 1.55
+                        }
+                    },
+                    message
+                ),
+
+                heard &&
+                    React.createElement(
+                        "div",
+                        {
+                            style: {
+                                marginTop: 10,
+                                fontSize: 12,
+                                color: "#8a725f"
+                            }
+                        },
+                        "Heard: “" +
+                            heard +
+                            "”"
+                    ),
+
+                /* VOICE WAVE */
+
+                React.createElement(
+                    "div",
+                    {
+                        style: {
+                            height: 48,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent:
+                                "center",
+                            gap: 5,
+                            margin:
+                                "14px 0 6px"
+                        }
+                    },
+
+                    [10,20,32,18,26,14,30,17,24,12,28].map(
+                        (height, index) =>
+                            React.createElement(
+                                "i",
+                                {
+                                    key: index,
+                                    style: {
+                                        width: 4,
+                                        height:
+                                            listening
+                                                ? height
+                                                : 8,
+                                        borderRadius:
+                                            99,
+                                        background:
+                                            listening
+                                                ? "#b46d42"
+                                                : "#d6c0ac",
+                                        transition:
+                                            "height .25s ease"
+                                    }
+                                }
+                            )
+                    )
+                ),
+
+                /* VOICE BUTTON */
+
+                React.createElement(
+                    "button",
+                    {
+                        onClick:
+                            startListening,
+                        style: {
+                            width: "100%",
+                            border: 0,
+                            borderRadius: 18,
+                            padding:
+                                "14px 18px",
+                            background:
+                                listening
+                                    ? "#238b5b"
+                                    : "#6f4e37",
+                            color: "#fff",
+                            fontSize: 15,
+                            fontWeight: 800,
+                            cursor: "pointer"
+                        }
+                    },
+
+                    listening
+                        ? "🎙️ Listening… बोलिए"
+                        : "🎙️ Speak to Karigar AI"
+                ),
+
+                /* QUICK ACTIONS */
+
+                React.createElement(
+                    "div",
+                    {
+                        style: {
+                            display: "grid",
+                            gridTemplateColumns:
+                                "repeat(2,minmax(0,1fr))",
+                            gap: 8,
+                            marginTop: 12
+                        }
+                    },
+
+                    role === "artisan"
+                        ? React.createElement(
+                            React.Fragment,
+                            null,
+
+                            React.createElement(
+                                "button",
+                                {
+                                    onClick: () => {
+                                        speak(
+                                            "Chaliye naya product add karte hain."
+                                        );
+
+                                        if (go) {
+                                            go("addProduct");
+                                        }
+                                    },
+
+                                    style: {
+                                        padding: 11,
+                                        borderRadius:
+                                            14,
+                                        border:
+                                            "1px solid #eadbce",
+                                        background:
+                                            "#fff",
+                                        fontWeight: 700,
+                                        cursor: "pointer"
+                                    }
+                                },
+                                "＋ Add Piece"
+                            ),
+
+                            React.createElement(
+                                "button",
+                                {
+                                    onClick: () => {
+                                        speak(
+                                            "Orders aur earnings khol raha hoon."
+                                        );
+
+                                        if (go) {
+                                            go("orders");
+                                        }
+                                    },
+
+                                    style: {
+                                        padding: 11,
+                                        borderRadius:
+                                            14,
+                                        border:
+                                            "1px solid #eadbce",
+                                        background:
+                                            "#fff",
+                                        fontWeight: 700,
+                                        cursor: "pointer"
+                                    }
+                                },
+                                "▣ Orders & Earnings"
+                            ),
+
+                            React.createElement(
+                                "button",
+                                {
+                                    onClick: () =>
+                                        openGrowthModule(
+                                            "Fair Price AI"
+                                        ),
+
+                                    style: {
+                                        padding: 11,
+                                        borderRadius:
+                                            14,
+                                        border:
+                                            "1px solid #eadbce",
+                                        background:
+                                            "#fff",
+                                        fontWeight: 700,
+                                        cursor: "pointer"
+                                    }
+                                },
+                                "₹ Fair Price"
+                            ),
+
+                            React.createElement(
+                                "button",
+                                {
+                                    onClick: () => {
+                                        speak(
+                                            "Create Reel khol raha hoon."
+                                        );
+
+                                        if (go) {
+                                            go("createReel");
+                                        }
+                                    },
+
+                                    style: {
+                                        padding: 11,
+                                        borderRadius:
+                                            14,
+                                        border:
+                                            "1px solid #eadbce",
+                                        background:
+                                            "#fff",
+                                        fontWeight: 700,
+                                        cursor: "pointer"
+                                    }
+                                },
+                                "▶ Create Reel"
+                            )
+                        )
+
+                        : React.createElement(
+                            React.Fragment,
+                            null,
+
+                            React.createElement(
+                                "button",
+                                {
+                                    onClick: () => {
+                                        if (go) {
+                                            go("buyerHome");
+                                        }
+                                    },
+
+                                    style: {
+                                        padding: 11,
+                                        borderRadius:
+                                            14,
+                                        border:
+                                            "1px solid #eadbce",
+                                        background:
+                                            "#fff",
+                                        fontWeight: 700,
+                                        cursor: "pointer"
+                                    }
+                                },
+                                "⌂ Explore"
+                            ),
+
+                            React.createElement(
+                                "button",
+                                {
+                                    onClick: () => {
+                                        if (go) {
+                                            go("cart");
+                                        }
+                                    },
+
+                                    style: {
+                                        padding: 11,
+                                        borderRadius:
+                                            14,
+                                        border:
+                                            "1px solid #eadbce",
+                                        background:
+                                            "#fff",
+                                        fontWeight: 700,
+                                        cursor: "pointer"
+                                    }
+                                },
+                                "🛒 Cart"
+                            )
+                        )
+                )
+            ),
+
+            role === "artisan" &&
+                React.createElement(
+                    "div",
+                    {
+                        style: {
+                            marginTop: 12,
+                            textAlign: "center",
+                            fontSize: 12,
+                            color: "#806b5b"
+                        }
+                    },
+                    "“Take a photo. Tell your story. Karigar AI does the rest.”"
+                )
+        )
+    );
 }
-// ---------------------------------------------------------------------------
 // AUTH / ONBOARDING SCREENS
 // ---------------------------------------------------------------------------
 function SplashScreen({ onNext }) {
