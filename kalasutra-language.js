@@ -188,6 +188,9 @@
 
   window.KalaSutraLanguage = { LANGS, getLanguage, setLanguage, speak, mount: mountLanguagePicker };
 
-  // Language is selected inside KalaSutra role selection; no startup overlay.
-
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountLanguagePicker, { once: true });
+  } else {
+    mountLanguagePicker();
+  }
 })();
