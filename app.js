@@ -476,6 +476,9 @@ function SplashScreen({ onNext }) {
 }
 function RoleSelectScreen({ name, onPick }) {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [language, setLanguage] = useState(() => localStorage.getItem("kalasutra_language") || "hi");
+    const languageOptions = [["hi","Hindi"],["en","English"],["mr","Marathi"],["gu","Gujarati"],["pa","Punjabi"],["bn","Bengali"],["ta","Tamil"],["te","Telugu"],["kn","Kannada"],["ml","Malayalam"],["or","Odia"],["ur","Urdu"]];
+    function chooseLanguage(code) { localStorage.setItem("kalasutra_language", code); setLanguage(code); window.dispatchEvent(new CustomEvent("kalasutra:language-changed", { detail: { code } })); }
     return (React.createElement("div", { className: "role-landing" },
         React.createElement("div", { className: "role-mandala mandala-one" }),
         React.createElement("div", { className: "role-mandala mandala-two" }),
@@ -517,6 +520,9 @@ function RoleSelectScreen({ name, onPick }) {
                     React.createElement("strong", null, "I'm a Buyer"),
                     React.createElement("em", null, "Discover verified handmade pieces, meet the makers")),
                 React.createElement("span", { className: "role-arrow" }, "\u2192"))),
+        React.createElement("div", { className: "role-language-picker" },
+            React.createElement("span", null, "Language for Karigar AI"),
+            React.createElement("div", { className: "role-language-chips" }, languageOptions.map(([code,label]) => React.createElement("button", { key: code, className: language === code ? "active" : "", onClick: () => chooseLanguage(code) }, label)))),
         React.createElement("div", { className: "role-bottom-note" },
             React.createElement("span", null, "\u2726 Small Creations \u00B7 Big Stories \u2661"),
             React.createElement("span", null, "Made with respect for every maker."))));
@@ -868,7 +874,7 @@ function ArtisanDashboard({ user, go, setToast }) {
                 React.createElement("div", { className: "plus-circle" }, "\uFF0B"),
                 React.createElement("strong", null, "You haven\u2019t added any products yet."),
                 React.createElement("span", null, "Tap \u201CAdd\u201D below to list your first piece."))),
-            React.createElement(AITalker, { embedded: true, role: "artisan", go: go }))));
+            null)));
 }
 // ---------------------------------------------------------------------------
 // CONSISTENT ARTISAN IDENTITY — shared visual across buyer/product/add/reel
@@ -3177,7 +3183,7 @@ function App() {
         !isArtisan && screen === "buyerProfile" && React.createElement(BuyerProfileScreen, { user: user, onLogout: logout, go: setScreen, openProduct: openProduct }),
         screen === "productDetail" && (React.createElement(ProductDetailScreen, { productId: activeProductId, go: setScreen, back: goBack, setToast: setToast, wishlist: wishlist, toggleWishlist: toggleWishlist, addToCart: addToCart, userId: user.id })),
         navBar,
-        !(isArtisan && screen === "dashboard") && React.createElement(AITalker, { compact: true, role: isArtisan ? "artisan" : "buyer", go: setScreen }),
+        window.KarigarCopilot && React.createElement(window.KarigarCopilot, { user: user, screen: screen, go: setScreen }),
         !(isArtisan && screen === "dashboard") && React.createElement("div", { className: `mode-switch-wrap ${screen === 'profile' || screen === 'buyerProfile' ? 'profile-mode-switch' : ''}` },
             React.createElement("button", { className: "mode-pill", onClick: switchRole },
                 "\u21C4 Switch to ",
