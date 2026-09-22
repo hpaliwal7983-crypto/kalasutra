@@ -1,0 +1,35 @@
+KALASUTRA — KARIGAR AI COPILOT FIXED
+
+This package is based on the current KalaSutra app snapshot. Existing UI/screens are preserved.
+
+WHAT WAS FIXED
+1. Replaced the broken AI Talker integration with a persistent Karigar AI Copilot.
+2. Dashboard: full dark listening overlay with avatar + mic; app remains underneath.
+3. Other screens: compact floating Copilot stays visible while the real screen remains usable.
+4. Add Product: Copilot opens with the screen and reacts to photo, story, making-proof and verification events.
+5. Role selection now has the 12-language selector directly under Artisan/Buyer.
+6. Voice commands can route to existing app screens such as Add Product, Orders, Reel, Profile and Buyer screens.
+7. Server-side OpenAI bridge uses OPENAI_API_KEY without exposing the key in browser code.
+8. TTS route is included with browser-speech fallback.
+9. Existing index.html is NOT replaced.
+
+DEPLOY / GITHUB
+Use the files from this package in the same repository. Do NOT delete the existing app assets.
+Replace these two files in the repo:
+- app.js
+- server/server.js
+
+You may also replace the root server.js with the included root server.js if your repo uses it, but the current package.json starts server/server.js.
+
+IMPORTANT
+- Do NOT upload the OPENAI API key into the repository.
+- Keep OPENAI_API_KEY in Render Environment Variables as you already configured it.
+- Do NOT replace index.html.
+- Do NOT replace public/app.js; root app.js is the file loaded by the current root index.html.
+
+TESTED
+- node --check app.js
+- node --check server.js
+- node --check server/server.js
+- local server starts successfully
+- POST /api/karigar-ai works in fallback mode when no API key is present

@@ -289,343 +289,291 @@ function PermissionCenter({ onClose }) {
 // ---------------------------------------------------------------------------
 // AI TALKER — voice-first assistant used across the prototype/demo
 // ---------------------------------------------------------------------------
-function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
-    const [open, setOpen] = useState(true);
+// ---------------------------------------------------------------------------
+// KARIGAR AI COPILOT — persistent, voice-first companion
+// Keeps the existing KalaSutra screens intact. It only adds a contextual AI
+// layer that can talk, listen, and route the user to existing app screens.
+// ---------------------------------------------------------------------------
+const KARIGAR_LANGS = [
+    ['hi-IN','हिंदी'],['en-IN','English'],['mr-IN','मराठी'],['gu-IN','ગુજરાતી'],
+    ['pa-IN','ਪੰਜਾਬੀ'],['bn-IN','বাংলা'],['ta-IN','தமிழ்'],['te-IN','తెలుగు'],
+    ['kn-IN','ಕನ್ನಡ'],['ml-IN','മലയാളം'],['or-IN','ଓଡ଼ିଆ'],['ur-IN','اردو']
+];
+function getKalaSutraVoiceLang() {
+    try { return localStorage.getItem('kalasutra_voice_lang') || 'hi-IN'; } catch (_) { return 'hi-IN'; }
+}
+function setKalaSutraVoiceLang(lang) {
+    try {
+        localStorage.setItem('kalasutra_voice_lang', lang);
+        const found = KARIGAR_LANGS.find(x => x[0] === lang);
+        if (found) localStorage.setItem('kalasutra_language', lang.split('-')[0]);
+    } catch (_) {}
+}
+function languageLabel(lang) {
+    return (KARIGAR_LANGS.find(x => x[0] === lang) || KARIGAR_LANGS[0])[1];
+}
+function dispatchCopilotEvent(name, detail = {}) {
+    try { window.dispatchEvent(new CustomEvent('kalasutra:copilot-flow', { detail: { name, ...detail } })); } catch (_) {}
+}
+function installKarigarCopilotStyles() {
+    if (document.getElementById('karigar-copilot-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'karigar-copilot-styles';
+    style.textContent = `
+      .ks-copilot-overlay{position:fixed;inset:0;z-index:120;background:rgba(26,19,17,.68);backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:22px;animation:ksFade .22s ease-out}
+      .ks-copilot-panel{width:min(430px,100%);border:1px solid rgba(255,241,225,.28);border-radius:30px;padding:24px 20px 18px;background:linear-gradient(180deg,rgba(64,43,31,.98),rgba(37,27,23,.97));box-shadow:0 30px 80px rgba(0,0,0,.4);color:#fffaf3;text-align:center}
+      .ks-copilot-avatar{width:138px;height:138px;border-radius:50%;margin:0 auto 16px;display:grid;place-items:center;background:radial-gradient(circle at 50% 45%,#f9e9c7 0 38%,#d48e5b 39% 53%,rgba(255,203,146,.18) 54% 66%,transparent 67%);box-shadow:0 0 0 8px rgba(255,224,190,.07),0 0 55px rgba(221,145,86,.38);overflow:hidden}
+      .ks-copilot-avatar img{width:108px;height:108px;object-fit:contain;transform:translateY(6px)}
+      .ks-copilot-brand{font:700 12px/1 Archivo,sans-serif;letter-spacing:.18em;text-transform:uppercase;opacity:.75}
+      .ks-copilot-title{font:700 26px/1.15 Fraunces,serif;margin-top:7px}
+      .ks-copilot-message{margin:14px auto 10px;max-width:340px;font:600 16px/1.45 Archivo,sans-serif;color:#fff8ed;min-height:48px}
+      .ks-copilot-state{display:flex;align-items:center;justify-content:center;gap:5px;font:700 10px/1 Archivo,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#f0c9a4;min-height:18px}
+      .ks-copilot-wave{display:flex;align-items:center;justify-content:center;gap:4px;height:22px;margin:10px 0 14px}
+      .ks-copilot-wave i{width:4px;height:7px;border-radius:6px;background:#edb17e;display:block;animation:ksWave 1s ease-in-out infinite}
+      .ks-copilot-wave i:nth-child(2){animation-delay:.12s}.ks-copilot-wave i:nth-child(3){animation-delay:.24s}.ks-copilot-wave i:nth-child(4){animation-delay:.36s}.ks-copilot-wave i:nth-child(5){animation-delay:.48s}.ks-copilot-wave i:nth-child(6){animation-delay:.60s}.ks-copilot-wave i:nth-child(7){animation-delay:.72s}
+      .ks-copilot-mic{width:68px;height:68px;border-radius:50%;border:1px solid rgba(255,241,225,.3);background:linear-gradient(180deg,#f3cda8,#d99569);color:#34231c;font-size:25px;cursor:pointer;box-shadow:0 12px 32px rgba(0,0,0,.25);margin:2px auto 8px}
+      .ks-copilot-mic.listening{animation:ksPulse 1.4s ease-in-out infinite}
+      .ks-copilot-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.14);color:#fff;font-size:18px;cursor:pointer}
+      .ks-copilot-helper{font:500 11px/1.4 Archivo,sans-serif;color:rgba(255,248,237,.64);margin-top:7px}
+      .ks-copilot-compact{position:fixed;right:14px;bottom:82px;z-index:105;width:min(344px,calc(100vw - 28px));background:rgba(255,250,243,.97);border:1px solid #decbb9;border-radius:22px;box-shadow:0 18px 55px rgba(52,36,27,.22);padding:11px;color:#402f26;backdrop-filter:blur(10px);animation:ksRise .18s ease-out}
+      .ks-copilot-row{display:flex;align-items:center;gap:10px}
+      .ks-copilot-mini-avatar{width:48px;height:48px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;background:radial-gradient(circle,#f7e5c9 0 38%,#cf8c5d 39% 52%,#f0d5b9 53% 66%,#fff 67%);overflow:hidden}
+      .ks-copilot-mini-avatar img{width:39px;height:39px;object-fit:contain}
+      .ks-copilot-copy{flex:1;min-width:0}
+      .ks-copilot-copy strong{display:block;font:700 16px/1.1 Fraunces,serif;color:#3e2e25}
+      .ks-copilot-copy small{display:block;font:500 9px/1.3 Archivo,sans-serif;color:#896f5c;margin-top:3px}
+      .ks-copilot-mini-msg{margin-top:9px;padding:9px 11px;border-radius:14px;background:#fff;border:1px solid #ecded2;font:600 11px/1.45 Archivo,sans-serif;color:#4b3a31}
+      .ks-copilot-bottom{display:flex;align-items:center;gap:8px;margin-top:8px}
+      .ks-copilot-compact-mic{width:42px;height:42px;border:0;border-radius:50%;background:#5f3225;color:#fff;font-size:17px;cursor:pointer}
+      .ks-copilot-compact-mic.listening{animation:ksPulse 1.2s infinite}
+      .ks-copilot-close-lite{margin-left:auto;width:31px;height:31px;border-radius:50%;border:1px solid #e1d0c1;background:#fff;color:#6e5242;cursor:pointer}
+      .ks-copilot-context{font:600 9px/1 Archivo,sans-serif;color:#a07158;margin-left:3px}
+      .ks-copilot-toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);z-index:130;background:#3b281f;color:#fff;padding:10px 14px;border-radius:999px;font:700 10px/1 Archivo,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+      .ks-role-lang{margin:16px auto 0;max-width:410px;padding:12px 14px;border-radius:20px;background:rgba(255,249,240,.8);border:1px solid #d8c7b7;box-shadow:0 5px 18px rgba(71,51,38,.07)}
+      .ks-role-lang label{display:block;font:800 9px/1 Archivo,sans-serif;letter-spacing:.13em;text-transform:uppercase;color:#7e6857;margin-bottom:7px}
+      .ks-role-lang select{width:100%;border:1px solid #d5c4b5;border-radius:12px;background:#fffdfa;color:#43332a;padding:10px 11px;font:700 12px/1.2 Archivo,sans-serif;outline:none}
+      @keyframes ksFade{from{opacity:0}to{opacity:1}} @keyframes ksRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}} @keyframes ksWave{0%,100%{height:7px;opacity:.55}50%{height:20px;opacity:1}} @keyframes ksPulse{0%,100%{box-shadow:0 0 0 0 rgba(217,149,105,.42)}50%{box-shadow:0 0 0 10px rgba(217,149,105,0)}}
+      @media(max-width:560px){.ks-copilot-overlay{padding:15px}.ks-copilot-panel{padding:20px 16px 16px;border-radius:27px}.ks-copilot-avatar{width:122px;height:122px}.ks-copilot-avatar img{width:96px;height:96px}.ks-copilot-compact{right:10px;bottom:78px;width:calc(100vw - 20px)}}
+    `;
+    document.head.appendChild(style);
+}
+
+function AITalker({ compact = false, embedded = false, role = 'buyer', go, screen = '' }) {
+    const [open, setOpen] = useState(!compact || embedded);
     const [listening, setListening] = useState(false);
-    const [speaking, setSpeaking] = useState(false);
-    const [message, setMessage] = useState(
-        role === "artisan"
-            ? "Namaste! Main Karigar AI hoon. Aap boliye, main saath-saath kaam karunga."
-            : "Namaste! Main KalaSutra AI hoon. Aap boliye, main help karta hoon."
-    );
+    const [busy, setBusy] = useState(false);
+    const [message, setMessage] = useState('Namaste! Main Karigar AI hoon. Aaj kya karna hai?');
+    const [lang, setLang] = useState(getKalaSutraVoiceLang());
+    const [history, setHistory] = useState([]);
     const recognitionRef = useRef(null);
+    const audioRef = useRef(null);
+    const mountedRef = useRef(true);
 
-    function speak(text) {
-        setMessage(text);
-        setSpeaking(true);
-
-        try {
-            if (window.speechSynthesis) {
-                window.speechSynthesis.cancel();
-
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = "hi-IN";
-                utterance.rate = 0.95;
-                utterance.pitch = 1.02;
-
-                utterance.onend = () => setSpeaking(false);
-                utterance.onerror = () => setSpeaking(false);
-
-                window.speechSynthesis.speak(utterance);
-            } else {
-                setSpeaking(false);
-            }
-        } catch (_) {
-            setSpeaking(false);
-        }
-    }
-
-    function handleCommand(heard) {
-        const q = String(heard || "").toLowerCase().trim();
-
-        if (!q) return;
-
-        if (
-            q.includes("product") ||
-            q.includes("add product") ||
-            q.includes("add a piece") ||
-            q.includes("नया प्रोडक्ट") ||
-            q.includes("उत्पाद") ||
-            q.includes("नया सामान") ||
-            q.includes("product add")
-        ) {
-            speak(
-                role === "artisan"
-                    ? "Bilkul. Chaliye aapka naya product banate hain. Main step by step aapke saath hoon."
-                    : "Bilkul. Main aapko product ke liye guide karta hoon."
-            );
-
-            if (role === "artisan") {
-                setTimeout(() => go?.("addProduct"), 650);
-            }
-            return;
-        }
-
-        if (
-            q.includes("order") ||
-            q.includes("orders") ||
-            q.includes("ऑर्डर") ||
-            q.includes("mere order")
-        ) {
-            speak("Bilkul. Chaliye aapke orders dekhte hain.");
-            setTimeout(() => go?.("orders"), 500);
-            return;
-        }
-
-        if (
-            q.includes("profile") ||
-            q.includes("प्रोफाइल")
-        ) {
-            speak("Bilkul. Main aapka profile khol raha hoon.");
-            setTimeout(() => {
-                go?.(role === "artisan" ? "profile" : "buyerProfile");
-            }, 500);
-            return;
-        }
-
-        if (
-            q.includes("reel") ||
-            q.includes("रील")
-        ) {
-            speak("Bilkul. Chaliye aapke craft ki reel banate hain.");
-            if (role === "artisan") {
-                setTimeout(() => go?.("createReel"), 500);
-            }
-            return;
-        }
-
-        if (
-            q.includes("home") ||
-            q.includes("dashboard") ||
-            q.includes("होम")
-        ) {
-            speak("Bilkul. Chaliye home screen par chalte hain.");
-            setTimeout(() => {
-                go?.(role === "artisan" ? "dashboard" : "buyerHome");
-            }, 500);
-            return;
-        }
-
-        speak(
-            `Samajh gaya. Aapne kaha "${heard}". Main aapke saath hoon.`
-        );
-    }
-
-    function startListening() {
-        const SR =
-            window.SpeechRecognition ||
-            window.webkitSpeechRecognition;
-
-        if (!SR) {
-            speak(
-                "Is browser mein voice input available nahi hai. Please microphone supported browser mein try karein."
-            );
-            return;
-        }
-
-        try {
-            const recognition = new SR();
-
-            recognition.lang = "hi-IN";
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-            recognition.continuous = false;
-
-            recognition.onstart = () => {
-                setListening(true);
-                setSpeaking(false);
-                setMessage("Main sun raha hoon...");
-            };
-
-            recognition.onresult = (event) => {
-                const heard =
-                    event.results?.[0]?.[0]?.transcript || "";
-
-                setListening(false);
-
-                if (heard) {
-                    handleCommand(heard);
-                }
-            };
-
-            recognition.onerror = () => {
-                setListening(false);
-                speak("Mujhe awaaz clear nahi mili. Ek baar phir boliye.");
-            };
-
-            recognition.onend = () => {
-                setListening(false);
-            };
-
-            recognitionRef.current = recognition;
-            recognition.start();
-        } catch (_) {
-            setListening(false);
-        }
-    }
+    useEffect(() => { installKarigarCopilotStyles(); }, []);
+    useEffect(() => () => { mountedRef.current = false; try { recognitionRef.current?.stop(); } catch (_) {} try { audioRef.current?.pause(); } catch (_) {} }, []);
 
     useEffect(() => {
-        if (!compact && role === "artisan") {
-            const timer = setTimeout(() => {
-                speak(
-                    "Namaste! Main Karigar AI hoon. Aap craft banaiye, baaki kaam mein main aapke saath hoon."
-                );
-            }, 450);
-
-            return () => clearTimeout(timer);
-        }
+        const onLang = (e) => { const next = e?.detail?.voice || getKalaSutraVoiceLang(); setLang(next); };
+        window.addEventListener('kalasutra:language-changed', onLang);
+        return () => window.removeEventListener('kalasutra:language-changed', onLang);
     }, []);
+    useEffect(() => {
+        if (!embedded && screen) setOpen(true);
+    }, [screen]);
 
     useEffect(() => {
-        return () => {
-            try {
-                recognitionRef.current?.stop();
-            } catch (_) {}
-
-            try {
-                window.speechSynthesis?.cancel();
-            } catch (_) {}
+        const onFlow = (e) => {
+            const name = e?.detail?.name;
+            if (screen !== 'addProduct' && name !== 'add-product-enter') return;
+            const copy = {
+                'add-product-enter': lang.startsWith('en') ? `I'm with you. Let's start with a clear product photo.` : 'Main yahin hoon. Chalo sabse pehle product ki ek clear photo lete hain.',
+                'product-photo-added': lang.startsWith('en') ? 'Perfect. Photo is in. Now tell me, what is this piece?' : 'Perfect. Photo mil gayi. Ab batao, ye piece kya hai?',
+                'story-listening': lang.startsWith('en') ? 'Take your time. Tell me the story in your own words.' : 'Aaram se batao. Apni kahani bilkul apne words mein sunao.',
+                'story-captured': lang.startsWith('en') ? `Beautiful. I've got the story. I'll keep it natural and buyer-friendly.` : 'Bahut badhiya. Kahani mil gayi. Main ise natural aur buyer-friendly bana dunga.',
+                'making-proof-recording': lang.startsWith('en') ? 'Yes, keep the making process in frame. A short proof clip is enough.' : 'Haan, making process frame mein rakho. Chhota sa proof clip kaafi hai.',
+                'making-proof-added': lang.startsWith('en') ? 'Great. Making proof is added. We are almost ready.' : 'Great. Making proof mil gaya. Ab bas final details check karte hain.',
+                'verification-start': lang.startsWith('en') ? `Nice. I'm checking the piece and its proof now.` : 'Nice. Ab main piece aur proof ko check kar raha hoon.',
+                'verification-complete': lang.startsWith('en') ? 'All set. Your piece has completed the verification flow.' : 'Ho gaya. Aapke piece ka verification flow complete ho gaya.'
+            };
+            const text = copy[name];
+            if (text) speak(text);
         };
-    }, []);
+        window.addEventListener('kalasutra:copilot-flow', onFlow);
+        return () => window.removeEventListener('kalasutra:copilot-flow', onFlow);
+    }, [screen, lang]);
 
-    if (!open) {
-        return React.createElement(
-            "button",
-            {
-                className: "karigar-copilot-fab",
-                onClick: () => setOpen(true),
-                "aria-label": "Open Karigar AI"
-            },
-            React.createElement(
-                "img",
-                {
-                    src: "/assets/avatar-artisan.png",
-                    alt: "Karigar AI"
+    function browserSpeak(text) {
+        try {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = lang;
+            u.rate = 0.96;
+            u.pitch = 1.02;
+            const voices = window.speechSynthesis.getVoices?.() || [];
+            const match = voices.find(v => String(v.lang || '').toLowerCase().startsWith(lang.toLowerCase().split('-')[0]));
+            if (match) u.voice = match;
+            window.speechSynthesis.speak(u);
+        } catch (_) {}
+    }
+
+    async function speak(text) {
+        if (!text) return;
+        setMessage(text);
+        try {
+            const r = await fetch('/api/karigar-ai/tts', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ text, language: lang }) });
+            if (r.ok) {
+                const data = await r.json();
+                if (data.audio) {
+                    const audio = new Audio(`data:${data.mime || 'audio/mpeg'};base64,${data.audio}`);
+                    audioRef.current = audio;
+                    await audio.play();
+                    return;
                 }
-            ),
-            React.createElement("span", null, "✦")
+            }
+        } catch (_) {}
+        browserSpeak(text);
+    }
+
+    function localAction(text) {
+        const q = String(text || '').toLowerCase();
+        if (/add( a)? (piece|product)|new product|naya product|product add|उत्पाद|नया प्रोडक्ट/.test(q) && role === 'artisan') return 'addProduct';
+        if (/order|ऑर्डर/.test(q)) return 'orders';
+        if (/earning|कमाई|income|paisa/.test(q)) return 'orders';
+        if (/reel|रील/.test(q)) return 'createReel';
+        if (/fair price|price|दाम|कीमत|rate/.test(q) && role === 'artisan') return 'fairPrice';
+        if (/raw material|material|कच्चा माल/.test(q) && role === 'artisan') return 'materialHub';
+        if (/market match|buyer.*dhundo|buyer.*find|buyer|खरीदार/.test(q) && role === 'artisan') return 'marketMatch';
+        if (/design|idea|डिजाइन|डिज़ाइन/.test(q) && role === 'artisan') return 'designLab';
+        if (/passport|craft passport/.test(q) && role === 'artisan') return 'craftPassport';
+        if (/gurukul|teach|सीख|बेटा/.test(q) && role === 'artisan') return 'craftGurukul';
+        if (/profile|प्रोफाइल/.test(q)) return role === 'artisan' ? 'profile' : 'buyerProfile';
+        if (/home|dashboard|होम/.test(q)) return role === 'artisan' ? 'dashboard' : 'buyerHome';
+        if (/cart|कार्ट/.test(q) && role === 'buyer') return 'cart';
+        if (/wishlist|saved|सेव/.test(q) && role === 'buyer') return 'wishlist';
+        return null;
+    }
+
+    function explainAction(action) {
+        const L = lang.split('-')[0];
+        const copy = {
+            hi: { add:'Bilkul. Chalo naya product add karte hain. Pehle ek achhi photo lete hain.', orders:'Haan, chalo orders dekhte hain.', reel:'Chalo is product ki Reel banate hain.', price:'Chalo is product ki fair price dekhte hain.', materialHub:'Chalo raw material ke liye Material Hub kholte hain.', marketMatch:'Chalo suitable buyers ke liye Market Match dekhte hain.', designLab:'Chalo Design Lab mein ideas dekhte hain.', craftPassport:'Chalo aapka Craft Passport kholte hain.', craftGurukul:'Chalo Craft Gurukul kholte hain.' },
+            en: { add:'Absolutely. Let’s add your new product. First, let’s take a clear photo.', orders:'Sure. Let’s check your orders.', reel:'Let’s turn this product into a Reel.', price:'Let’s work out a fair price for it.', materialHub:'Let’s open Material Hub and check the raw material options.', marketMatch:'Let’s open Market Match and look for suitable buyers.', designLab:'Let’s open Design Lab and find a fresh idea.', craftPassport:'Let’s open your Craft Passport.', craftGurukul:'Let’s open Craft Gurukul.' }
+        }[L] || null;
+        if (copy?.[action]) return copy[action];
+        return 'Bilkul. Chalo agla step karte hain.';
+    }
+
+    function performAction(action) {
+        if (!action) return;
+        const map = { addProduct:'addProduct', orders:'orders', createReel:'createReel', profile:'profile', buyerProfile:'buyerProfile', dashboard:'dashboard', buyerHome:'buyerHome', cart:'cart', wishlist:'wishlist', materialHub:'dashboard', marketMatch:'dashboard', designLab:'dashboard', craftPassport:'dashboard', craftGurukul:'dashboard', fairPrice:'dashboard' };
+        dispatchCopilotEvent('action', { action, screen });
+        if (map[action]) go?.(map[action]);
+    }
+
+    async function askServer(text) {
+        try {
+            const payload = {
+                message: text,
+                language: lang,
+                role,
+                screen,
+                context: { screen, role, language: lang, flow: screen === 'addProduct' ? 'add-product' : 'general' },
+                history: history.slice(-8)
+            };
+            const res = await fetch('/api/karigar-ai', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+            if (!res.ok) return null;
+            const data = await res.json();
+            if (!data?.reply) return null;
+            if (mountedRef.current) setHistory(prev => [...prev, { role:'user', content:text }, { role:'assistant', content:data.reply }].slice(-10));
+            return data;
+        } catch (_) { return null; }
+    }
+
+    async function handleTranscript(heard) {
+        if (!heard || busy) return;
+        setBusy(true);
+        setMessage('Samajh raha hoon…');
+        const data = await askServer(heard);
+        const action = data?.action || localAction(heard);
+        const reply = data?.reply || explainAction(action);
+        await speak(reply);
+        if (action) {
+            window.setTimeout(() => { performAction(action); }, 280);
+        }
+        setBusy(false);
+    }
+
+    async function startListening() {
+        if (busy || listening) return;
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            await speak('Voice input is not available in this browser. Please use a browser with microphone speech recognition.');
+            return;
+        }
+        try { recognitionRef.current?.stop(); } catch (_) {}
+        const recognition = new SR();
+        recognition.lang = lang;
+        recognition.interimResults = false;
+        recognition.continuous = false;
+        recognition.maxAlternatives = 1;
+        recognition.onstart = () => { setListening(true); setMessage('Sun raha hoon… bolo.'); };
+        recognition.onend = () => setListening(false);
+        recognition.onerror = () => { setListening(false); speak('Main sun nahi paaya. Ek baar phir bolo.'); };
+        recognition.onresult = (event) => {
+            const heard = event.results?.[0]?.[0]?.transcript || '';
+            setListening(false);
+            if (heard) handleTranscript(heard);
+        };
+        recognitionRef.current = recognition;
+        try { recognition.start(); } catch (_) { setListening(false); }
+    }
+
+    useEffect(() => {
+        if (embedded) return;
+        if (role === 'artisan' && screen === 'dashboard' && open) {
+            const key = 'kalasutra_copilot_greeted';
+            let greeted = false; try { greeted = sessionStorage.getItem(key) === '1'; } catch (_) {}
+            if (!greeted) {
+                try { sessionStorage.setItem(key, '1'); } catch (_) {}
+                window.setTimeout(() => speak(lang.startsWith('en') ? 'Welcome to KalaSutra. I’m Karigar AI. Bas batao, aaj kya karna hai.' : 'Welcome to KalaSutra. Main Karigar AI hoon. Bas batao, aaj kya karna hai.'), 450);
+            }
+        }
+    }, [role, screen, open]);
+
+    if (embedded) return null;
+
+    if (!open) return React.createElement('button', { className:'ai-fab', 'aria-label':'Open Karigar AI', onClick:()=>setOpen(true) },
+        React.createElement('img', { src:'/assets/avatar-artisan.png', alt:'Karigar AI' }), React.createElement('span',{className:'ai-fab-dot'}));
+
+    if (!compact && role === 'artisan' && screen === 'dashboard') {
+        return React.createElement('div', { className:'ks-copilot-overlay' },
+            React.createElement('div', { className:'ks-copilot-panel' },
+                React.createElement('button', { className:'ks-copilot-close', onClick:()=>setOpen(false), 'aria-label':'Close Karigar AI' }, '×'),
+                React.createElement('div', { className:'ks-copilot-avatar' }, React.createElement('img',{src:'/assets/avatar-artisan.png',alt:'Karigar AI'})),
+                React.createElement('div',{className:'ks-copilot-brand'},'KALASUTRA · KARIGAR AI'),
+                React.createElement('div',{className:'ks-copilot-title'},'Your craft, your way.'),
+                React.createElement('div',{className:'ks-copilot-message'},message),
+                React.createElement('div',{className:'ks-copilot-state'},listening ? 'Listening…' : busy ? 'Thinking…' : 'Ready when you are'),
+                React.createElement('div',{className:'ks-copilot-wave'},[1,2,3,4,5,6,7].map(i=>React.createElement('i',{key:i}))),
+                React.createElement('button',{className:`ks-copilot-mic ${listening?'listening':''}`,onClick:startListening,'aria-label':'Talk to Karigar AI'},listening?'●':'🎙'),
+                React.createElement('div',{className:'ks-copilot-helper'},'Speak naturally. Hindi, English and your selected language are supported.'),
+                React.createElement('div',{className:'ks-copilot-helper'},`Language: ${languageLabel(lang)}`)
+            )
         );
     }
 
-    return React.createElement(
-        "div",
-        {
-            className:
-                "karigar-copilot " +
-                (compact ? "karigar-copilot-compact " : "") +
-                (listening ? "karigar-listening " : "") +
-                (speaking ? "karigar-speaking " : "")
-        },
-
-        React.createElement(
-            "div",
-            { className: "karigar-copilot-glow" }
+    return React.createElement('div',{className:'ks-copilot-compact'},
+        React.createElement('div',{className:'ks-copilot-row'},
+            React.createElement('div',{className:'ks-copilot-mini-avatar'},React.createElement('img',{src:'/assets/avatar-artisan.png',alt:'Karigar AI'})),
+            React.createElement('div',{className:'ks-copilot-copy'},React.createElement('strong',null,'Karigar AI'),React.createElement('small',null, listening ? 'Listening…' : busy ? 'Thinking…' : `Active · ${languageLabel(lang)}`)),
+            React.createElement('button',{className:'ks-copilot-close-lite',onClick:()=>setOpen(false),'aria-label':'Minimize Karigar AI'},'×')
         ),
-
-        React.createElement(
-            "div",
-            { className: "karigar-copilot-top" },
-
-            React.createElement(
-                "div",
-                { className: "karigar-avatar-ring" },
-
-                React.createElement("img", {
-                    src: "/assets/avatar-artisan.png",
-                    alt: "Karigar AI"
-                }),
-
-                React.createElement(
-                    "div",
-                    { className: "karigar-orb" }
-                )
-            ),
-
-            React.createElement(
-                "div",
-                { className: "karigar-copilot-heading" },
-                React.createElement("strong", null, "Karigar AI"),
-                React.createElement(
-                    "span",
-                    null,
-                    role === "artisan"
-                        ? "Your craft companion"
-                        : "Your KalaSutra companion"
-                )
-            ),
-
-            React.createElement(
-                "button",
-                {
-                    className: "karigar-close",
-                    onClick: () => setOpen(false)
-                },
-                "×"
-            )
-        ),
-
-        React.createElement(
-            "div",
-            { className: "karigar-copilot-visual" },
-
-            React.createElement(
-                "div",
-                {
-                    className:
-                        "karigar-main-orb " +
-                        (listening ? "is-listening " : "") +
-                        (speaking ? "is-speaking" : "")
-                },
-
-                React.createElement(
-                    "div",
-                    { className: "karigar-orb-core" }
-                ),
-
-                React.createElement(
-                    "img",
-                    {
-                        src: "/assets/avatar-artisan.png",
-                        alt: ""
-                    }
-                )
-            ),
-
-            React.createElement(
-                "div",
-                { className: "karigar-status" },
-                listening
-                    ? "Listening…"
-                    : speaking
-                        ? "Speaking…"
-                        : "Tap the mic and talk"
-            )
-        ),
-
-        React.createElement(
-            "div",
-            { className: "karigar-voice-message" },
-            message
-        ),
-
-        React.createElement(
-            "div",
-            { className: "karigar-wave" },
-            [1, 2, 3, 4, 5, 6, 7].map((n) =>
-                React.createElement("i", {
-                    key: n
-                })
-            )
-        ),
-
-        React.createElement(
-            "button",
-            {
-                className:
-                    "karigar-main-mic " +
-                    (listening ? "active" : ""),
-                onClick: startListening,
-                "aria-label": "Talk to Karigar AI"
-            },
-            listening ? "●" : "🎙"
-        ),
-
-        React.createElement(
-            "div",
-            { className: "karigar-hint" },
-            role === "artisan"
-                ? "Just speak naturally — I’ll guide you step by step."
-                : "Ask naturally — I’ll help you find what you need."
+        React.createElement('div',{className:'ks-copilot-mini-msg'},message),
+        React.createElement('div',{className:'ks-copilot-bottom'},
+            React.createElement('button',{className:`ks-copilot-compact-mic ${listening?'listening':''}`,onClick:startListening,'aria-label':'Talk to Karigar AI'},listening?'●':'🎙'),
+            React.createElement('span',{className:'ks-copilot-context'},screen==='addProduct'?'Add Product guide is active':'Ask me anything'),
+            React.createElement('span',{style:{marginLeft:'auto',fontSize:10,color:'#846655'}},role==='artisan'?'Artisan':'Buyer')
         )
     );
 }
@@ -651,6 +599,7 @@ function SplashScreen({ onNext }) {
 }
 function RoleSelectScreen({ name, onPick }) {
     const [menuOpen, setMenuOpen] = useState(false);
+    const [selectedLanguage, setSelectedLanguage] = useState(getKalaSutraVoiceLang());
     return (React.createElement("div", { className: "role-landing" },
         React.createElement("div", { className: "role-mandala mandala-one" }),
         React.createElement("div", { className: "role-mandala mandala-two" }),
@@ -678,20 +627,24 @@ function RoleSelectScreen({ name, onPick }) {
                 React.createElement("span", null, "\uD83D\uDE4F")),
             React.createElement("p", null, "How will you use Kala Sutra?")),
         React.createElement("div", { className: "role-options" },
-            React.createElement("button", { className: "role-card role-card-premium artisan", onClick: () => onPick("artisan") },
+            React.createElement("button", { className: "role-card role-card-premium artisan", onClick: () => onPick("artisan", selectedLanguage) },
                 React.createElement("span", { className: "role-card-icon" },
                     React.createElement(Icon, { name: "add" })),
                 React.createElement("span", { className: "role-card-copy" },
                     React.createElement("strong", null, "I'm an Artisan"),
                     React.createElement("em", null, "List your craft, verify it, tell its story in Reels")),
                 React.createElement("span", { className: "role-arrow" }, "\u2192")),
-            React.createElement("button", { className: "role-card role-card-premium buyer", onClick: () => onPick("buyer") },
+            React.createElement("button", { className: "role-card role-card-premium buyer", onClick: () => onPick("buyer", selectedLanguage) },
                 React.createElement("span", { className: "role-card-icon" },
                     React.createElement(Icon, { name: "search" })),
                 React.createElement("span", { className: "role-card-copy" },
                     React.createElement("strong", null, "I'm a Buyer"),
                     React.createElement("em", null, "Discover verified handmade pieces, meet the makers")),
                 React.createElement("span", { className: "role-arrow" }, "\u2192"))),
+        React.createElement("div", { className: "ks-role-lang" },
+            React.createElement("label", null, "Choose your language"),
+            React.createElement("select", { value: selectedLanguage, onChange: e => { setSelectedLanguage(e.target.value); setKalaSutraVoiceLang(e.target.value); } },
+                KARIGAR_LANGS.map(([code, label]) => React.createElement("option", { key: code, value: code }, label)))),
         React.createElement("div", { className: "role-bottom-note" },
             React.createElement("span", null, "\u2726 Small Creations \u00B7 Big Stories \u2661"),
             React.createElement("span", null, "Made with respect for every maker."))));
@@ -1099,6 +1052,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             setGalleryImages(prev => [...prev, ...urls].slice(0, 6));
             setImageDataUrl(prev => prev || urls[0]);
             setErr(null);
+            dispatchCopilotEvent("product-photo-added", { count: urls.length });
         }
         catch {
             setErr("Couldn't read that image — please try another file.");
@@ -1133,7 +1087,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             rec.interimResults = false;
             rec.continuous = false;
             rec.maxAlternatives = 1;
-            rec.onstart = () => { setStoryRecording(true); setErr(null); };
+            rec.onstart = () => { setStoryRecording(true); setErr(null); dispatchCopilotEvent("story-listening"); };
             rec.onend = () => setStoryRecording(false);
             rec.onerror = () => { setStoryRecording(false); setErr("I couldn't hear the story. Please try again."); };
             rec.onresult = (event) => {
@@ -1141,6 +1095,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                 if (heard) {
                     setStory(heard);
                     generateEnglishDescription(heard);
+                    dispatchCopilotEvent("story-captured", { text: heard });
                 }
             };
             storyRecognitionRef.current = rec;
@@ -1166,13 +1121,14 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             recorder.onstop = () => {
                 const blob = new Blob(proofChunksRef.current, { type: "video/webm" });
                 const reader = new FileReader();
-                reader.onload = () => setProofVideo(reader.result);
+                reader.onload = () => { setProofVideo(reader.result); dispatchCopilotEvent("making-proof-added", { source: "camera" }); };
                 reader.readAsDataURL(blob);
                 stream.getTracks().forEach((t) => t.stop());
             };
             recorder.start();
             proofRecorderRef.current = recorder;
             setRecording(true);
+            dispatchCopilotEvent("making-proof-recording");
             setTimeout(() => { if (proofRecorderRef.current?.state === "recording")
                 proofRecorderRef.current.stop(); setRecording(false); }, 5000);
         }
@@ -1189,6 +1145,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
         try {
             setProofVideo(await fileToDataURL(file));
             setErr(null);
+            dispatchCopilotEvent("making-proof-added", { source: "gallery" });
         }
         catch {
             setErr("Couldn't read that video. Please try another clip.");
@@ -1196,6 +1153,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
         e.target.value = "";
     }
     async function handleCreateAndScan() {
+        dispatchCopilotEvent("verification-start");
         if (!imageDataUrl) {
             setErr("First upload/take a photo of the piece.");
             return;
@@ -1233,15 +1191,20 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             setStepState("result");
             setLastVerifiedProductId(created.id);
             saveRecentProduct(user.id, created.id);
+            dispatchCopilotEvent("verification-complete", { productId: created.id });
         }
         catch (e) {
             setErr(e.message || "Verification failed.");
         }
     }
-    useEffect(() => () => { try {
+    useEffect(() => {
+        dispatchCopilotEvent("add-product-enter");
+        return () => { try {
         storyRecognitionRef.current?.stop();
     }
-    catch (_) { } proofStreamRef.current?.getTracks().forEach((t) => t.stop()); }, []);
+    catch (_) { } proofStreamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+    }, []);
     return (React.createElement(React.Fragment, null,
         React.createElement("div", { className: "addpiece-page" },
             React.createElement("header", { className: "addpiece-topbar" },
@@ -3261,8 +3224,9 @@ function App() {
         setPendingName(name);
         setPhase("role");
     }
-    async function handleRolePick(role) {
+    async function handleRolePick(role, language) {
         try {
+            if (language) setKalaSutraVoiceLang(language);
             const created = await apiPost("/users", { name: pendingName, contact: "demo", role });
             setUser(created);
             setPendingRole(role);
@@ -3352,7 +3316,7 @@ function App() {
         !isArtisan && screen === "buyerProfile" && React.createElement(BuyerProfileScreen, { user: user, onLogout: logout, go: setScreen, openProduct: openProduct }),
         screen === "productDetail" && (React.createElement(ProductDetailScreen, { productId: activeProductId, go: setScreen, back: goBack, setToast: setToast, wishlist: wishlist, toggleWishlist: toggleWishlist, addToCart: addToCart, userId: user.id })),
         navBar,
-        !(isArtisan && screen === "dashboard") && React.createElement(AITalker, { compact: true, role: isArtisan ? "artisan" : "buyer", go: setScreen }),
+        React.createElement(AITalker, { compact: screen !== "dashboard", role: isArtisan ? "artisan" : "buyer", go: setScreen, screen }),
         !(isArtisan && screen === "dashboard") && React.createElement("div", { className: `mode-switch-wrap ${screen === 'profile' || screen === 'buyerProfile' ? 'profile-mode-switch' : ''}` },
             React.createElement("button", { className: "mode-pill", onClick: switchRole },
                 "\u21C4 Switch to ",
