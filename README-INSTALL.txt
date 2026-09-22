@@ -1,28 +1,27 @@
-KalaSutra — Karigar AI upgrade
-================================
+KalaSutra — Karigar AI V2 additive upgrade
 
-This ZIP is additive. It does NOT replace app.js or remove your existing screens/features.
+What this does
+- Keeps the existing KalaSutra opening, Get Started, Login, OTP, name and role screens.
+- Adds the language selector directly BELOW Artisan/Buyer role selection.
+- Supports: Hindi, English, Marathi, Gujarati, Punjabi, Bengali, Tamil, Telugu, Kannada, Malayalam, Odia, Urdu.
+- After Artisan opens, shows a warm KalaSutra/“Welcome to KalaSutra” Karigar AI experience automatically.
+- Adds the reference-inspired AI orb overlay with voice + typing fallback.
+- Uses the selected language for speech recognition and text-to-speech.
+- Keeps existing Add Product, Orders, Reels, Fair Price AI, Material Hub, Design Lab, Craft Passport, Market Match and Craft Gurukul screens; the AI routes into those existing actions instead of replacing them.
+- Adds a small proactive artisan insight card for today’s orders/earnings where the existing API provides the data.
+- Adds a matching KalaSutra AI entry point on the buyer home.
 
-What it adds:
-- Multilingual Karigar AI speech using the language selected in the KalaSutra welcome screen.
-- Same-language voice recognition preference.
-- First-run role handoff: the Artisan/Buyer choice from the welcome screen is automatically applied to the existing app role screen after login.
-- Voice aliases for Craft Capital and Market Hub, using the existing Growth Hub cards.
-- Existing seven artisan systems remain available:
-  Fair Price AI, Craft Capital, Market Hub / Material Hub, Design Lab,
-  Craft Passport, Direct Market Match, Craft Gurukul.
-- A small Language button appears inside Karigar AI so the language can be changed later.
-- Existing UI, routes, product IDs, photos, reels, orders, verification, payments, etc. are left untouched.
+IMPORTANT
+- Replace ONLY the existing root file named: kalasutra-ai-welcome.js
+- Do NOT replace index.html.
+- Do NOT replace app.js.
+- Do NOT delete any existing assets or files.
+- Your current index.html already loads /kalasutra-ai-welcome.js, so no extra script line is needed.
 
-INSTALL
--------
-1. Upload `index.html` from this ZIP to the root of your GitHub repo and replace the existing `index.html`.
-2. Upload `kalasutra-ai-welcome.js` to the root of your GitHub repo.
-3. Commit both files.
-4. Keep your existing `kalasutra-language.js` and `kalasutra-language.css` files in the repo; the included index.html loads them.
-5. Render will then load the new Karigar AI enhancement automatically.
+After upload
+1. Commit the file.
+2. Deploy on Render as you already do.
+3. Open the app, go through the normal flow, choose Artisan/Buyer, then choose language under the role buttons.
 
-Important:
-- The browser still controls whether speech recognition / speech synthesis is available.
-- Microphone/camera/location permissions remain browser permissions.
-- This upgrade does not create a cloud LLM or API key; it enhances the existing in-browser Karigar AI and voice flows.
+Browser note
+Voice recognition and microphone behaviour are controlled by the browser. If the browser blocks automatic microphone start, the AI screen still opens automatically and the user can tap the voice button once.
