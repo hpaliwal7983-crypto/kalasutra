@@ -1,31 +1,17 @@
-KALASUTRA LANGUAGE PACK
-=======================
+KalaSutra Buyer Front — REFERENCE UPDATE
 
-This package adds a lightweight multilingual language-selection entry experience
-for KalaSutra without replacing your existing app files.
+This package is an additive update to the previously working blank-screen-fixed build.
 
-Included:
-- kalasutra-language.js  -> language selector + saved preference + voice-language event
-- kalasutra-language.css -> mobile-first visual styling
+What was added:
+- Buyer Home front page redesigned to closely follow the supplied reference screenshot.
+- Explore by Craft section with the exact craft photos supplied in the conversation, cropped from the supplied references.
+- Pottery, Textiles, Woodwork, Metalwork, Cane & Bamboo, Jewellery, Home Decor + More.
+- Craft tiles are interactive and filter the existing buyer product grid without removing existing functionality.
+- Added Today’s Craft Story, Craft Stories, Curated for You and Why Buy Handmade visual sections.
+- Existing Buyer navigation, cart, wishlist, product detail, orders, reels, profile, AI Talker and Artisan functionality are preserved.
 
-Supported languages:
-Hindi, English, Marathi, Gujarati, Punjabi, Bengali, Tamil, Telugu,
-Kannada, Malayalam, Odia, Urdu.
+UPLOAD:
+Replace the files/folders in the existing static/public app with this package.
+Do not delete backend/API files that are not included here.
 
-Integration (one line):
-Add these before your closing </body> in index.html:
-
-<link rel="stylesheet" href="/kalasutra-language.css">
-<script src="/kalasutra-language.js"></script>
-
-The selector stores:
-localStorage key: kalasutra_language
-
-Events:
-kalasutra:language-changed
-kalasutra:role-selected
-
-Important:
-This pack does not delete or overwrite your existing UI. It only adds the entry
-screen and emits events so your existing app can react to the selected language
-and role. Your current app logic can then connect to those events.
+This ZIP is based on the last working blank-screen-fixed version.

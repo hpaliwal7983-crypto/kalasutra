@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node server/server.js"
+    "start": "node server/server.js",
+    "check": "node -c server.js && node -c app.js && node -c kalasutra-language.js && node -c kalasutra-ai-welcome.js && node -c server/server.js"
   },
   "engines": {
     "node": ">=18"

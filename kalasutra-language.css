@@ -1,88 +1,64 @@
-#kalasutra-language-overlay{
-  position:fixed;
-  inset:0;
-  z-index:999999;
+/* KalaSutra role-first language selector */
+.ks-inline-language{
+  margin:12px auto 4px;
+  width:min(100%,430px);
   display:flex;
   align-items:center;
-  justify-content:center;
-  padding:20px;
-  background:radial-gradient(circle at 20% 10%,#f5e8d8 0,#efe1d1 35%,#d9c2ad 100%);
-  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
-  transition:opacity .22s ease,visibility .22s ease;
+  gap:12px;
+  padding:10px 12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.75);
+  border:1px solid rgba(111,78,55,.14);
+  box-shadow:0 8px 26px rgba(72,48,31,.07);
 }
-#kalasutra-language-overlay.closing{opacity:0;visibility:hidden}
-.ks-lang-card{
-  width:min(720px,100%);
-  max-height:min(92vh,860px);
-  overflow:auto;
-  padding:28px;
-  border-radius:30px;
-  background:rgba(255,252,248,.96);
-  box-shadow:0 30px 100px rgba(64,42,28,.24);
+.ks-inline-language-copy{display:flex;flex-direction:column;min-width:0;flex:1;text-align:left}
+.ks-inline-language-copy strong{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:#5b4031}
+.ks-inline-language-copy span{font-size:11px;color:#806b5b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ks-inline-language select{
+  appearance:auto;
+  border:1px solid #dfcfc0;
+  background:#fffaf5;
+  color:#4d392c;
+  border-radius:12px;
+  padding:9px 28px 9px 10px;
+  font-weight:800;
+  font-size:13px;
+  outline:none;
+}
+@media(max-width:430px){.ks-inline-language{margin-left:0;margin-right:0}.ks-inline-language select{max-width:130px}}
+
+/* V4 safety: language must never appear as a startup full-screen overlay. */
+#kalasutra-language-overlay,
+.kalasutra-language-overlay,
+.ks-lang-overlay { display:none !important; }
+
+.ks-inline-language{
+  width:min(100%,620px);
+  margin:14px auto 0;
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
   border:1px solid rgba(105,73,49,.14);
-  text-align:center;
+  border-radius:16px;
+  background:rgba(255,252,248,.86);
+  box-sizing:border-box;
 }
-.ks-lang-brand{
-  font-size:14px;
-  font-weight:900;
-  letter-spacing:1.6px;
-  color:#765039;
-  margin-bottom:8px;
-}
-.ks-lang-card h1{
-  margin:0;
-  color:#3e2b20;
-  font-size:clamp(30px,6vw,46px);
-  line-height:1.05;
-}
-.ks-lang-card p{
-  color:#79685c;
-  margin:12px 0 22px;
-  font-size:16px;
-}
-.ks-lang-grid{
-  display:grid;
-  grid-template-columns:repeat(3,minmax(0,1fr));
-  gap:9px;
-}
-.ks-lang-grid button{
-  border:1px solid #eadfd4;
+.ks-inline-language-copy{display:flex;flex-direction:column;gap:2px;text-align:left;min-width:0}
+.ks-inline-language-copy strong{font-size:12px;color:#6f4e37}
+.ks-inline-language-copy span{font-size:11px;color:#927d6b}
+.ks-inline-language select{
+  min-width:145px;
+  border:1px solid #dfd1c5;
+  border-radius:12px;
+  padding:10px 12px;
   background:#fff;
   color:#4d3b30;
-  border-radius:16px;
-  padding:13px 10px;
-  font-size:14px;
-  font-weight:800;
-  cursor:pointer;
-}
-.ks-lang-grid button.active{
-  background:#6f4e37;
-  border-color:#6f4e37;
-  color:#fff;
-}
-.ks-lang-actions{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-top:18px;
-}
-.ks-lang-actions button{
-  border:0;
-  border-radius:17px;
-  padding:15px 12px;
-  font-size:15px;
-  font-weight:900;
-  cursor:pointer;
-}
-#ks-artisan-btn{background:#6f4e37;color:#fff}
-#ks-buyer-btn{background:#efe5da;color:#4d3b30}
-#ks-lang-note{
-  display:block;
-  margin-top:13px;
-  color:#927d6b;
+  font-weight:700;
+  outline:none;
 }
 @media(max-width:540px){
-  .ks-lang-card{padding:20px;border-radius:24px}
-  .ks-lang-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .ks-lang-actions{grid-template-columns:1fr}
+  .ks-inline-language{margin-top:12px;padding:9px;gap:8px}
+  .ks-inline-language select{min-width:118px;padding:9px 8px}
 }

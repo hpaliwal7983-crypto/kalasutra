@@ -1,0 +1,11 @@
+KALASUTRA — KARIGAR AI V3
+
+1) Do NOT paste your OpenAI key into app.js, kalasutra-ai-welcome.js, or any HTML file.
+2) In Render, open your service → Environment → add: OPENAI_API_KEY = your_key_here
+3) Optional model vars are already defaulted:
+   OPENAI_MODEL=gpt-5.6-luna
+   OPENAI_TTS_MODEL=gpt-4o-mini-tts
+   OPENAI_TTS_VOICE=alloy
+4) Redeploy.
+5) The app uses /api/ai/chat for conversation and /api/ai/tts for natural voice. The browser never receives OPENAI_API_KEY.
+6) Without a key, the app still opens and uses local fallback replies + browser speech, so the UI can be tested first.

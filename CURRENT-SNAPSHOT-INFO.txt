@@ -1,0 +1,13 @@
+KalaSutra — Current App Snapshot
+
+Base app:
+This snapshot preserves the full app supplied in the uploaded
+KalaSutra_BUYER_PHOTOS_ADDED(2).zip.
+
+Also included:
+- kalasutra-ai-welcome.js — latest standalone Karigar AI welcome/integration layer created in this conversation.
+- kalasutra-language.js / .css — latest standalone multilingual language layer created in this conversation.
+
+Important:
+The base app files were not replaced or deleted while making this snapshot.
+The standalone additions are included so the whole project state is in one ZIP for analysis and future integration.
