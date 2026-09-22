@@ -1,0 +1,88 @@
+#kalasutra-language-overlay{
+  position:fixed;
+  inset:0;
+  z-index:999999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:radial-gradient(circle at 20% 10%,#f5e8d8 0,#efe1d1 35%,#d9c2ad 100%);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  transition:opacity .22s ease,visibility .22s ease;
+}
+#kalasutra-language-overlay.closing{opacity:0;visibility:hidden}
+.ks-lang-card{
+  width:min(720px,100%);
+  max-height:min(92vh,860px);
+  overflow:auto;
+  padding:28px;
+  border-radius:30px;
+  background:rgba(255,252,248,.96);
+  box-shadow:0 30px 100px rgba(64,42,28,.24);
+  border:1px solid rgba(105,73,49,.14);
+  text-align:center;
+}
+.ks-lang-brand{
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:1.6px;
+  color:#765039;
+  margin-bottom:8px;
+}
+.ks-lang-card h1{
+  margin:0;
+  color:#3e2b20;
+  font-size:clamp(30px,6vw,46px);
+  line-height:1.05;
+}
+.ks-lang-card p{
+  color:#79685c;
+  margin:12px 0 22px;
+  font-size:16px;
+}
+.ks-lang-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:9px;
+}
+.ks-lang-grid button{
+  border:1px solid #eadfd4;
+  background:#fff;
+  color:#4d3b30;
+  border-radius:16px;
+  padding:13px 10px;
+  font-size:14px;
+  font-weight:800;
+  cursor:pointer;
+}
+.ks-lang-grid button.active{
+  background:#6f4e37;
+  border-color:#6f4e37;
+  color:#fff;
+}
+.ks-lang-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:18px;
+}
+.ks-lang-actions button{
+  border:0;
+  border-radius:17px;
+  padding:15px 12px;
+  font-size:15px;
+  font-weight:900;
+  cursor:pointer;
+}
+#ks-artisan-btn{background:#6f4e37;color:#fff}
+#ks-buyer-btn{background:#efe5da;color:#4d3b30}
+#ks-lang-note{
+  display:block;
+  margin-top:13px;
+  color:#927d6b;
+}
+@media(max-width:540px){
+  .ks-lang-card{padding:20px;border-radius:24px}
+  .ks-lang-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ks-lang-actions{grid-template-columns:1fr}
+}
