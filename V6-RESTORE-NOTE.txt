@@ -1,0 +1,4 @@
+KalaSutra V6 Restore
+
+This package contains the V6 runtime: root index.html/app.js/styles.css, server, package files, and the public assets used by /assets/*.
+No V7/V8/V9 voice/coplay changes are included.
