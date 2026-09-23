@@ -1,29 +1,34 @@
-/* Add this near the existing V6 app render/router code.
- * Do NOT replace your V6 app.tsx/app.js.
+/*
+ * V6 integration — keep your V6 UI and router intact.
+ * Do NOT replace app.tsx/app.js.
  */
 
-// 1) Load the CSS + JS files from this add-on in index.html, OR copy their contents
-//    into your existing asset pipeline.
-//
-// 2) After the existing V6 `go()` function is available:
-//
+// 1) Load these two addon files once, after React/ReactDOM are available:
+//    frontend/karigar-warm-welcome-v7.js
+//    frontend/karigar-warm-welcome-v7.css
+
+// 2) After your existing V6 go(screen) function exists:
 //    window.__KALASUTRA_GO__ = go;
 //    window.KalaSutraV7.mount({ go, open: false });
+
+// 3) Change ONLY the existing V6 “Start Talking” button handler to:
+//    onClick={() => window.KalaSutraV7.startConversation()}
+//    Keep the button/UI itself exactly as it is.
+
+// 4) Or, from any existing V6 voice-command handler, call:
+//    window.KalaSutraV7.runCommand(transcript);
+//    Example transcript: “Aaj mujhe ek product add karna hai.”
 //
-// 3) If you want the Warm Welcome Center to open automatically on the artisan dashboard:
-//
-//    window.KalaSutraV7.mount({ go, open: true, autoWelcome: true });
-//
-// 4) When your V6 router changes screens, optionally expose the current screen:
-//
+//    The Warm Welcome Center will appear, respond in voice, and the
+//    Realtime assistant can call open_add_product to route to your
+//    EXISTING V6 Add Product screen.
+
+// 5) Optional current-screen hook:
 //    window.__KALASUTRA_SCREEN__ = screen;
-//
-// 5) Add Product integration events. In the existing AddProductScreen, after the
-//    relevant step changes, dispatch one of these:
-//
-//    window.dispatchEvent(new CustomEvent('kalasutra:copilot-flow', { detail: { step: 'photos' } }));
-//    window.dispatchEvent(new CustomEvent('kalasutra:copilot-flow', { detail: { step: 'details' } }));
-//    window.dispatchEvent(new CustomEvent('kalasutra:copilot-flow', { detail: { step: 'video' } }));
-//    window.dispatchEvent(new CustomEvent('kalasutra:copilot-flow', { detail: { step: 'review' } }));
-//
-// The voice command “Aaj mujhe ek product add karna hai” already routes to addProduct.
+
+// 6) When Add Product advances, dispatch these events if you want the avatar
+//    to guide each step:
+//    window.dispatchEvent(new CustomEvent('kalasutra:copilot-flow', { detail: { step:'photos' } }));
+//    window.dispatchEvent(new CustomEvent('kalasutra:copilot-flow', { detail: { step:'details' } }));
+//    window.dispatchEvent(new CustomEvent('kalasutra:copilot-flow', { detail: { step:'video' } }));
+//    window.dispatchEvent(new CustomEvent('kalasutra:copilot-flow', { detail: { step:'review' } }));

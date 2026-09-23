@@ -1,38 +1,55 @@
-# KalaSutra V7 — Warm Welcome Center AI Avatar
+# KalaSutra V7.2 — Warm Welcome Center Conversation Add-on
 
-## What this add-on changes
+This package is a **focused add-on for the restored V6**. It does not rebuild, replace, or merge the V6 UI.
 
-This is a focused V7 add-on for the restored KalaSutra V6. It is intentionally NOT a replacement V6 project.
+## What was changed for the exact problem in the reference
 
-It adds:
+The previous compact Karigar AI card is **not** the main experience in this add-on.
 
-- Warm Welcome Center AI Avatar overlay
-- Natural conversational OpenAI TTS
-- Voice input + spoken replies
-- Extended Indian-language selector
-- OpenAI language-aware fallback
-- Natural Hindi/English code-switching
-- Voice command → existing V6 Add Product screen
-- Add Product flow events for photo/details/video/review guidance
-- Server-side OpenAI key handling
+This version makes the **Warm Welcome Center** the conversation surface:
 
-## Important
+- dark soft backdrop + central artisan avatar
+- layered warm rings/glow around the avatar
+- speech bubble around the avatar, matching the reference behavior
+- clear `Listening…`, `Thinking…`, `Speaking…` states
+- large microphone + cancel controls
+- extended language selector
+- the voice assistant can stay conversational while the V6 screen remains untouched
 
-Keep your V6 UI, router, screens and existing files. Attach only these V7 pieces.
+## Voice architecture
 
-## Install
+Primary: **OpenAI Realtime API over WebRTC** for speech-to-speech conversation and natural turn-taking.
 
-1. Copy `frontend/karigar-copilot-v7.js` and `frontend/karigar-copilot-v7.css` into the V6 frontend assets.
-2. Load them after React/ReactDOM and before the V6 screen that mounts the copilot.
-3. Use the small integration in `frontend/integration-snippet.js` with your existing V6 `go()` function.
-4. Copy `server/openai-routes.js` into the existing Node/Express backend and mount it once:
+Fallback: the existing chained `/api/ai/chat` + `/api/ai/tts` flow.
+
+The Realtime session uses `gpt-realtime-2.1` with `marin` voice. The fallback TTS uses `gpt-4o-mini-tts` with explicit style instructions for warm, natural conversation.
+
+## First required flow
+
+User says:
+
+> “Aaj mujhe ek product add karna hai.”
+
+The V7 assistant should:
+
+1. show the Warm Welcome Center
+2. respond naturally in voice
+3. call `open_add_product`
+4. open the **existing V6 `addProduct` route**
+5. announce the immediate next step: 2–3 clear product photos
+
+No V6 screen is recreated.
+
+## Server install
+
+Mount once in your existing Node/Express server:
 
 ```js
-const mountKalaSutraV7AI = require('./server/openai-routes');
+const mountKalaSutraV7AI = require('./server/openai-realtime-routes');
 mountKalaSutraV7AI(app);
 ```
 
-5. Set the server environment variable:
+Set only on the server:
 
 ```text
 OPENAI_API_KEY=your_server_side_key
@@ -43,21 +60,27 @@ Optional:
 ```text
 KALASUTRA_AI_MODEL=gpt-5.6-luna
 KALASUTRA_TTS_MODEL=gpt-4o-mini-tts
-KALASUTRA_TTS_VOICE=coral
+KALASUTRA_TTS_VOICE=marin
+KALASUTRA_REALTIME_MODEL=gpt-realtime-2.1
 ```
 
-Do NOT put `OPENAI_API_KEY` in frontend JavaScript, React state, localStorage, or public environment variables.
+Never put the OpenAI key in frontend JavaScript or localStorage.
 
-## First demo flow
+## Frontend install
 
-Say:
+Load:
 
-> “Aaj mujhe ek product add karna hai.”
+```text
+frontend/karigar-warm-welcome-v7.js
+frontend/karigar-warm-welcome-v7.css
+```
 
-The assistant routes to the existing V6 `addProduct` screen and announces the next step.
+Then use the small integration snippet in:
 
-For the existing Add Product screen, dispatch the `kalasutra:copilot-flow` events shown in `integration-snippet.js` so the avatar can announce photo → details → making video → review guidance.
+```text
+frontend/integration-snippet.js
+```
 
-## Why the voice should feel less robotic
+## Important V6 preservation rule
 
-The V7 TTS request sends a voice-direction instruction to the server instead of relying only on browser `speechSynthesis`. Browser speech remains only as a fallback. The server keeps the OpenAI key private and returns generated audio to the browser.
+Do **not** attach the older `KalaSutra_app_js_KarigarCopilot_V7_READY.js` at the same time as this add-on. That older file contains a separate Karigar Copilot experience. Load only this V7.2 Warm Welcome add-on for the focused test.

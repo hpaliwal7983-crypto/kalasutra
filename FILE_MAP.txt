@@ -1,7 +1,16 @@
-V7 WARM WELCOME ADD-ON
+V7.2 ADD-ON FILES
 
-frontend/karigar-copilot-v7.js  -> Warm Welcome Center component + voice control
-frontend/karigar-copilot-v7.css -> Avatar/rings/listening UI
-frontend/integration-snippet.js -> attach to existing V6 router without replacing V6
-server/openai-routes.js        -> secure OpenAI chat + TTS routes
-README.md                       -> installation + environment variables
+frontend/karigar-warm-welcome-v7.js
+  Warm Welcome Center UI + Realtime WebRTC voice conversation + fallback voice flow.
+
+frontend/karigar-warm-welcome-v7.css
+  Reference-inspired Warm Welcome Center overlay styling.
+
+frontend/integration-snippet.js
+  Minimal V6 wiring. No V6 replacement.
+
+server/openai-realtime-routes.js
+  Secure server-side OpenAI routes: Realtime client secret + Responses fallback + TTS fallback.
+
+README.md
+  Installation and exact flow notes.
