@@ -3,5 +3,5 @@ services:
     name: kalasutra
     env: node
     buildCommand: ""
-    startCommand: "node scripts/fetch-assets.js && node server/server.js"
+    startCommand: "node server/server.js"
     autoDeploy: true
