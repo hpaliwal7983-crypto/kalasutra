@@ -1,0 +1,5 @@
+KalaSutra Karigar AI V8 — V6 UI + V7 voice/conversation merge
+
+Base: V6_FIXED (UI/features preserved)
+Added: resilient iPad/iPhone MediaRecorder capture + OpenAI transcription, OpenAI TTS, conversation loop, warm welcome overlay, and existing language selector preservation.
+API key: NOT included. Use OPENAI_API_KEY in Render environment variables.
