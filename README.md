@@ -1,27 +1,63 @@
-KALASUTRA — PRODUCTION UI FIX V2
+# KalaSutra V7 — Warm Welcome Center AI Avatar
 
-This V2 is an additive responsive-layout patch built on the existing KalaSutra production UI fix.
+## What this add-on changes
 
-PRESERVED:
-- Existing KalaSutra design language and screens
-- Existing Artisan Impact Hub + all 7 modules
-- Fair Price AI calculation and CTA
-- Craft Capital, Material Hub, Design Lab, Craft Passport, Direct Market Match, Craft Gurukul
-- Buyer marketplace, Recently Viewed, Reels, cart/checkout, Bulk/B2B, Razorpay/COD
-- Profiles, Add Product, verification, AI Talker and bottom navigation
-- Existing logo/assets and camera/reel functionality
+This is a focused V7 add-on for the restored KalaSutra V6. It is intentionally NOT a replacement V6 project.
 
-FIXED:
-- Mobile bottom-nav content collision by reserving real document space
-- Artisan greeting/switch-button flow
-- Buyer Switch to Artisan top spacing
-- Profile mobile stacking
-- Product Detail mobile Back button overlap with logo
-- Impact Hub one-column accordion flow; expanded panels stay in normal document flow
-- Add Product verification CTA safe-area spacing
-- AI Talker/floating controls moved to a safer rail above bottom navigation
-- Mobile width/overflow constraints and safe-area handling
+It adds:
 
-IMPORTANT:
-Only replace app.tsx, styles.css, index.html and kalasutra-login-flow.js in the repo root.
-Do NOT delete or replace the assets folder.
+- Warm Welcome Center AI Avatar overlay
+- Natural conversational OpenAI TTS
+- Voice input + spoken replies
+- Extended Indian-language selector
+- OpenAI language-aware fallback
+- Natural Hindi/English code-switching
+- Voice command → existing V6 Add Product screen
+- Add Product flow events for photo/details/video/review guidance
+- Server-side OpenAI key handling
+
+## Important
+
+Keep your V6 UI, router, screens and existing files. Attach only these V7 pieces.
+
+## Install
+
+1. Copy `frontend/karigar-copilot-v7.js` and `frontend/karigar-copilot-v7.css` into the V6 frontend assets.
+2. Load them after React/ReactDOM and before the V6 screen that mounts the copilot.
+3. Use the small integration in `frontend/integration-snippet.js` with your existing V6 `go()` function.
+4. Copy `server/openai-routes.js` into the existing Node/Express backend and mount it once:
+
+```js
+const mountKalaSutraV7AI = require('./server/openai-routes');
+mountKalaSutraV7AI(app);
+```
+
+5. Set the server environment variable:
+
+```text
+OPENAI_API_KEY=your_server_side_key
+```
+
+Optional:
+
+```text
+KALASUTRA_AI_MODEL=gpt-5.6-luna
+KALASUTRA_TTS_MODEL=gpt-4o-mini-tts
+KALASUTRA_TTS_VOICE=coral
+```
+
+Do NOT put `OPENAI_API_KEY` in frontend JavaScript, React state, localStorage, or public environment variables.
+
+## First demo flow
+
+Say:
+
+> “Aaj mujhe ek product add karna hai.”
+
+The assistant routes to the existing V6 `addProduct` screen and announces the next step.
+
+For the existing Add Product screen, dispatch the `kalasutra:copilot-flow` events shown in `integration-snippet.js` so the avatar can announce photo → details → making video → review guidance.
+
+## Why the voice should feel less robotic
+
+The V7 TTS request sends a voice-direction instruction to the server instead of relying only on browser `speechSynthesis`. Browser speech remains only as a fallback. The server keeps the OpenAI key private and returns generated audio to the browser.
