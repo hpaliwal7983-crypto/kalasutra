@@ -1,0 +1,17 @@
+KalaSutra Karigar AI V7
+
+Voice conversation reliability update:
+- Added MediaRecorder fallback for browsers where SpeechRecognition is unavailable (including common iPad/Safari cases).
+- Recorded voice is sent to /api/ai/transcribe and transcribed with OpenAI gpt-4o-mini-transcribe by default.
+- Existing OpenAI chat + TTS remain in place.
+- Added warm welcome overlay with centered Karigar AI avatar and a user-gesture Talk button for browsers that block autoplay.
+- Conversation mode can automatically listen again after the AI replies.
+- Existing V6 interface, language selector, Add Product guide, business modules, and other app features are preserved.
+
+Required Render environment variable:
+OPENAI_API_KEY
+Optional:
+OPENAI_MODEL (defaults to gpt-5.6-luna)
+OPENAI_TRANSCRIBE_MODEL (defaults to gpt-4o-mini-transcribe)
+OPENAI_TTS_MODEL (defaults to gpt-4o-mini-tts)
+OPENAI_TTS_VOICE (defaults to coral)

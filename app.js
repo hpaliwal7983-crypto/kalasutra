@@ -289,18 +289,27 @@ function PermissionCenter({ onClose }) {
 // ---------------------------------------------------------------------------
 // AI TALKER — voice-first assistant used across the prototype/demo
 // ---------------------------------------------------------------------------
-function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
+function AITalker({ compact = false, embedded = false, role = 'buyer', go, userName = '' }) {
     const [open, setOpen] = useState(true);
     const [listening, setListening] = useState(false);
     const [thinking, setThinking] = useState(false);
     const [speaking, setSpeaking] = useState(false);
+    const [recording, setRecording] = useState(false);
+    const [conversationMode, setConversationMode] = useState(false);
+    const [welcomeOpen, setWelcomeOpen] = useState(role === 'artisan');
+    const [audioUnlockNeeded, setAudioUnlockNeeded] = useState(false);
     const [message, setMessage] = useState(role === 'artisan'
-        ? 'Welcome to KalaSutra! Main Karigar AI hoon. Batao, aaj kya karna hai?'
+        ? 'Namaste! Main Karigar AI hoon. Batao, aaj kya karna hai?'
         : 'Welcome to KalaSutra! Batao, main aapki kya madad karoon?');
+
     const recognitionRef = useRef(null);
     const audioRef = useRef(null);
     const historyRef = useRef([]);
-    const greetedRef = useRef(false);
+    const mediaRecorderRef = useRef(null);
+    const mediaStreamRef = useRef(null);
+    const mediaChunksRef = useRef([]);
+    const recordTimerRef = useRef(null);
+    const mountedRef = useRef(true);
 
     const LANGS = [
         ['hi', 'हिंदी', 'hi-IN'], ['en', 'English', 'en-IN'], ['mr', 'मराठी', 'mr-IN'],
@@ -320,6 +329,16 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
         const code = getLanguageCode();
         return (LANGS.find(x => x[0] === code) || LANGS[0])[1];
     }
+    function getWarmWelcome() {
+        const name = String(userName || '').trim();
+        if (role !== 'artisan') return 'Welcome to KalaSutra! Main aapke saath hoon. Batao, aaj kya dekhna ya karna hai?';
+        return name
+            ? `Namaste ${name}! Main Karigar AI hoon. Main yahin hoon — batao, aaj kya karna hai?`
+            : 'Namaste! Main Karigar AI hoon. Main yahin hoon — batao, aaj kya karna hai?';
+    }
+    function getAddProductWelcome() {
+        return 'Bilkul! Chalo ek naya product banate hain. Main tumhe step by step guide karunga. Pehle 2 ya 3 clear photos lete hain.';
+    }
     function cycleLanguage() {
         try {
             const code = getLanguageCode();
@@ -334,14 +353,18 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
 
     async function speak(text) {
         const clean = String(text || '').trim();
-        if (!clean) return;
+        if (!clean) return false;
         setMessage(clean);
         setSpeaking(true);
+        setAudioUnlockNeeded(false);
+
+        if (audioRef.current) {
+            try { audioRef.current.pause(); } catch (_) {}
+            try { audioRef.current.currentTime = 0; } catch (_) {}
+            audioRef.current = null;
+        }
+
         try {
-            if (audioRef.current) {
-                try { audioRef.current.pause(); } catch (_) {}
-                audioRef.current = null;
-            }
             const r = await fetch('/api/ai/tts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -351,33 +374,192 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
                 const blob = await r.blob();
                 const url = URL.createObjectURL(blob);
                 const audio = new Audio(url);
+                audio.preload = 'auto';
                 audioRef.current = audio;
-                audio.onended = () => {
-                    setSpeaking(false);
-                    URL.revokeObjectURL(url);
-                    audioRef.current = null;
-                };
-                audio.onerror = () => {
-                    setSpeaking(false);
-                    URL.revokeObjectURL(url);
-                    audioRef.current = null;
-                };
-                await audio.play();
-                return;
+                return await new Promise(resolve => {
+                    let finished = false;
+                    const finish = ok => {
+                        if (finished) return;
+                        finished = true;
+                        if (mountedRef.current) setSpeaking(false);
+                        try { URL.revokeObjectURL(url); } catch (_) {}
+                        if (audioRef.current === audio) audioRef.current = null;
+                        resolve(ok);
+                    };
+                    audio.onended = () => finish(true);
+                    audio.onerror = () => finish(false);
+                    audio.play().catch(() => finish(false));
+                });
             }
         } catch (_) {}
+
         try {
-            window.speechSynthesis?.cancel();
-            const u = new SpeechSynthesisUtterance(clean);
-            u.lang = getVoiceLang();
-            u.rate = 0.96;
-            u.pitch = 1.02;
-            u.onend = () => setSpeaking(false);
-            u.onerror = () => setSpeaking(false);
-            window.speechSynthesis?.speak(u);
-        } catch (_) {
-            setSpeaking(false);
+            if ('speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined') {
+                window.speechSynthesis.cancel();
+                return await new Promise(resolve => {
+                    const u = new SpeechSynthesisUtterance(clean);
+                    u.lang = getVoiceLang();
+                    u.rate = 0.96;
+                    u.pitch = 1.02;
+                    u.onend = () => { if (mountedRef.current) setSpeaking(false); resolve(true); };
+                    u.onerror = () => { if (mountedRef.current) setSpeaking(false); resolve(false); };
+                    window.speechSynthesis.speak(u);
+                });
+            }
+        } catch (_) {}
+
+        setSpeaking(false);
+        setAudioUnlockNeeded(true);
+        return false;
+    }
+
+    function clearRecorder() {
+        if (recordTimerRef.current) {
+            window.clearTimeout(recordTimerRef.current);
+            recordTimerRef.current = null;
         }
+        try { mediaStreamRef.current?.getTracks()?.forEach(track => track.stop()); } catch (_) {}
+        mediaStreamRef.current = null;
+        mediaRecorderRef.current = null;
+        mediaChunksRef.current = [];
+        setRecording(false);
+        setListening(false);
+    }
+
+    async function blobToDataUrl(blob) {
+        return await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    async function transcribeBlob(blob) {
+        const dataUrl = await blobToDataUrl(blob);
+        const base64 = dataUrl.split(',')[1] || '';
+        if (!base64) throw new Error('No recorded audio');
+        const r = await fetch('/api/ai/transcribe', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                audio: base64,
+                mimeType: blob.type || 'audio/webm',
+                language: getLanguageCode()
+            })
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || 'Transcription failed');
+        return String(data.text || '').trim();
+    }
+
+    async function handleRecordedAudio(blob) {
+        try {
+            setThinking(true);
+            setMessage('Awaaz samajh raha hoon…');
+            const heard = await transcribeBlob(blob);
+            if (!heard) throw new Error('No speech detected');
+            await askAI(heard);
+        } catch (_) {
+            setMessage('Awaaz clear nahi mili. Ek baar phir bolo.');
+            await speak('Awaaz clear nahi mili. Ek baar phir bolo, main sun raha hoon.');
+            setThinking(false);
+            if (conversationMode) window.setTimeout(() => startListening({ keepConversation: true }), 500);
+        }
+    }
+
+    async function startMediaRecorderListening() {
+        if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+            await speak('Is browser mein voice recording supported nahi hai. Please Safari ya Chrome ke latest version par try karo.');
+            return;
+        }
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStreamRef.current = stream;
+            mediaChunksRef.current = [];
+            const candidates = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm', 'audio/wav'];
+            const mimeType = candidates.find(type => {
+                try { return MediaRecorder.isTypeSupported ? MediaRecorder.isTypeSupported(type) : false; } catch (_) { return false; }
+            }) || '';
+            const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+            mediaRecorderRef.current = recorder;
+            recorder.ondataavailable = event => {
+                if (event.data && event.data.size) mediaChunksRef.current.push(event.data);
+            };
+            recorder.onstart = () => {
+                if (!mountedRef.current) return;
+                setRecording(true);
+                setListening(true);
+                setThinking(false);
+                setMessage('Sun raha hoon… Bolo, main dhyaan se sun raha hoon.');
+            };
+            recorder.onstop = async () => {
+                const chunks = mediaChunksRef.current.slice();
+                const type = recorder.mimeType || mimeType || 'audio/webm';
+                clearRecorder();
+                if (!chunks.length) return;
+                const blob = new Blob(chunks, { type });
+                await handleRecordedAudio(blob);
+            };
+            recorder.onerror = () => {
+                clearRecorder();
+                setMessage('Mic mein thodi dikkat aa gayi. Dobara try karo.');
+            };
+            recorder.start();
+            recordTimerRef.current = window.setTimeout(() => {
+                try { if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop(); } catch (_) {}
+            }, 7000);
+        } catch (_) {
+            clearRecorder();
+            await speak('Microphone permission allow kar do, phir dobara bolo.');
+        }
+    }
+
+    function startSpeechRecognition() {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) return false;
+        try { recognitionRef.current?.stop(); } catch (_) {}
+        const recognition = new SR();
+        recognition.lang = getVoiceLang();
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.onstart = () => {
+            setListening(true);
+            setMessage('Sun raha hoon… Bolo, main dhyaan se sun raha hoon.');
+        };
+        recognition.onresult = event => {
+            setListening(false);
+            const heard = event.results?.[0]?.[0]?.transcript || '';
+            if (heard) askAI(heard);
+        };
+        recognition.onerror = async () => {
+            setListening(false);
+            if (conversationMode) {
+                await speak('Awaaz clear nahi mili. Ek baar phir bolo.');
+                window.setTimeout(() => startListening({ keepConversation: true }), 450);
+            } else {
+                await speak('Awaaz clear nahi mili. Ek baar phir bolo.');
+            }
+        };
+        recognition.onend = () => setListening(false);
+        recognitionRef.current = recognition;
+        try { recognition.start(); return true; } catch (_) { return false; }
+    }
+
+    async function startListening({ keepConversation = false } = {}) {
+        setOpen(true);
+        if (keepConversation) setConversationMode(true);
+        if (recording || listening) return;
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SR && startSpeechRecognition()) return;
+        await startMediaRecorderListening();
+    }
+
+    function stopListening(manual = true) {
+        if (manual) setConversationMode(false);
+        try { recognitionRef.current?.stop(); } catch (_) {}
+        try { if (mediaRecorderRef.current?.state === 'recording') mediaRecorderRef.current.stop(); } catch (_) {}
+        clearRecorder();
     }
 
     async function askAI(text) {
@@ -400,7 +582,9 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
             if (!r.ok) throw new Error(data.error || 'AI request failed');
             const reply = String(data.reply || 'Bilkul. Main yahin hoon, batao kya karna hai.').trim();
             historyRef.current.push({ role: 'assistant', content: reply });
+            setThinking(false);
             await speak(reply);
+
             const actions = {
                 addProduct: 'addProduct', createReel: 'createReel', orders: 'orders',
                 profile: role === 'artisan' ? 'profile' : 'buyerProfile',
@@ -410,61 +594,42 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
             };
             const target = actions[data.action];
             if (target && go && target !== window.__KALASUTRA_SCREEN__) {
-                window.setTimeout(() => go(target), 350);
+                setConversationMode(false);
+                window.setTimeout(() => go(target), 450);
+                return;
+            }
+            if (conversationMode && role === 'artisan') {
+                window.setTimeout(() => startListening({ keepConversation: true }), 450);
             }
         } catch (_) {
+            setThinking(false);
             const q = clean.toLowerCase();
-            if (q.includes('product') || q.includes('piece') || q.includes('उत्पाद') || q.includes('naya')) {
-                await speak('Bilkul. Chalo naya product add karte hain. Pehle clear photos lete hain.');
-                if (role === 'artisan') window.setTimeout(() => go?.('addProduct'), 350);
+            if (q.includes('product') || q.includes('piece') || q.includes('उत्पाद') || q.includes('naya') || q.includes('नया')) {
+                await speak(getAddProductWelcome());
+                setConversationMode(false);
+                if (role === 'artisan') window.setTimeout(() => go?.('addProduct'), 450);
             } else if (q.includes('order') || q.includes('ऑर्डर')) {
                 await speak('Bilkul, chalo tumhare orders dekhte hain.');
-                window.setTimeout(() => go?.('orders'), 350);
+                setConversationMode(false);
+                window.setTimeout(() => go?.('orders'), 450);
             } else if (q.includes('reel')) {
                 await speak('Chalo, tumhare craft ki reel banate hain.');
-                window.setTimeout(() => go?.('createReel'), 350);
+                setConversationMode(false);
+                window.setTimeout(() => go?.('createReel'), 450);
             } else {
-                await speak('Haan, main sun raha hoon. Batao kya karna hai?');
+                await speak('Haan, main yahin hoon. Batao, aaj kya karna hai?');
+                if (conversationMode) window.setTimeout(() => startListening({ keepConversation: true }), 450);
             }
-        } finally {
-            setThinking(false);
         }
     }
 
-    function startListening() {
+    async function beginWarmConversation() {
         setOpen(true);
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) {
-            speak('Voice input is not supported in this browser. Please try Chrome or a supported browser.');
-            return;
-        }
-        try { recognitionRef.current?.stop(); } catch (_) {}
-        const recognition = new SR();
-        recognition.lang = getVoiceLang();
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
-        recognition.onstart = () => {
-            setListening(true);
-            setMessage('Sun raha hoon...');
-        };
-        recognition.onresult = (event) => {
-            setListening(false);
-            const heard = event.results?.[0]?.[0]?.transcript || '';
-            if (heard) askAI(heard);
-        };
-        recognition.onerror = () => {
-            setListening(false);
-            speak('Awaaz clear nahi mili. Ek baar phir boliye.');
-        };
-        recognition.onend = () => setListening(false);
-        recognitionRef.current = recognition;
-        requestVoicePermission().then(ok => {
-            if (!ok) {
-                speak('Microphone permission allow kar do, phir dobara bolna.');
-                return;
-            }
-            try { recognition.start(); } catch (_) {}
-        });
+        setWelcomeOpen(false);
+        setConversationMode(true);
+        const intro = window.__KALASUTRA_SCREEN__ === 'addProduct' ? getAddProductWelcome() : getWarmWelcome();
+        await speak(intro);
+        window.setTimeout(() => startListening({ keepConversation: true }), 350);
     }
 
     function copilotMessage(text, action) {
@@ -477,43 +642,45 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
     }
 
     useEffect(() => {
+        mountedRef.current = true;
         window.__KALASUTRA_COPILOT_START__ = startListening;
-        const onStart = () => startListening();
-        const onMessage = (event) => {
+        const onStart = () => startListening({ keepConversation: true });
+        const onMessage = event => {
             const text = event?.detail?.text;
             const action = event?.detail?.action;
             if (text) copilotMessage(text, action);
         };
         window.addEventListener('kalasutra:copilot:start', onStart);
         window.addEventListener('kalasutra:copilot:message', onMessage);
+
+        let cancelled = false;
+        const timer = window.setTimeout(async () => {
+            if (cancelled || role !== 'artisan') return;
+            const isAddProduct = window.__KALASUTRA_SCREEN__ === 'addProduct';
+            const intro = isAddProduct ? getAddProductWelcome() : getWarmWelcome();
+            const ok = await speak(intro);
+            if (cancelled || !mountedRef.current) return;
+            if (ok) window.setTimeout(() => setWelcomeOpen(false), 1200);
+            else setAudioUnlockNeeded(true);
+        }, 700);
+
         return () => {
+            cancelled = true;
+            mountedRef.current = false;
+            window.clearTimeout(timer);
             if (window.__KALASUTRA_COPILOT_START__ === startListening) delete window.__KALASUTRA_COPILOT_START__;
             window.removeEventListener('kalasutra:copilot:start', onStart);
             window.removeEventListener('kalasutra:copilot:message', onMessage);
             try { recognitionRef.current?.stop(); } catch (_) {}
+            try { mediaRecorderRef.current?.stop(); } catch (_) {}
+            clearRecorder();
             try { audioRef.current?.pause(); } catch (_) {}
             try { window.speechSynthesis?.cancel(); } catch (_) {}
         };
     }, [role]);
 
-    useEffect(() => {
-        if (role !== 'artisan' || greetedRef.current) return;
-        let already = false;
-        try { already = sessionStorage.getItem('kalasutra_karigar_greeted') === '1'; } catch (_) {}
-        if (already) return;
-        greetedRef.current = true;
-        try { sessionStorage.setItem('kalasutra_karigar_greeted', '1'); } catch (_) {}
-        const timer = window.setTimeout(() => {
-            const screen = window.__KALASUTRA_SCREEN__ || '';
-            speak(screen === 'addProduct'
-                ? 'Great! Chalo naya product add karte hain. Pehle 2 ya 3 clear photos le lo.'
-                : 'Welcome to KalaSutra! Main Karigar AI hoon. Batao, aaj kya karna hai?');
-        }, 650);
-        return () => window.clearTimeout(timer);
-    }, [role]);
-
     const aiPanel = React.createElement('div', {
-        className: `ai-talker ${compact ? 'ai-talker-compact' : ''} karigar-copilot ${embedded ? 'ai-talker-embedded-v3' : ''} ${thinking ? 'ai-thinking' : ''}`
+        className: `ai-talker ${compact ? 'ai-talker-compact' : ''} karigar-copilot ${embedded ? 'ai-talker-embedded-v3' : ''} ${thinking ? 'ai-thinking' : ''} ${recording ? 'ai-recording' : ''}`
     },
         React.createElement('div', { className: 'ai-talker-head' },
             React.createElement('div', { className: 'ai-talker-avatar-wrap' },
@@ -522,10 +689,11 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
             ),
             React.createElement('div', { className: 'ai-talker-title' },
                 React.createElement('strong', null, role === 'artisan' ? 'Karigar AI' : 'KalaSutra AI'),
-                React.createElement('span', null, listening ? 'Listening…' : thinking ? 'Thinking…' : 'Your AI copilot')
+                React.createElement('span', null,
+                    listening ? 'Listening…' : thinking ? 'Thinking…' : speaking ? 'Speaking…' : conversationMode ? 'Conversation mode' : 'Your AI copilot')
             ),
             React.createElement('button', { className: 'ai-lang-pill', onClick: cycleLanguage, title: 'Change language' }, getLanguageLabel()),
-            React.createElement('button', { className: 'ai-close', onClick: () => setOpen(false), 'aria-label': 'Minimize AI' }, '×')
+            React.createElement('button', { className: 'ai-close', onClick: () => { setConversationMode(false); setWelcomeOpen(false); stopListening(true); setOpen(false); }, 'aria-label': 'Minimize AI' }, '×')
         ),
         React.createElement('div', { className: 'ai-talker-body' },
             React.createElement('div', { className: 'ai-message' }, message),
@@ -533,8 +701,12 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
                 ...Array.from({ length: 7 }, (_, i) => React.createElement('i', { key: i }))
             ),
             React.createElement('div', { className: 'ai-copilot-voice-row' },
-                React.createElement('button', { className: `ai-mic ${listening ? 'listening' : ''}`, onClick: startListening, 'aria-label': 'Talk to Karigar AI' }, listening ? '■' : '🎙️'),
-                React.createElement('span', null, listening ? 'I’m listening…' : speaking ? 'I’m speaking…' : 'Tap the mic and talk naturally')
+                React.createElement('button', {
+                    className: `ai-mic ${listening ? 'listening' : ''}`,
+                    onClick: () => listening ? stopListening(true) : startListening({ keepConversation: true }),
+                    'aria-label': listening ? 'Stop listening' : 'Talk to Karigar AI'
+                }, listening ? '■' : '🎙️'),
+                React.createElement('span', null, recording ? 'Recording…' : listening ? 'I’m listening…' : speaking ? 'I’m speaking…' : conversationMode ? 'Talk naturally; I’ll keep the conversation going' : 'Tap the mic and talk naturally')
             ),
             role === 'artisan' && React.createElement('div', { className: 'ai-quick-row' },
                 React.createElement('button', { onClick: () => askAI('Mera naya product add karna hai') }, '＋ Add product'),
@@ -551,7 +723,31 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
             onClick: () => setOpen(true)
         }, React.createElement('img', { src: '/assets/avatar-artisan.png', alt: 'Karigar AI' }), React.createElement('span', { className: 'ai-fab-dot' }));
     }
-    return aiPanel;
+
+    const warmOverlay = welcomeOpen && role === 'artisan' ? React.createElement('div', { className: 'karigar-warm-overlay' },
+        React.createElement('div', { className: 'karigar-warm-card' },
+            React.createElement('div', { className: 'karigar-warm-bubble' },
+                React.createElement('strong', null, userName ? `Namaste, ${userName}!` : 'Namaste!'),
+                React.createElement('span', null, 'Main Karigar AI hoon. Main tumhare saath hoon.')
+            ),
+            React.createElement('div', { className: `karigar-warm-avatar ${speaking ? 'speaking' : ''} ${listening ? 'listening' : ''}` },
+                React.createElement('div', { className: 'karigar-warm-ring ring-one' }),
+                React.createElement('div', { className: 'karigar-warm-ring ring-two' }),
+                React.createElement('img', { src: '/assets/avatar-artisan.png', alt: 'Karigar AI' }),
+                React.createElement('span', { className: 'karigar-warm-fallback' }, '🤖')
+            ),
+            React.createElement('div', { className: 'karigar-warm-status' },
+                listening ? 'Listening…' : speaking ? 'Speaking…' : 'Your AI companion is ready'
+            ),
+            React.createElement('p', null, audioUnlockNeeded
+                ? 'Ek baar tap karo — phir main tumse naturally baat karunga.'
+                : 'Bolo jaise kisi apne se baat karte ho.'),
+            React.createElement('button', { className: 'karigar-warm-talk', onClick: beginWarmConversation }, '🎙️  Talk to Karigar AI'),
+            React.createElement('button', { className: 'karigar-warm-skip', onClick: () => setWelcomeOpen(false) }, 'Continue to KalaSutra')
+        )
+    ) : null;
+
+    return React.createElement(React.Fragment, null, warmOverlay, aiPanel);
 }
 // ---------------------------------------------------------------------------
 // AUTH / ONBOARDING SCREENS
@@ -986,7 +1182,7 @@ function ArtisanDashboard({ user, go, setToast }) {
                 React.createElement("div", { className: "plus-circle" }, "\uFF0B"),
                 React.createElement("strong", null, "You haven\u2019t added any products yet."),
                 React.createElement("span", null, "Tap \u201CAdd\u201D below to list your first piece."))),
-            React.createElement(AITalker, { embedded: true, role: "artisan", go: go }))));
+            React.createElement(AITalker, { embedded: true, role: "artisan", go: go, userName: user.name }))));
 }
 // ---------------------------------------------------------------------------
 // CONSISTENT ARTISAN IDENTITY — shared visual across buyer/product/add/reel
@@ -3323,7 +3519,7 @@ function App() {
         !isArtisan && screen === "buyerProfile" && React.createElement(BuyerProfileScreen, { user: user, onLogout: logout, go: setScreen, openProduct: openProduct }),
         screen === "productDetail" && (React.createElement(ProductDetailScreen, { productId: activeProductId, go: setScreen, back: goBack, setToast: setToast, wishlist: wishlist, toggleWishlist: toggleWishlist, addToCart: addToCart, userId: user.id })),
         navBar,
-        !(isArtisan && screen === "dashboard") && React.createElement(AITalker, { compact: true, role: isArtisan ? "artisan" : "buyer", go: setScreen }),
+        !(isArtisan && screen === "dashboard") && React.createElement(AITalker, { compact: true, role: isArtisan ? "artisan" : "buyer", go: setScreen, userName: user?.name || '' }),
         !(isArtisan && screen === "dashboard") && React.createElement("div", { className: `mode-switch-wrap ${screen === 'profile' || screen === 'buyerProfile' ? 'profile-mode-switch' : ''}` },
             React.createElement("button", { className: "mode-pill", onClick: switchRole },
                 "\u21C4 Switch to ",
