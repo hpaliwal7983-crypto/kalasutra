@@ -1,0 +1,18 @@
+KalaSutra — Karigar AI V6 Ready Build
+
+Implemented:
+- Fixed Render start configuration.
+- Voice-first Karigar AI copilot; no written chat box/input.
+- OpenAI chat bridge on /api/ai/chat.
+- OpenAI natural speech bridge on /api/ai/tts with browser speech fallback.
+- Compact floating/embedded copilot UI that stays alongside the app.
+- Artisan V3 welcome card with Start Talking and language control.
+- Add Product contextual guidance: welcome -> photos -> story -> making proof -> verification.
+- Existing ArtisanGrowthHub, verification, products, reels, buyer UI and existing assets preserved.
+- No API key is stored in this package.
+
+Render:
+- Start command is already set in render.yaml.
+- Add OPENAI_API_KEY in Render Environment Variables.
+- Optional: OPENAI_TTS_MODEL=gpt-4o-mini-tts
+- Optional: OPENAI_TTS_VOICE=coral

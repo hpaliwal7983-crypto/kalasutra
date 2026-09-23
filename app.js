@@ -288,375 +288,272 @@ function PermissionCenter({ onClose }) {
 }
 // ---------------------------------------------------------------------------
 // AI TALKER — voice-first assistant used across the prototype/demo
-// ---------------------------------------------------------------------------// ---------------------------------------------------------------------------
-function AITalker({ compact = false, embedded = false, role = "buyer", go }) {
-  const [open, setOpen] = useState(true);
-  const [listening, setListening] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-  const [message, setMessage] = useState(
-    role === "artisan"
-      ? "Namaste! Main Karigar AI hoon. Batao, aaj kya banana hai?"
-      : "Welcome to KalaSutra! Main aapke saath hoon. Batao, kya dhoondh rahe ho?"
-  );
+// ---------------------------------------------------------------------------
+function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
+    const [open, setOpen] = useState(true);
+    const [listening, setListening] = useState(false);
+    const [thinking, setThinking] = useState(false);
+    const [speaking, setSpeaking] = useState(false);
+    const [message, setMessage] = useState(role === 'artisan'
+        ? 'Welcome to KalaSutra! Main Karigar AI hoon. Batao, aaj kya karna hai?'
+        : 'Welcome to KalaSutra! Batao, main aapki kya madad karoon?');
+    const recognitionRef = useRef(null);
+    const audioRef = useRef(null);
+    const historyRef = useRef([]);
+    const greetedRef = useRef(false);
 
-  const recognitionRef = useRef(null);
-  const historyRef = useRef([]);
-
-  const LANGS = {
-    Hindi: "hi-IN",
-    English: "en-IN",
-    Marathi: "mr-IN",
-    Gujarati: "gu-IN",
-    Punjabi: "pa-IN",
-    Bengali: "bn-IN",
-    Tamil: "ta-IN",
-    Telugu: "te-IN",
-    Kannada: "kn-IN",
-    Malayalam: "ml-IN",
-    Odia: "or-IN",
-    Urdu: "ur-IN"
-  };
-
-  const [language] = useState(() => {
-    try {
-      return localStorage.getItem("kalasutra_language_name") || "Hindi";
-    } catch (_) {
-      return "Hindi";
-    }
-  });
-
-  const speechLanguage = LANGS[language] || "hi-IN";
-
-  function speak(text) {
-    if (!text) return;
-
-    try {
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = speechLanguage;
-      utterance.rate = 0.94;
-      utterance.pitch = 1.03;
-
-      utterance.onstart = () => setSpeaking(true);
-      utterance.onend = () => setSpeaking(false);
-      utterance.onerror = () => setSpeaking(false);
-
-      window.speechSynthesis.speak(utterance);
-    } catch (_) {}
-  }
-
-  async function askKarigarAI(heard) {
-    const clean = String(heard || "").trim();
-    if (!clean) return;
-
-    historyRef.current = [
-      ...historyRef.current.slice(-7),
-      { role: "user", content: clean }
+    const LANGS = [
+        ['hi', 'हिंदी', 'hi-IN'], ['en', 'English', 'en-IN'], ['mr', 'मराठी', 'mr-IN'],
+        ['gu', 'ગુજરાતી', 'gu-IN'], ['pa', 'ਪੰਜਾਬੀ', 'pa-IN'], ['bn', 'বাংলা', 'bn-IN'],
+        ['ta', 'தமிழ்', 'ta-IN'], ['te', 'తెలుగు', 'te-IN'], ['kn', 'ಕನ್ನಡ', 'kn-IN'],
+        ['ml', 'മലയാളം', 'ml-IN'], ['or', 'ଓଡ଼ିଆ', 'or-IN'], ['ur', 'اردو', 'ur-IN']
     ];
 
-    try {
-      const response = await fetch("/api/karigar-ai", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          role,
-          language,
-          history: historyRef.current
-        })
-      });
-
-      const data = await response.json();
-
-      const reply =
-        String(data.reply || "").trim() ||
-        "Haan, main yahin hoon. Batao kya karna hai?";
-
-      historyRef.current.push({
-        role: "assistant",
-        content: reply
-      });
-
-      setMessage(reply);
-      speak(reply);
-
-      if (data.action && data.action !== "none" && go) {
-        setTimeout(() => {
-          go(data.action);
-        }, 700);
-      }
-
-      return;
-    } catch (_) {
-      const lower = clean.toLowerCase();
-
-      if (
-        lower.includes("add product") ||
-        lower.includes("new product") ||
-        lower.includes("product add") ||
-        lower.includes("naya product") ||
-        lower.includes("nayi cheez") ||
-        lower.includes("product banana")
-      ) {
-        const reply =
-          language === "English"
-            ? "Of course. Let's add your new product. I'll guide you step by step."
-            : "Bilkul. Chalo naya product add karte hain. Main tumhe step by step guide karunga.";
-
-        setMessage(reply);
-        speak(reply);
-
-        setTimeout(() => {
-          if (go) go("addProduct");
-        }, 700);
-
-        return;
-      }
-
-      if (
-        lower.includes("order") ||
-        lower.includes("orders") ||
-        lower.includes("mere order")
-      ) {
-        const reply =
-          language === "English"
-            ? "Sure, let's check your orders."
-            : "Bilkul, chalo tumhare orders dekhte hain.";
-
-        setMessage(reply);
-        speak(reply);
-
-        setTimeout(() => {
-          if (go) go("orders");
-        }, 700);
-
-        return;
-      }
-
-      if (
-        lower.includes("reel") ||
-        lower.includes("reel bana") ||
-        lower.includes("reel create")
-      ) {
-        const reply =
-          language === "English"
-            ? "Sure, let's create a reel for your craft."
-            : "Bilkul, chalo tumhare craft ki reel banate hain.";
-
-        setMessage(reply);
-        speak(reply);
-
-        setTimeout(() => {
-          if (go) go("createReel");
-        }, 700);
-
-        return;
-      }
-
-      const reply =
-        language === "English"
-          ? "I'm listening. Tell me what you want to do."
-          : "Haan, main sun raha hoon. Batao kya karna hai?";
-
-      setMessage(reply);
-      speak(reply);
+    function getLanguageCode() {
+        try { return localStorage.getItem('kalasutra_language') || 'hi'; } catch (_) { return 'hi'; }
     }
-  }
-
-  function startListening() {
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setMessage("Voice input is not supported on this browser.");
-      speak("Voice input is not supported on this browser.");
-      return;
+    function getVoiceLang() {
+        const code = getLanguageCode();
+        return (LANGS.find(x => x[0] === code) || LANGS[0])[2];
+    }
+    function getLanguageLabel() {
+        const code = getLanguageCode();
+        return (LANGS.find(x => x[0] === code) || LANGS[0])[1];
+    }
+    function cycleLanguage() {
+        try {
+            const code = getLanguageCode();
+            const index = Math.max(0, LANGS.findIndex(x => x[0] === code));
+            const next = LANGS[(index + 1) % LANGS.length];
+            localStorage.setItem('kalasutra_language', next[0]);
+            localStorage.setItem('kalasutra_voice_lang', next[2]);
+            setMessage(`Language set to ${next[1]}`);
+            speak(`Language changed to ${next[1]}.`);
+        } catch (_) {}
     }
 
-    try {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop();
-      }
-
-      const recognition = new SpeechRecognition();
-
-      recognition.lang = speechLanguage;
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-
-      recognition.onstart = () => {
-        setListening(true);
-        setMessage("Sun raha hoon... Batao kya karna hai.");
-      };
-
-      recognition.onresult = event => {
-        const heard =
-          event.results &&
-          event.results[0] &&
-          event.results[0][0]
-            ? event.results[0][0].transcript
-            : "";
-
-        setListening(false);
-        askKarigarAI(heard);
-      };
-
-      recognition.onerror = () => {
-        setListening(false);
-        setMessage("Koi baat nahi. Dobara bolo, main sun raha hoon.");
-      };
-
-      recognition.onend = () => {
-        setListening(false);
-      };
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (_) {
-      setListening(false);
+    async function speak(text) {
+        const clean = String(text || '').trim();
+        if (!clean) return;
+        setMessage(clean);
+        setSpeaking(true);
+        try {
+            if (audioRef.current) {
+                try { audioRef.current.pause(); } catch (_) {}
+                audioRef.current = null;
+            }
+            const r = await fetch('/api/ai/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: clean, language: getVoiceLang() })
+            });
+            if (r.ok) {
+                const blob = await r.blob();
+                const url = URL.createObjectURL(blob);
+                const audio = new Audio(url);
+                audioRef.current = audio;
+                audio.onended = () => {
+                    setSpeaking(false);
+                    URL.revokeObjectURL(url);
+                    audioRef.current = null;
+                };
+                audio.onerror = () => {
+                    setSpeaking(false);
+                    URL.revokeObjectURL(url);
+                    audioRef.current = null;
+                };
+                await audio.play();
+                return;
+            }
+        } catch (_) {}
+        try {
+            window.speechSynthesis?.cancel();
+            const u = new SpeechSynthesisUtterance(clean);
+            u.lang = getVoiceLang();
+            u.rate = 0.96;
+            u.pitch = 1.02;
+            u.onend = () => setSpeaking(false);
+            u.onerror = () => setSpeaking(false);
+            window.speechSynthesis?.speak(u);
+        } catch (_) {
+            setSpeaking(false);
+        }
     }
-  }
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const greeting =
-        role === "artisan"
-          ? "Namaste! Main Karigar AI hoon. Batao, aaj kya karna hai?"
-          : "Welcome to KalaSutra! Batao, main aapki kya madad karoon?";
+    async function askAI(text) {
+        const clean = String(text || '').trim();
+        if (!clean) return;
+        setThinking(true);
+        historyRef.current = [...historyRef.current.slice(-7), { role: 'user', content: clean }];
+        try {
+            const r = await fetch('/api/ai/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    role,
+                    language: getLanguageCode(),
+                    screen: window.__KALASUTRA_SCREEN__ || '',
+                    messages: historyRef.current.slice(-8)
+                })
+            });
+            const data = await r.json();
+            if (!r.ok) throw new Error(data.error || 'AI request failed');
+            const reply = String(data.reply || 'Bilkul. Main yahin hoon, batao kya karna hai.').trim();
+            historyRef.current.push({ role: 'assistant', content: reply });
+            await speak(reply);
+            const actions = {
+                addProduct: 'addProduct', createReel: 'createReel', orders: 'orders',
+                profile: role === 'artisan' ? 'profile' : 'buyerProfile',
+                dashboard: role === 'artisan' ? 'dashboard' : 'buyerHome',
+                buyerHome: 'buyerHome', wishlist: 'wishlist', cart: 'cart',
+                myProducts: 'myProducts', myReels: 'myReels'
+            };
+            const target = actions[data.action];
+            if (target && go && target !== window.__KALASUTRA_SCREEN__) {
+                window.setTimeout(() => go(target), 350);
+            }
+        } catch (_) {
+            const q = clean.toLowerCase();
+            if (q.includes('product') || q.includes('piece') || q.includes('उत्पाद') || q.includes('naya')) {
+                await speak('Bilkul. Chalo naya product add karte hain. Pehle clear photos lete hain.');
+                if (role === 'artisan') window.setTimeout(() => go?.('addProduct'), 350);
+            } else if (q.includes('order') || q.includes('ऑर्डर')) {
+                await speak('Bilkul, chalo tumhare orders dekhte hain.');
+                window.setTimeout(() => go?.('orders'), 350);
+            } else if (q.includes('reel')) {
+                await speak('Chalo, tumhare craft ki reel banate hain.');
+                window.setTimeout(() => go?.('createReel'), 350);
+            } else {
+                await speak('Haan, main sun raha hoon. Batao kya karna hai?');
+            }
+        } finally {
+            setThinking(false);
+        }
+    }
 
-      setMessage(greeting);
-      speak(greeting);
-    }, 800);
+    function startListening() {
+        setOpen(true);
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            speak('Voice input is not supported in this browser. Please try Chrome or a supported browser.');
+            return;
+        }
+        try { recognitionRef.current?.stop(); } catch (_) {}
+        const recognition = new SR();
+        recognition.lang = getVoiceLang();
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+        recognition.onstart = () => {
+            setListening(true);
+            setMessage('Sun raha hoon...');
+        };
+        recognition.onresult = (event) => {
+            setListening(false);
+            const heard = event.results?.[0]?.[0]?.transcript || '';
+            if (heard) askAI(heard);
+        };
+        recognition.onerror = () => {
+            setListening(false);
+            speak('Awaaz clear nahi mili. Ek baar phir boliye.');
+        };
+        recognition.onend = () => setListening(false);
+        recognitionRef.current = recognition;
+        requestVoicePermission().then(ok => {
+            if (!ok) {
+                speak('Microphone permission allow kar do, phir dobara bolna.');
+                return;
+            }
+            try { recognition.start(); } catch (_) {}
+        });
+    }
 
-    return () => clearTimeout(timer);
-  }, []);
+    function copilotMessage(text, action) {
+        setOpen(true);
+        if (action && go) {
+            go(action);
+            return;
+        }
+        speak(text);
+    }
 
-  if (!open) {
-    return React.createElement(
-      "button",
-      {
-        className: "ai-copilot-mini",
-        onClick: () => setOpen(true),
-        "aria-label": "Open Karigar AI"
-      },
-      "🤖"
-    );
-  }
+    useEffect(() => {
+        window.__KALASUTRA_COPILOT_START__ = startListening;
+        const onStart = () => startListening();
+        const onMessage = (event) => {
+            const text = event?.detail?.text;
+            const action = event?.detail?.action;
+            if (text) copilotMessage(text, action);
+        };
+        window.addEventListener('kalasutra:copilot:start', onStart);
+        window.addEventListener('kalasutra:copilot:message', onMessage);
+        return () => {
+            if (window.__KALASUTRA_COPILOT_START__ === startListening) delete window.__KALASUTRA_COPILOT_START__;
+            window.removeEventListener('kalasutra:copilot:start', onStart);
+            window.removeEventListener('kalasutra:copilot:message', onMessage);
+            try { recognitionRef.current?.stop(); } catch (_) {}
+            try { audioRef.current?.pause(); } catch (_) {}
+            try { window.speechSynthesis?.cancel(); } catch (_) {}
+        };
+    }, [role]);
 
-  return React.createElement(
-    "div",
-    {
-      className:
-        "ai-copilot " +
-        (compact ? "ai-copilot-compact " : "") +
-        (listening ? "is-listening " : "") +
-        (speaking ? "is-speaking " : "")
+    useEffect(() => {
+        if (role !== 'artisan' || greetedRef.current) return;
+        let already = false;
+        try { already = sessionStorage.getItem('kalasutra_karigar_greeted') === '1'; } catch (_) {}
+        if (already) return;
+        greetedRef.current = true;
+        try { sessionStorage.setItem('kalasutra_karigar_greeted', '1'); } catch (_) {}
+        const timer = window.setTimeout(() => {
+            const screen = window.__KALASUTRA_SCREEN__ || '';
+            speak(screen === 'addProduct'
+                ? 'Great! Chalo naya product add karte hain. Pehle 2 ya 3 clear photos le lo.'
+                : 'Welcome to KalaSutra! Main Karigar AI hoon. Batao, aaj kya karna hai?');
+        }, 650);
+        return () => window.clearTimeout(timer);
+    }, [role]);
+
+    const aiPanel = React.createElement('div', {
+        className: `ai-talker ${compact ? 'ai-talker-compact' : ''} karigar-copilot ${embedded ? 'ai-talker-embedded-v3' : ''} ${thinking ? 'ai-thinking' : ''}`
     },
-
-    React.createElement(
-      "div",
-      { className: "ai-copilot-glow" }
-    ),
-
-    React.createElement(
-      "div",
-      { className: "ai-copilot-avatar-wrap" },
-
-      React.createElement(
-        "div",
-        { className: "ai-copilot-wave wave-one" }
-      ),
-
-      React.createElement(
-        "div",
-        { className: "ai-copilot-wave wave-two" }
-      ),
-
-      React.createElement(
-        "div",
-        { className: "ai-copilot-avatar" },
-
-        React.createElement("img", {
-          src: "/assets/ai-avatar.png",
-          alt: "Karigar AI",
-          onError: e => {
-            e.currentTarget.style.display = "none";
-          }
-        }),
-
-        React.createElement(
-          "span",
-          { className: "ai-copilot-fallback" },
-          "🤖"
+        React.createElement('div', { className: 'ai-talker-head' },
+            React.createElement('div', { className: 'ai-talker-avatar-wrap' },
+                React.createElement('img', { src: '/assets/avatar-artisan.png', alt: 'Karigar AI' }),
+                React.createElement('span', { className: `ai-live-dot ${speaking ? 'ai-speaking' : ''}` })
+            ),
+            React.createElement('div', { className: 'ai-talker-title' },
+                React.createElement('strong', null, role === 'artisan' ? 'Karigar AI' : 'KalaSutra AI'),
+                React.createElement('span', null, listening ? 'Listening…' : thinking ? 'Thinking…' : 'Your AI copilot')
+            ),
+            React.createElement('button', { className: 'ai-lang-pill', onClick: cycleLanguage, title: 'Change language' }, getLanguageLabel()),
+            React.createElement('button', { className: 'ai-close', onClick: () => setOpen(false), 'aria-label': 'Minimize AI' }, '×')
+        ),
+        React.createElement('div', { className: 'ai-talker-body' },
+            React.createElement('div', { className: 'ai-message' }, message),
+            React.createElement('div', { className: 'ai-wave', 'aria-hidden': 'true' },
+                ...Array.from({ length: 7 }, (_, i) => React.createElement('i', { key: i }))
+            ),
+            React.createElement('div', { className: 'ai-copilot-voice-row' },
+                React.createElement('button', { className: `ai-mic ${listening ? 'listening' : ''}`, onClick: startListening, 'aria-label': 'Talk to Karigar AI' }, listening ? '■' : '🎙️'),
+                React.createElement('span', null, listening ? 'I’m listening…' : speaking ? 'I’m speaking…' : 'Tap the mic and talk naturally')
+            ),
+            role === 'artisan' && React.createElement('div', { className: 'ai-quick-row' },
+                React.createElement('button', { onClick: () => askAI('Mera naya product add karna hai') }, '＋ Add product'),
+                React.createElement('button', { onClick: () => askAI('Mere orders batao') }, '▣ My orders'),
+                React.createElement('button', { onClick: () => askAI('Mere product ki reel banana hai') }, '▶ Create reel')
+            )
         )
-      )
-    ),
+    );
 
-    React.createElement(
-      "div",
-      { className: "ai-copilot-content" },
-
-      React.createElement(
-        "div",
-        { className: "ai-copilot-name" },
-        role === "artisan" ? "Karigar AI" : "KalaSutra AI",
-        React.createElement("span", null, " • AI")
-      ),
-
-      React.createElement(
-        "div",
-        { className: "ai-copilot-message" },
-        message
-      ),
-
-      React.createElement(
-        "div",
-        { className: "ai-copilot-status" },
-        listening
-          ? "Listening..."
-          : speaking
-          ? "Speaking..."
-          : "Tap the mic and talk naturally"
-      )
-    ),
-
-    React.createElement(
-      "div",
-      { className: "ai-copilot-actions" },
-
-      React.createElement(
-        "button",
-        {
-          className:
-            "ai-copilot-mic " +
-            (listening ? "active" : ""),
-          onClick: startListening,
-          "aria-label": "Talk to Karigar AI"
-        },
-        listening ? "⏹" : "🎙️"
-      ),
-
-      React.createElement(
-        "button",
-        {
-          className: "ai-copilot-close",
-          onClick: () => {
-            setOpen(false);
-            try {
-              window.speechSynthesis.cancel();
-            } catch (_) {}
-          },
-          "aria-label": "Minimize Karigar AI"
-        },
-        "×"
-      )
-    )
-  );
+    if (!open) {
+        return React.createElement('button', {
+            className: 'ai-fab karigar-copilot-fab',
+            'aria-label': 'Open Karigar AI',
+            onClick: () => setOpen(true)
+        }, React.createElement('img', { src: '/assets/avatar-artisan.png', alt: 'Karigar AI' }), React.createElement('span', { className: 'ai-fab-dot' }));
+    }
+    return aiPanel;
 }
+// ---------------------------------------------------------------------------
 // AUTH / ONBOARDING SCREENS
 // ---------------------------------------------------------------------------
 function SplashScreen({ onNext }) {
@@ -1000,647 +897,96 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
 function ArtisanDashboard({ user, go, setToast }) {
     const [products, setProducts] = useState([]);
     const [err, setErr] = useState(null);
-
     useEffect(() => {
-        apiGet(`/products`)
-            .then((all) => {
-                const mine = all.filter((p) => p.artisanId === user.id);
-                setProducts(
-                    mine.length
-                        ? mine
-                        : all.filter((p) => p.id === "p5")
-                );
-            })
-            .catch((e) => setErr(e.message));
+        apiGet(`/products`).then((all) => {
+            const mine = all.filter((p) => p.artisanId === user.id);
+            // Keep the demo storefront populated with the featured real cane product.
+            setProducts(mine.length ? mine : all.filter((p) => p.id === "p5"));
+        }).catch((e) => setErr(e.message));
     }, [user.id]);
-
-    const verifiedCount = products.filter(
-        (p) => p.verificationStatus === "verified"
-    ).length;
-
+    const verifiedCount = products.filter((p) => p.verificationStatus === "verified").length;
     const featured = products[0];
-
-    function speakWelcome() {
-        try {
-            window.speechSynthesis.cancel();
-
-            const text =
-                "Namaste " +
-                user.name +
-                "! Main Karigar AI hoon. Batao, aaj kya karna hai?";
-
-            const voice = new SpeechSynthesisUtterance(text);
-            voice.lang = "hi-IN";
-            voice.rate = 0.94;
-            voice.pitch = 1.03;
-
-            window.speechSynthesis.speak(voice);
-        } catch (_) {}
-    }
-
-    return React.createElement(
-        "div",
-        { className: "artisan-home" },
-
-        /* TOP BAR */
-        React.createElement(
-            "div",
-            { className: "artisan-topbar" },
-
-            React.createElement("img", {
-                className: "artisan-logo",
-                src: "/assets/logo.png",
-                alt: "KalaSutra"
-            }),
-
-            React.createElement(
-                "div",
-                { className: "art-lives" },
+    return (React.createElement("div", { className: "artisan-home" },
+        React.createElement("div", { className: "artisan-topbar" },
+            React.createElement("img", { className: "artisan-logo", src: "/assets/logo.png", alt: "Kala Sutra" }),
+            React.createElement("div", { className: "art-lives" },
                 "Art",
-                React.createElement("br"),
+                React.createElement("br", null),
                 "Lives",
-                React.createElement("br"),
-                "Here ♡"
-            ),
-
-            React.createElement(
-                "button",
-                {
-                    className: "menu-circle",
-                    "aria-label": "Menu"
-                },
-                "☰"
-            )
-        ),
-
-        /* WELCOME */
-        React.createElement(
-            "div",
-            { className: "artisan-greeting" },
-
-            React.createElement(
-                "div",
-                null,
-
-                React.createElement(
-                    "h2",
-                    null,
-                    "Namaste, ",
+                React.createElement("br", null),
+                "Here \u2661"),
+            React.createElement("button", { className: "menu-circle", "aria-label": "Menu" }, "\u2630")),
+        React.createElement("div", { className: "artisan-greeting" },
+            React.createElement("div", null,
+                React.createElement("h2", null,
+                    "Hello, ",
                     user.name,
-                    "! ",
-                    React.createElement("span", null, "👋")
+                    " ",
+                    React.createElement("span", null, "\uD83D\uDE4F")),
+                React.createElement("div", { className: "sub" }, "Your artisan journey is live \u2728")),
+            React.createElement("button", { className: "home-switch", onClick: () => {
+                    const next = user.role === "artisan" ? "buyer" : "artisan";
+                    apiPost("/users", { name: user.name, contact: "demo", role: next }).then((u) => { window.location.reload(); });
+                } }, "\u21C4 Switch to Buyer")),
+        React.createElement("section", { className: "karigar-v3-card" },
+            React.createElement("div", { className: "karigar-v3-top" },
+                React.createElement("div", { className: "karigar-v3-avatar" },
+                    React.createElement("img", { src: "/assets/avatar-artisan.png", alt: "Karigar AI" })
                 ),
-
-                React.createElement(
-                    "div",
-                    { className: "sub" },
-                    "Your craft keeps our culture alive."
+                React.createElement("div", { className: "karigar-v3-copy" },
+                    React.createElement("span", { className: "karigar-v3-kicker" }, "● KARIGAR AI"),
+                    React.createElement("h3", null, "Your AI Companion"),
+                    React.createElement("p", null, "Bas mujhse baat karo. Main tumhare craft business mein help karunga.")
                 ),
-
-                React.createElement(
-                    "div",
-                    {
-                        className: "sub",
-                        style: { marginTop: 3 }
-                    },
-                    "Let's create a bigger tomorrow together."
-                )
+                React.createElement("button", { className: "karigar-v3-lang", onClick: () => window.KalaSutraLanguage?.setLanguage?.('hi') }, "हिंदी")
             ),
-
-            React.createElement(
-                "button",
-                {
-                    className: "home-switch",
-                    onClick: () => {
-                        const next =
-                            user.role === "artisan"
-                                ? "buyer"
-                                : "artisan";
-
-                        apiPost("/users", {
-                            name: user.name,
-                            contact: "demo",
-                            role: next
-                        }).then(() => {
-                            window.location.reload();
-                        });
-                    }
-                },
-                "⇄ Switch to Buyer"
-            )
-        ),
-
-        /* V3 KARIGAR AI CARD */
-        React.createElement(
-            "section",
-            {
-                className: "karigar-v3-card",
-                style: {
-                    margin: "4px 0 16px",
-                    padding: "16px",
-                    borderRadius: "26px",
-                    background:
-                        "linear-gradient(135deg,#fff8ef,#f3dfce)",
-                    border:
-                        "1px solid rgba(120,60,30,.12)",
-                    boxShadow:
-                        "0 10px 28px rgba(80,40,20,.10)"
-                }
-            },
-
-            React.createElement(
-                "div",
-                {
-                    style: {
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "13px"
-                    }
-                },
-
-                React.createElement(
-                    "div",
-                    {
-                        style: {
-                            width: "72px",
-                            height: "72px",
-                            borderRadius: "50%",
-                            overflow: "hidden",
-                            flexShrink: 0,
-                            background: "#efc4a3",
-                            border: "3px solid white",
-                            boxShadow:
-                                "0 5px 16px rgba(100,50,25,.16)"
-                        }
-                    },
-
-                    React.createElement("img", {
-                        src: "/assets/ai-avatar.png",
-                        alt: "Karigar AI",
-                        style: {
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover"
-                        },
-                        onError: (e) => {
-                            e.currentTarget.style.display =
-                                "none";
-                        }
-                    })
-                ),
-
-                React.createElement(
-                    "div",
-                    { style: { flex: 1 } },
-
-                    React.createElement(
-                        "div",
-                        {
-                            style: {
-                                color: "#a44827",
-                                fontSize: "12px",
-                                fontWeight: "800",
-                                marginBottom: 3
-                            }
-                        },
-                        "● KARIGAR AI"
-                    ),
-
-                    React.createElement(
-                        "h3",
-                        {
-                            style: {
-                                margin: "0 0 4px",
-                                color: "#572817",
-                                fontSize: "20px"
-                            }
-                        },
-                        "Your AI Companion"
-                    ),
-
-                    React.createElement(
-                        "p",
-                        {
-                            style: {
-                                margin: 0,
-                                color: "#65483a",
-                                fontSize: "13px",
-                                lineHeight: 1.4
-                            }
-                        },
-                        "Bas mujhse baat karo. Main tumhare craft business mein help karunga."
-                    )
-                )
-            ),
-
-            React.createElement(
-                "button",
-                {
-                    onClick: speakWelcome,
-                    style: {
-                        width: "100%",
-                        marginTop: "13px",
-                        padding: "13px",
-                        border: "none",
-                        borderRadius: "17px",
-                        background: "#9d3e20",
-                        color: "#fff",
-                        fontSize: "15px",
-                        fontWeight: "700"
-                    }
-                },
+            React.createElement("button", { className: "karigar-v3-talk", onClick: () => window.dispatchEvent(new Event('kalasutra:copilot:start')) },
                 "🎙️  Start Talking"
             ),
-
-            React.createElement(
-                "div",
-                {
-                    style: {
-                        marginTop: "9px",
-                        textAlign: "center",
-                        fontSize: "12px",
-                        color: "#745548"
-                    }
-                },
+            React.createElement("div", { className: "karigar-v3-hint" },
                 "Try saying: “Mera naya product add karna hai”"
             )
         ),
-
-        /* QUICK ACTIONS */
-        React.createElement(
-            "div",
-            {
-                style: {
-                    display: "grid",
-                    gridTemplateColumns:
-                        "repeat(3,1fr)",
-                    gap: "9px",
-                    marginBottom: "14px"
-                }
-            ),
-
-            React.createElement(
-                "button",
-                {
-                    onClick: () => go("addProduct"),
-                    style: {
-                        padding: "12px 5px",
-                        borderRadius: "16px",
-                        border:
-                            "1px solid rgba(120,60,30,.12)",
-                        background: "#fff",
-                        color: "#572817",
-                        fontWeight: "700"
-                    }
-                },
-                "📸",
-                React.createElement("br"),
-                "Add Product"
-            ),
-
-            React.createElement(
-                "button",
-                {
-                    onClick: () => go("orders"),
-                    style: {
-                        padding: "12px 5px",
-                        borderRadius: "16px",
-                        border:
-                            "1px solid rgba(120,60,30,.12)",
-                        background: "#fff",
-                        color: "#572817",
-                        fontWeight: "700"
-                    }
-                },
-                "📦",
-                React.createElement("br"),
-                "View Orders"
-            ),
-
-            React.createElement(
-                "button",
-                {
-                    onClick: () => {
-                        try {
-                            const u =
-                                new SpeechSynthesisUtterance(
-                                    "Main tumhare craft business ke insights ke liye ready hoon."
-                                );
-                            u.lang = "hi-IN";
-                            u.rate = 0.94;
-                            window.speechSynthesis.speak(u);
-                        } catch (_) {}
-                    },
-                    style: {
-                        padding: "12px 5px",
-                        borderRadius: "16px",
-                        border:
-                            "1px solid rgba(120,60,30,.12)",
-                        background: "#fff",
-                        color: "#572817",
-                        fontWeight: "700"
-                    }
-                },
-                "✨",
-                React.createElement("br"),
-                "See Insights"
-            )
-        ),
-
-        /* EXISTING CONTENT */
-        React.createElement(
-            "div",
-            { className: "content artisan-content" },
-
-            React.createElement(
-                ErrorBanner,
-                { message: err }
-            ),
-
-            /* STATS */
-            React.createElement(
-                "div",
-                { className: "home-stats" },
-
-                React.createElement(
-                    "div",
-                    null,
-                    React.createElement(
-                        "span",
-                        { className: "stat-icon pot" },
-                        "◇"
-                    ),
-                    React.createElement(
-                        "strong",
-                        null,
-                        products.length
-                    ),
-                    React.createElement(
-                        "small",
-                        null,
-                        "Products Listed"
-                    )
-                ),
-
-                React.createElement(
-                    "div",
-                    null,
-                    React.createElement(
-                        "span",
-                        { className: "stat-icon check" },
-                        "✓"
-                    ),
-                    React.createElement(
-                        "strong",
-                        null,
-                        verifiedCount
-                    ),
-                    React.createElement(
-                        "small",
-                        null,
-                        "Verified"
-                    )
-                ),
-
-                React.createElement(
-                    "div",
-                    null,
-                    React.createElement(
-                        "span",
-                        { className: "stat-icon star" },
-                        "★"
-                    ),
-                    React.createElement(
-                        "strong",
-                        null,
-                        user.profile?.trustScore ?? 100
-                    ),
-                    React.createElement(
-                        "small",
-                        null,
-                        "Trust score"
-                    )
-                )
-            ),
-
-            /* GROWTH */
-            React.createElement(
-                "div",
-                {
-                    className: "artisan-growth-card",
-                    onClick: () => go("orders")
-                },
-
-                React.createElement(
-                    "div",
-                    null,
-
-                    React.createElement(
-                        "span",
-                        { className: "field-label" },
-                        "ARTISAN GROWTH DASHBOARD"
-                    ),
-
-                    React.createElement(
-                        "strong",
-                        null,
-                        "Orders, earnings & business insights"
-                    ),
-
-                    React.createElement(
-                        "small",
-                        null,
-                        "Track New Orders → Processing → Shipped → Delivered"
-                    )
-                ),
-
-                React.createElement(
-                    "button",
-                    {
-                        className: "btn secondary",
-                        style: { marginTop: 10 },
-                        onClick: (e) => {
-                            e.stopPropagation();
-                            go("reviews");
-                        }
-                    },
-                    "🛡️ Safety & Review Center"
-                ),
-
-                React.createElement(
-                    "span",
-                    { className: "growth-arrow" },
-                    "→"
-                )
-            ),
-
-            /* EXISTING 7 AI BUSINESS MODULES */
-            React.createElement(
-                ArtisanGrowthHub,
-                {
-                    user: user,
-                    featured: featured,
-                    products: products,
-                    setToast: setToast
-                }
-            ),
-
-            /* PRODUCTS */
-            React.createElement(
-                "div",
-                {
-                    className:
-                        "section-row home-section-row"
-                },
-
-                React.createElement(
-                    "div",
-                    { className: "section-title" },
-                    "Your craft, on the grid"
-                ),
-
-                React.createElement(
-                    "span",
-                    {
-                        className: "view-all",
-                        onClick: () => go("myProducts")
-                    },
-                    "View all →"
-                )
-            ),
-
-            products.length
-                ? React.createElement(
-                      "div",
-                      {
-                          className:
-                              "home-products-grid"
-                      },
-
-                      products
-                          .slice(0, 4)
-                          .map((p) =>
-                              React.createElement(
-                                  "div",
-                                  {
-                                      key: p.id,
-                                      className:
-                                          "home-product-card",
-                                      onClick: () =>
-                                          go(
-                                              "product",
-                                              p.id
-                                          )
-                                  },
-
-                                  React.createElement(
-                                      "div",
-                                      {
-                                          className:
-                                              "home-product-image",
-                                          style: {
-                                              backgroundImage:
-                                                  `url(${p.image})`
-                                          }
-                                      },
-
-                                      React.createElement(
-                                          "span",
-                                          {
-                                              className:
-                                                  "featured-badge"
-                                          },
-                                          "● Verified Handmade"
-                                      )
-                                  ),
-
-                                  React.createElement(
-                                      "div",
-                                      {
-                                          className:
-                                              "home-product-info"
-                                      },
-
-                                      React.createElement(
-                                          "strong",
-                                          null,
-                                          p.title
-                                      ),
-
-                                      React.createElement(
-                                          "div",
-                                          {
-                                              className:
-                                                  "home-product-bottom"
-                                          },
-
-                                          React.createElement(
-                                              "span",
-                                              {
-                                                  className:
-                                                      "featured-price"
-                                              },
-                                              "₹",
-                                              Number(
-                                                  p.price
-                                              ).toLocaleString(
-                                                  "en-IN"
-                                              )
-                                          ),
-
-                                          React.createElement(
-                                              "button",
-                                              {
-                                                  onClick: (
-                                                      e
-                                                  ) => {
-                                                      e.stopPropagation();
-                                                      setToast(
-                                                          "Product is ready on your storefront"
-                                                      );
-                                                  }
-                                              },
-                                              "＋ Cart"
-                                          )
-                                      )
-                                  )
-                              )
-                          )
-                  )
-                : React.createElement(
-                      "div",
-                      { className: "craft-empty" },
-
-                      React.createElement(
-                          "div",
-                          {
-                              className:
-                                  "plus-circle"
-                          },
-                          "＋"
-                      ),
-
-                      React.createElement(
-                          "strong",
-                          null,
-                          "You haven’t added any products yet."
-                      ),
-
-                      React.createElement(
-                          "span",
-                          null,
-                          "Tap “Add” below to list your first piece."
-                      )
-                  )
-        ),
-
-        /* FLOATING AI */
-        React.createElement(AITalker, {
-            embedded: true,
-            role: "artisan",
-            go: go
-        })
-    );
+        React.createElement("div", { className: "content artisan-content" },
+            React.createElement(ErrorBanner, { message: err }),
+            React.createElement("div", { className: "home-stats" },
+                React.createElement("div", null,
+                    React.createElement("span", { className: "stat-icon pot" }, "\u25B1"),
+                    React.createElement("strong", null, products.length),
+                    React.createElement("small", null, "Products Listed")),
+                React.createElement("div", null,
+                    React.createElement("span", { className: "stat-icon check" }, "\u2713"),
+                    React.createElement("strong", null, verifiedCount),
+                    React.createElement("small", null, "Verified")),
+                React.createElement("div", null,
+                    React.createElement("span", { className: "stat-icon star" }, "\u2605"),
+                    React.createElement("strong", null, user.profile?.trustScore ?? 100),
+                    React.createElement("small", null, "Trust score"))),
+            React.createElement("div", { className: "artisan-growth-card", onClick: () => go('orders') },
+                React.createElement("div", null,
+                    React.createElement("span", { className: "field-label" }, "ARTISAN GROWTH DASHBOARD"),
+                    React.createElement("strong", null, "Orders, earnings & business insights"),
+                    React.createElement("small", null, "Track New Orders \u2192 Processing \u2192 Shipped \u2192 Delivered")),
+                React.createElement("button", { className: "btn secondary", style: { marginTop: 10 }, onClick: () => go("reviews") }, "\uD83D\uDEE1\uFE0F Safety & Review Center"),
+                React.createElement("span", { className: "growth-arrow" }, "\u2192")),
+            React.createElement(ArtisanGrowthHub, { user: user, featured: featured, products: products, setToast: setToast }),
+            React.createElement("div", { className: "section-row home-section-row" },
+                React.createElement("div", { className: "section-title" }, "Your craft, on the grid"),
+                React.createElement("span", { className: "view-all", onClick: () => go("myProducts") }, "View all \u2192")),
+            products.length ? (React.createElement("div", { className: "home-products-grid" }, products.slice(0, 4).map((p) => (React.createElement("div", { key: p.id, className: "home-product-card", onClick: () => go("product", p.id) },
+                React.createElement("div", { className: "home-product-image", style: { backgroundImage: `url(${p.image})` } },
+                    React.createElement("span", { className: "featured-badge" }, "\u25CF Verified Handmade")),
+                React.createElement("div", { className: "home-product-info" },
+                    React.createElement("strong", null, p.title),
+                    React.createElement("div", { className: "home-product-bottom" },
+                        React.createElement("span", { className: "featured-price" },
+                            "\u20B9",
+                            Number(p.price).toLocaleString("en-IN")),
+                        React.createElement("button", { onClick: (e) => { e.stopPropagation(); setToast("Product is ready on your storefront"); } }, "\uFF0B Cart")))))))) : (React.createElement("div", { className: "craft-empty" },
+                React.createElement("div", { className: "plus-circle" }, "\uFF0B"),
+                React.createElement("strong", null, "You haven\u2019t added any products yet."),
+                React.createElement("span", null, "Tap \u201CAdd\u201D below to list your first piece."))),
+            React.createElement(AITalker, { embedded: true, role: "artisan", go: go }))));
 }
 // ---------------------------------------------------------------------------
 // CONSISTENT ARTISAN IDENTITY — shared visual across buyer/product/add/reel
@@ -1687,6 +1033,11 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
     const proofStreamRef = useRef(null);
     const proofChunksRef = useRef([]);
     const storyRecognitionRef = useRef(null);
+    function copilotSay(text, action) {
+        try {
+            window.dispatchEvent(new CustomEvent('kalasutra:copilot:message', { detail: { text, action } }));
+        } catch (_) {}
+    }
     async function handleImagePick(e) {
         const files = Array.from(e.target.files || []);
         if (!files.length)
@@ -1696,6 +1047,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             setGalleryImages(prev => [...prev, ...urls].slice(0, 6));
             setImageDataUrl(prev => prev || urls[0]);
             setErr(null);
+            window.setTimeout(() => copilotSay('Bahut badhiya! Photos aa gayi hain. Ab mujhe apne product ke baare mein batao — kya hai, kis material se bana hai aur iska naam kya rakhna hai?'), 120);
         }
         catch {
             setErr("Couldn't read that image — please try another file.");
@@ -1738,6 +1090,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                 if (heard) {
                     setStory(heard);
                     generateEnglishDescription(heard);
+                    copilotSay('Bahut khoob! Maine aapki story samajh li. Ab main details ko listing ke liye ready kar raha hoon. Agla step making-proof video hai.');
                 }
             };
             storyRecognitionRef.current = rec;
@@ -1763,7 +1116,10 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             recorder.onstop = () => {
                 const blob = new Blob(proofChunksRef.current, { type: "video/webm" });
                 const reader = new FileReader();
-                reader.onload = () => setProofVideo(reader.result);
+                reader.onload = () => {
+                    setProofVideo(reader.result);
+                    copilotSay('Perfect! Making-proof video mil gaya. Ab ek baar details review karte hain, phir verification ke liye ready hain.');
+                }
                 reader.readAsDataURL(blob);
                 stream.getTracks().forEach((t) => t.stop());
             };
@@ -1786,6 +1142,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
         try {
             setProofVideo(await fileToDataURL(file));
             setErr(null);
+            copilotSay('Proof video add ho gaya. Ab details review karke verification shuru kar sakte hain.');
         }
         catch {
             setErr("Couldn't read that video. Please try another clip.");
@@ -1828,6 +1185,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             setVerifyResult(result);
             await new Promise((r) => setTimeout(r, 700));
             setStepState("result");
+            copilotSay('Verification complete. Aapki listing review ke liye ready hai. Publish karne se pehle result dekh lo.');
             setLastVerifiedProductId(created.id);
             saveRecentProduct(user.id, created.id);
         }
@@ -1835,6 +1193,12 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             setErr(e.message || "Verification failed.");
         }
     }
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            copilotSay('Great! Let’s add a new product. First, take 2 or 3 clear photos from different angles. I’ll guide you through the rest.');
+        }, 900);
+        return () => window.clearTimeout(timer);
+    }, []);
     useEffect(() => () => { try {
         storyRecognitionRef.current?.stop();
     }
@@ -1849,6 +1213,14 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                 React.createElement(ArtisanIdentityChip, { user: user, tone: "addpiece-identity" }),
                 React.createElement(ErrorBanner, { message: err }),
                 step === "form" && React.createElement(React.Fragment, null,
+                    React.createElement("div", { className: "addproduct-ai-guide" },
+                        React.createElement("span", { className: "addproduct-ai-dot" }, "●"),
+                        React.createElement("div", null,
+                            React.createElement("strong", null, "Karigar AI is with you"),
+                            React.createElement("span", null, "Photos → Story → Details → Making proof → Review")
+                        ),
+                        React.createElement("button", { onClick: () => window.dispatchEvent(new Event('kalasutra:copilot:start')) }, "🎙️ Talk")
+                    ),
                     React.createElement("section", { className: "addpiece-heading" },
                         React.createElement("span", { className: "addpiece-eyebrow" }, "FOR ARTISANS"),
                         React.createElement("h1", null, "Add a New Piece"),
@@ -3880,10 +3252,12 @@ function App() {
         setScreen("dashboard");
     }
     function go(nextScreen) {
+        window.__KALASUTRA_SCREEN__ = nextScreen;
         setScreenStack((s) => [...s, screen]);
         setScreen(nextScreen);
     }
     function goBack() {
+        window.__KALASUTRA_SCREEN__ = screen;
         setScreenStack((s) => {
             const copy = [...s];
             const prev = copy.pop();
