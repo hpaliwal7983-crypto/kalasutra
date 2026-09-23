@@ -1,0 +1,7 @@
+FINAL MERGE SCOPE
+1. V6 is the visual/product baseline.
+2. Only AITalker logic was replaced with a Realtime WebRTC voice copilot plus fallback.
+3. Added /api/ai/realtime on the server. Existing AI chat/tts/transcribe routes remain.
+4. Added warm centered welcome styling and ai-avatar.png.
+5. Added userName prop to existing AITalker mounts.
+6. No existing business module was removed.
