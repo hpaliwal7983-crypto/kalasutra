@@ -39,24 +39,65 @@ async function api(req,res,url){
       if(!text) return json(res,400,{error:'Text is required'});
       const payload={model:process.env.OPENAI_TTS_MODEL||'gpt-4o-mini-tts',voice:process.env.OPENAI_TTS_VOICE||'coral',input:text,response_format:'mp3',instructions:'Speak like a warm, natural Indian conversational AI companion. Friendly, human, short pauses, clear pronunciation, gentle emphasis. Do not sound robotic, formal, or like a scripted IVR.'};
       const rr=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});
-      if(!rr.ok) return json(res,502,{error:`OpenAI TTS request failed (${rr.status})`});
+      if(!rr.ok){const t=await rr.text().catch(()=>'');console.error('OpenAI TTS failed',rr.status,t.slice(0,400));return json(res,502,{error:`OpenAI TTS request failed (${rr.status})`});}
       const audio=Buffer.from(await rr.arrayBuffer());
       res.writeHead(200,{'Content-Type':'audio/mpeg','Content-Length':audio.length,'Cache-Control':'no-store','Access-Control-Allow-Origin':'*'});
       return res.end(audio);
+    }
+    if(resource==='ai' && parts[2]==='transcribe' && req.method==='POST'){
+      const b=await body(req);
+      const key=process.env.OPENAI_API_KEY;
+      if(!key) return json(res,503,{error:'OPENAI_API_KEY is not configured on the server'});
+      const audioBase64=String(b.audio||'').replace(/^data:[^;]+;base64,/,'');
+      if(!audioBase64) return json(res,400,{error:'Audio is required'});
+      let audio;
+      try{audio=Buffer.from(audioBase64,'base64');}catch(_){return json(res,400,{error:'Invalid audio data'});}
+      if(!audio.length) return json(res,400,{error:'Empty audio'});
+      const mime=String(b.mimeType||'audio/webm').toLowerCase();
+      const filename=mime.includes('mp4')||mime.includes('m4a')?'voice.m4a':mime.includes('wav')?'voice.wav':'voice.webm';
+      const form=new FormData();
+      form.append('file',new Blob([audio],{type:mime}),filename);
+      form.append('model',process.env.OPENAI_TRANSCRIBE_MODEL||'gpt-4o-mini-transcribe');
+      // No forced language: let the model auto-detect so users can speak any language.
+      form.append('response_format','json');
+      const rr=await fetch('https://api.openai.com/v1/audio/transcriptions',{method:'POST',headers:{'Authorization':`Bearer ${key}`},body:form});
+      const raw=await rr.text();
+      if(!rr.ok){console.error('OpenAI transcription failed',rr.status,raw.slice(0,400));return json(res,502,{error:`OpenAI transcription failed (${rr.status})`});}
+      let out={}; try{out=JSON.parse(raw)}catch(_){out={text:raw}};
+      return json(res,200,{text:String(out.text||'').trim()});
     }
     if(resource==='ai' && parts[2]==='chat' && req.method==='POST'){
       const b=await body(req);
       const key=process.env.OPENAI_API_KEY;
       if(!key) return json(res,503,{error:'OPENAI_API_KEY is not configured on the server'});
       const messages=Array.isArray(b.messages)?b.messages.slice(-10):[];
-      const system=`You are Karigar AI, the warm conversational copilot inside KalaSutra, an Indian artisan marketplace. You are clearly an AI, but speak naturally like a helpful friend. Reply in the user's language and keep replies short and conversational. Never dump menus or formal scripts. When the user asks to do something in the app, choose exactly one action from: none, addProduct, createReel, orders, profile, dashboard, myProducts, myReels, wishlist, cart, buyerHome. For Add Product, guide one step at a time: photo, story, category/material/region, fair price, making-proof video, verification, publish. Do not claim an action happened unless the app is actually navigating. Return ONLY valid JSON: {"reply":"...","action":"one allowed action"}. Role: ${String(b.role||'artisan')}. Current screen: ${String(b.screen||'')}.`;
-      const payload={model:process.env.OPENAI_MODEL||'gpt-5.6-luna',input:[{role:'system',content:system},...messages.map(m=>({role:m.role,content:String(m.content||'')}))],max_output_tokens:220};
-      const rr=await fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const langNames={hi:'Hindi',en:'English',mr:'Marathi',gu:'Gujarati',pa:'Punjabi',bn:'Bengali',ta:'Tamil',te:'Telugu',kn:'Kannada',ml:'Malayalam',or:'Odia',ur:'Urdu'};
+      const pref=langNames[String(b.language||'').slice(0,2).toLowerCase()]||'Hindi';
+      const system=`You are Karigar AI, the warm voice companion inside KalaSutra, an Indian artisan marketplace. You are clearly an AI, but you talk like a caring, friendly didi/friend — never like a menu, IVR or formal assistant.
+Your replies are READ ALOUD by a text-to-speech voice, so:
+- Reply in the same language the user just spoke. If unclear, use ${pref}.
+- Write in that language's NATIVE SCRIPT (for example Devanagari for Hindi/Marathi, not Roman letters), so it is pronounced correctly. Use natural everyday spoken words, not bookish ones.
+- Keep it to 1-2 short sentences. Ask only ONE question at a time. No lists, no emojis, no markdown.
+- Be proactive: after answering, gently suggest the next step.
+When the user wants something done in the app, pick exactly one action from: none, addProduct, createReel, orders, profile, dashboard, myProducts, myReels, wishlist, cart, buyerHome. For Add Product, guide one step at a time: photo, story, category/material/region, fair price, making-proof video, verification, publish. Never claim an action happened unless you set the action.
+Return ONLY raw JSON (no code fences): {"reply":"...","action":"one allowed action"}.
+Role: ${String(b.role||'artisan')}. Current screen: ${String(b.screen||'')}.`;
+      const callModel=(model)=>fetch('https://api.openai.com/v1/responses',{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json'},body:JSON.stringify({model,input:[{role:'system',content:system},...messages.map(m=>({role:m.role,content:String(m.content||'')}))],max_output_tokens:700})});
+      let model=process.env.OPENAI_MODEL||'gpt-5.6-luna';
+      let rr=await callModel(model);
+      // If the configured model name is rejected (typo / no access), retry once with a safe default.
+      if(!rr.ok && rr.status>=400 && rr.status<500 && rr.status!==401 && rr.status!==429){
+        const t=await rr.text().catch(()=>'');
+        console.error('OpenAI chat model',model,'failed',rr.status,t.slice(0,400),'- retrying with gpt-4.1-mini');
+        model='gpt-4.1-mini';
+        rr=await callModel(model);
+      }
       const raw=await rr.text();
-      if(!rr.ok) return json(res,502,{error:`OpenAI request failed (${rr.status})`});
+      if(!rr.ok){console.error('OpenAI chat failed',rr.status,raw.slice(0,400));return json(res,502,{error:`OpenAI request failed (${rr.status})`});}
       const out=JSON.parse(raw);
-      const text=out.output_text || (out.output||[]).flatMap(x=>x.content||[]).map(x=>x.text||'').join('');
-      let parsed; try{parsed=JSON.parse(text)}catch(_){parsed={reply:text||'Bilkul. Chaliye step by step karte hain.',action:'none'}}
+      const text=(out.output_text || (out.output||[]).flatMap(x=>x.content||[]).map(x=>x.text||'').join('')).trim();
+      if(!text) console.error('OpenAI chat returned empty text',out.status,JSON.stringify(out.incomplete_details||{}));
+      let parsed; try{parsed=JSON.parse(text.replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,''))}catch(_){parsed={reply:text||'ठीक है, चलिए आगे बढ़ते हैं। बताइए, अब क्या करना है?',action:'none'}}
       const allowed=['none','addProduct','createReel','orders','profile','dashboard','myProducts','myReels','wishlist','cart','buyerHome'];
       if(!allowed.includes(parsed.action)) parsed.action='none';
       return json(res,200,{reply:String(parsed.reply||''),action:parsed.action});
