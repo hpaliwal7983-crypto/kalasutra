@@ -1761,7 +1761,6 @@ button, input, select, textarea { max-width:100%; }
 .addproduct-ai-guide{display:flex;align-items:center;gap:10px;padding:11px 12px;margin:0 0 12px;border-radius:18px;background:#fffaf4;border:1px solid rgba(120,60,30,.10);box-shadow:0 7px 18px rgba(80,40,20,.06)}.addproduct-ai-dot{width:10px;height:10px;border-radius:50%;background:#2f7a47;box-shadow:0 0 0 5px rgba(47,122,71,.10);flex:0 0 auto}.addproduct-ai-guide>div{flex:1;min-width:0}.addproduct-ai-guide strong{display:block;font-size:12px;color:#5a2e20}.addproduct-ai-guide span{display:block;font-size:11px;color:#78665a;margin-top:2px}.addproduct-ai-guide button{border:0;background:#9d3e20;color:#fff;border-radius:999px;padding:8px 11px;font-weight:800;font-size:11px}
 @media(max-width:560px){.karigar-copilot.ai-talker-compact{right:10px!important;left:10px!important;bottom:76px!important;width:auto!important}.karigar-copilot .ai-quick-row{max-width:100%;overflow-x:auto}.karigar-v3-top{align-items:flex-start}.karigar-v3-lang{margin-left:auto}}
 
-
 /* ------------------------------------------------------------------
    KARIGAR AI V7 — warm welcome + resilient iOS voice conversation
    Additive only: keeps the existing V6 copilot and UI.
