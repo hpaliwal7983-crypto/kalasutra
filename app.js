@@ -3199,7 +3199,7 @@ function App() {
         };
         // Keep the requested warm welcome visible as soon as the V6 app opens.
         // Voice capture still waits for the user's mic-button tap.
-        const copilot = window.KalaSutraV7.mount({ role, go: window.__KALASUTRA_GO__, open: true });
+        const copilot = window.KalaSutraV7.mount({ role, go: window.__KALASUTRA_GO__, open: true, greetOnOpen: true });
         return () => { copilot?.unmount?.(); };
     }, [phase, user?.role]);
     const certificateId = new URLSearchParams(window.location.search).get('certificate');

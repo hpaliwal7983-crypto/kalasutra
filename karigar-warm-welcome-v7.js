@@ -354,8 +354,23 @@
         if (!answerRes.ok) throw new Error(await answerRes.text());
         await pc.setRemoteDescription({ type: "answer", sdp: await answerRes.text() });
 
+        // The data channel may still be connecting when the SDP answer arrives.
+        // Sending session.update before it opens silently drops the session and
+        // leaves the UI stuck at “Listening…” with no assistant audio.
+        if (dc.readyState !== "open") {
+          await new Promise((resolve, reject) => {
+            const timeout = window.setTimeout(() => reject(new Error("Voice channel timed out while connecting.")), 15000);
+            dc.addEventListener("open", () => { window.clearTimeout(timeout); resolve(); }, { once: true });
+            dc.addEventListener("error", () => { window.clearTimeout(timeout); reject(new Error("Voice channel could not connect.")); }, { once: true });
+          });
+        }
+
         setConnected(true);
         updateSession();
+        sendRealtime({
+          type: "response.create",
+          response: { instructions: `Greet the user warmly in ${localeName(locale)}. Say: “${copy(locale, "welcome") }” Then invite them to tell you what they need, and listen for their reply.` }
+        });
       }
 
       async function speakWelcome() {
@@ -376,7 +391,9 @@
         } catch (_) {
           setRealtimeUnavailable(true);
           closeRealtime();
-          if (!fallbackSpeechRecognition()) await speakWelcome();
+          await speakWelcome();
+          if (fallbackSpeechRecognition()) return;
+          setUIState("idle", "Voice input is unavailable here. You can still use the app buttons, or try Chrome with microphone access enabled.");
         }
       }
 
@@ -443,7 +460,6 @@
           setUIState("listening", copy(locale, "listening"));
           return;
         }
-        if (fallbackSpeechRecognition()) return;
         startConversation();
       }
 
@@ -497,7 +513,11 @@
         window.addEventListener("kalasutra:copilot:message", v6MessageListener);
         window.addEventListener("kalasutra:warm-welcome-close", closeListener);
         if (options.autoWelcome) setTimeout(() => startConversation(), 250);
+        const welcomeTimer = options.greetOnOpen && !options.autoWelcome
+          ? setTimeout(() => speakWelcome().catch(() => {}), 350)
+          : null;
         return () => {
+          if (welcomeTimer) clearTimeout(welcomeTimer);
           window.removeEventListener("kalasutra:copilot-state", stateListener);
           window.removeEventListener("kalasutra:language-changed", langListener);
           window.removeEventListener("kalasutra:warm-welcome-open", openListener);
