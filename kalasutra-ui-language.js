@@ -54,7 +54,12 @@
   new MutationObserver(records => {
     if (busy) return;
     for (const record of records) {
-      if (record.type === "characterData") { if (!originals.has(record.target)) originals.set(record.target, record.oldValue || ""); queue(record.target); }
+      if (record.type === "characterData") {
+        // Keep the first source string. Replacing it with each oldValue makes
+        // translated nodes bounce back and forth when the user switches locale.
+        if (!originals.has(record.target)) originals.set(record.target, record.oldValue || "");
+        queue(record.target);
+      }
       else record.addedNodes.forEach(n => { if (n.nodeType === Node.TEXT_NODE) queue(n); else if (n.nodeType === Node.ELEMENT_NODE) scan(n); });
     }
   }).observe(document.documentElement, { childList:true, subtree:true, characterData:true });
