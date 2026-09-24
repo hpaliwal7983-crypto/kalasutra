@@ -537,7 +537,7 @@
               React.createElement("div", { className: "ks-v72-orbit orbit-b" }),
               React.createElement("div", { className: "ks-v72-orbit orbit-c" }),
               React.createElement("div", { className: "ks-v72-glow" }),
-              React.createElement("img", { className: "ks-v72-avatar", src: "/assets/avatar-artisan.png", alt: "Karigar AI" }),
+              React.createElement("img", { className: "ks-v72-avatar", src: "/ai-avatar.png", alt: "Karigar AI" }),
               React.createElement("div", { className: `ks-v72-wave ks-v72-wave-${state}` }, [1,2,3,4,5,6,7,8,9].map(i => React.createElement("i", { key: i }))),
               React.createElement("div", { className: `ks-v72-speech-bubble ks-v72-bubble-${state}` }, shownMessage)),
 
@@ -549,7 +549,9 @@
 
             React.createElement("div", { className: "ks-v72-helper" },
               realtimeUnavailable
-                ? "Voice connection can fall back to the existing V6 voice flow."
+                ? ((window.SpeechRecognition || window.webkitSpeechRecognition)
+                  ? "AI connection is unavailable. Tap the mic to use your browser’s voice input."
+                  : "Voice input isn’t supported in this browser. Please open KalaSutra in Chrome.")
                 : "Talk naturally — Hindi, English, Hinglish and more are welcome."),
 
             React.createElement("button", { className: `ks-v72-mic ${state === "listening" ? "listening" : ""}`, onClick: listenOnce, "aria-label": "Talk to Karigar AI" },
@@ -563,7 +565,7 @@
 
             connected && React.createElement("div", { className: "ks-v72-live-dot" }, "● Live voice"))
           ) : React.createElement("button", { className: "ks-v72-fab", onClick: () => { setOpen(true); startConversation(); }, "aria-label": "Open Karigar AI" },
-          React.createElement("img", { src: "/assets/avatar-artisan.png", alt: "Karigar AI" }),
+          React.createElement("img", { src: "/ai-avatar.png", alt: "Karigar AI" }),
           React.createElement("span", null, "✦"))
       );
     }
@@ -576,7 +578,7 @@
     }
     if (!document.getElementById("ks-v72-hide-old-copilot")) {
       const style = document.createElement("style"); style.id = "ks-v72-hide-old-copilot";
-      style.textContent = ".ai-talker,.karigar-v3-card{display:none!important}.ks-v72-center{max-height:calc(100dvh - 18px);overflow-y:auto}";
+      style.textContent = ".ai-talker,.karigar-v3-card{display:none!important}.ks-v72-center{height:min(92dvh,760px);min-height:0;max-height:calc(100dvh - 18px);overflow-y:auto}.ks-v72-avatar{object-position:center 42%}@media(max-width:600px){.ks-v72-center{height:calc(100dvh - 20px);min-height:0}}";
       document.head.appendChild(style);
     }
 
