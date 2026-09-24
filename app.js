@@ -497,7 +497,7 @@ function AITalker({ compact = false, embedded = false, role = 'buyer', go }) {
     }, [role]);
 
     useEffect(() => {
-        if (role !== 'artisan' || greetedRef.current) return;
+        if (window.__KALASUTRA_ISOLATED_COPILOT__ || role !== 'artisan' || greetedRef.current) return;
         let already = false;
         try { already = sessionStorage.getItem('kalasutra_karigar_greeted') === '1'; } catch (_) {}
         if (already) return;
@@ -3189,6 +3189,17 @@ function App() {
         if (phase === 'app' && wantsPermissions && localStorage.getItem('kalasutra_permission_seen') !== '1')
             setShowPermissions(true);
     }, [phase]);
+    useEffect(() => {
+        if (phase !== 'app' || !window.KalaSutraV7?.mount) return;
+        const role = user?.role || pendingRole || 'buyer';
+        window.__KALASUTRA_ROLE__ = role;
+        window.__KALASUTRA_GO__ = (target) => {
+            window.__KALASUTRA_SCREEN__ = target;
+            setScreen(target);
+        };
+        const copilot = window.KalaSutraV7.mount({ role, go: window.__KALASUTRA_GO__ });
+        return () => { copilot?.unmount?.(); };
+    }, [phase, user?.role]);
     const certificateId = new URLSearchParams(window.location.search).get('certificate');
     if (certificateId)
         return React.createElement(CertificateScreen, { certificateId: certificateId });

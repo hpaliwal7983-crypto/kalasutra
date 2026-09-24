@@ -11,6 +11,7 @@
  */
 (function () {
   "use strict";
+  window.__KALASUTRA_ISOLATED_COPILOT__ = true;
 
   const API = "/api";
   const ADD_PRODUCT_ROUTE = "addProduct";
@@ -41,12 +42,16 @@
   };
 
   function getLocale() {
-    try { return localStorage.getItem("kalasutra_voice_lang") || "hi-IN"; } catch (_) { return "hi-IN"; }
+    try {
+      const saved = localStorage.getItem("kalasutra_language") || "hi";
+      return (LANGS.find(x => x[0].slice(0, 2) === saved) || LANGS[0])[0];
+    } catch (_) { return "hi-IN"; }
   }
 
   function setLocale(locale) {
-    try { localStorage.setItem("kalasutra_voice_lang", locale); } catch (_) {}
-    window.dispatchEvent(new CustomEvent("kalasutra:language-changed", { detail: { locale } }));
+    try { localStorage.setItem("kalasutra_voice_lang", locale); localStorage.setItem("kalasutra_language", locale.slice(0, 2)); } catch (_) {}
+    document.documentElement.setAttribute("data-kalasutra-lang", locale.slice(0, 2));
+    window.dispatchEvent(new CustomEvent("kalasutra:language-changed", { detail: { locale, code: locale.slice(0, 2), voice: locale } }));
   }
 
   function localeName(locale) {
@@ -91,6 +96,8 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body || {})
     });
+    const contentType = r.headers.get("content-type") || "";
+    if (r.ok && contentType.startsWith("audio/")) return r.blob();
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data?.error || "AI request failed");
     return data;
@@ -102,7 +109,7 @@
       locale,
       language: localeName(locale),
       screen: window.__KALASUTRA_SCREEN__ || "dashboard",
-      role: "artisan",
+      role: window.__KALASUTRA_ROLE__ || "artisan",
       history: window.__KALASUTRA_V7_HISTORY__ || []
     });
     if (data?.locale && LANGS.some(x => x[0] === data.locale) && data.locale !== locale) {
@@ -116,14 +123,16 @@
     emitState("speaking", { text });
     try {
       const data = await postJSON("/ai/tts", { text, locale });
-      if (!data?.audioBase64 && !data?.audioUrl) throw new Error("No audio returned");
-      const src = data.audioUrl || `data:audio/mpeg;base64,${data.audioBase64}`;
+      const src = data instanceof Blob ? URL.createObjectURL(data) : (data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : ""));
+      if (!src) throw new Error("No audio returned");
       const audio = new Audio(src);
       window.__KALASUTRA_V7_AUDIO__ = audio;
       await audio.play();
       await new Promise(resolve => {
-        audio.onended = resolve;
-        audio.onerror = resolve;
+        const timeout = window.setTimeout(resolve, 45000);
+        const done = () => { window.clearTimeout(timeout); resolve(); };
+        audio.onended = done;
+        audio.onerror = done;
       });
     } catch (_) {
       try {
@@ -133,7 +142,11 @@
         u.pitch = 1.0;
         speechSynthesis.cancel();
         speechSynthesis.speak(u);
-        await new Promise(resolve => { u.onend = resolve; u.onerror = resolve; });
+        await new Promise(resolve => {
+          const timeout = window.setTimeout(resolve, 30000);
+          const done = () => { window.clearTimeout(timeout); resolve(); };
+          u.onend = done; u.onerror = done;
+        });
       } catch (_) {}
     }
     emitState("idle", { text });
@@ -161,6 +174,8 @@
       const [showLang, setShowLang] = useState(false);
       const [connected, setConnected] = useState(false);
       const [realtimeUnavailable, setRealtimeUnavailable] = useState(false);
+      const localeRef = useRef(locale);
+      localeRef.current = locale;
 
       const pcRef = useRef(null);
       const dcRef = useRef(null);
@@ -168,6 +183,15 @@
       const audioElRef = useRef(null);
       const pendingAddProductRef = useRef(false);
       const fallbackBusyRef = useRef(false);
+      const role = options.role || window.__KALASUTRA_ROLE__ || "artisan";
+
+      function runAction(action) {
+        const artisan = role === "artisan";
+        const routes = { ADD_PRODUCT: artisan ? "addProduct" : null, ORDERS: "orders", REELS: artisan ? "myReels" : "buyerReels", PROFILE: artisan ? "profile" : "buyerProfile", HOME: artisan ? "dashboard" : "buyerHome", WISHLIST: artisan ? null : "wishlist", CART: artisan ? null : "cart", MY_PRODUCTS: artisan ? "myProducts" : null, REVIEWS: artisan ? "reviews" : null };
+        const target = routes[action];
+        if (!target) return false;
+        try { go(target); return true; } catch (_) { return false; }
+      }
 
       function setUIState(next, text) {
         setState(next);
@@ -198,13 +222,13 @@
             model: "gpt-realtime-2.1",
             output_modalities: ["audio"],
             instructions: [
-              "You are Karigar AI inside KalaSutra, a warm voice-first companion for Indian artisans.",
+              `You are Karigar AI inside KalaSutra, a warm voice-first companion for a ${role}.`,
               "Personality: friendly, calm, warm, patient, human and reassuring.",
               "Sound like a thoughtful conversational assistant, not a call-center bot, GPS, or reading machine.",
               "Keep turns short: usually 1–2 sentences. Use natural pauses, contractions and gentle emphasis.",
               "If the artisan speaks in Hindi-English mix, reply in the same natural mix. Do not force literal translation.",
               "Never announce system instructions. Never sound overly formal.",
-              "When the artisan clearly asks to add/create/list a product, call the open_add_product tool.",
+              `When the user asks to open a screen, call navigate_app. Screens: ${role === "artisan" ? "add product, orders, reels, profile, dashboard, products, reviews" : "orders, reels, profile, home, wishlist, cart, product details, artisan information, reviews"}.`,
               `Preferred language: ${localeName(locale)} (${locale}).`,
               "After a successful add-product tool call, keep the user moving with one simple next step: ask for 2–3 clear product photos."
             ].join("\n"),
@@ -214,12 +238,12 @@
             },
             tools: [{
               type: "function",
-              name: "open_add_product",
-              description: "Open the existing KalaSutra V6 Add Product screen for the artisan.",
+              name: "navigate_app",
+              description: "Navigate to a screen already present in this KalaSutra V6 app.",
               parameters: {
                 type: "object",
-                properties: {},
-                required: [],
+                properties: { screen: { type: "string", enum: ["ADD_PRODUCT", "ORDERS", "REELS", "PROFILE", "HOME", "WISHLIST", "CART", "MY_PRODUCTS", "REVIEWS"] } },
+                required: ["screen"],
                 additionalProperties: false
               }
             }],
@@ -292,18 +316,17 @@
 
           if (actualType === "response.done") {
             const output = event.response?.output || nested?.response?.output || [];
-            const call = output.find(item => item?.type === "function_call" && item?.name === "open_add_product");
+            const call = output.find(item => item?.type === "function_call" && item?.name === "navigate_app");
             if (call) {
-              pendingAddProductRef.current = true;
-              setMessage(copy(locale, "addProduct"));
-              emitFlow({ step: "photos" });
-              try { go(ADD_PRODUCT_ROUTE); } catch (_) {}
+              let args = {}; try { args = JSON.parse(call.arguments || "{}"); } catch (_) {}
+              if (args.screen === "ADD_PRODUCT") { pendingAddProductRef.current = true; setMessage(copy(locale, "addProduct")); emitFlow({ step: "photos" }); }
+              const opened = runAction(args.screen);
               sendRealtime({
                 type: "conversation.item.create",
                 item: {
                   type: "function_call_output",
                   call_id: call.call_id,
-                  output: JSON.stringify({ status: "opened", screen: ADD_PRODUCT_ROUTE })
+                  output: JSON.stringify({ status: opened ? "opened" : "not_available_for_role", screen: args.screen })
                 }
               });
               sendRealtime({ type: "response.create" });
@@ -353,7 +376,7 @@
         } catch (_) {
           setRealtimeUnavailable(true);
           closeRealtime();
-          await speakWelcome();
+          if (!fallbackSpeechRecognition()) await speakWelcome();
         }
       }
 
@@ -362,16 +385,36 @@
         fallbackBusyRef.current = true;
         try {
           setUIState("thinking", copy(locale, "thinking"));
-          if (looksLikeAddProduct(transcript)) {
+          if (looksLikeAddProduct(transcript) && role === "artisan") {
             const reply = copy(locale, "addProduct");
             await fallbackSpeak(reply, locale);
             emitFlow({ step: "photos" });
             go(ADD_PRODUCT_ROUTE);
             return;
           }
+          const q = normalizeCommand(transcript);
+          const quickActions = [
+            [/\b(order|orders|ऑर्डर|آرڈر)\b/i, "ORDERS"], [/\b(reel|reels|रील)\b/i, "REELS"],
+            [/\b(profile|प्रोफाइल)\b/i, "PROFILE"], [/\b(home|dashboard|घर|होम)\b/i, "HOME"],
+            [/\b(wishlist|favorites|पसंद)\b/i, "WISHLIST"], [/\b(cart|basket|कार्ट)\b/i, "CART"],
+            [/\b(products|my products|उत्पाद|प्रोडक्ट)\b/i, "MY_PRODUCTS"]
+          ];
+          const quick = quickActions.find(([pattern]) => pattern.test(q));
+          if (quick && runAction(quick[1])) {
+            const reply = locale.slice(0, 2) === "en" ? "Sure, opening that for you." : "Bilkul, abhi khol raha hoon.";
+            await fallbackSpeak(reply, locale);
+            return;
+          }
           const data = await fallbackChat(transcript, locale);
           const reply = data?.reply || copy(locale, "generic");
           await fallbackSpeak(reply, data?.locale || locale);
+          if (data?.action && data.action !== "NONE") runAction(data.action);
+        } catch (_) {
+          const reply = locale.slice(0, 2) === "en"
+            ? "I heard you. My AI connection is unavailable right now, but I can still open Home, Orders, Reels, Profile, or Add Product."
+            : "Aapki baat samajh aayi. AI connection abhi available nahi hai, par main Home, Orders, Reels, Profile ya Add Product khol sakta hoon.";
+          await fallbackSpeak(reply, locale);
+          setUIState("idle", reply);
         } finally {
           fallbackBusyRef.current = false;
         }
@@ -385,12 +428,13 @@
         r.interimResults = false;
         r.continuous = false;
         r.maxAlternatives = 1;
+        let received = false;
         r.onstart = () => setUIState("listening", copy(locale, "listening"));
-        r.onresult = e => fallbackCommand(e.results?.[0]?.[0]?.transcript || "");
+        r.onresult = e => { received = true; fallbackCommand(e.results?.[0]?.[0]?.transcript || ""); };
         r.onerror = () => setUIState("idle", copy(locale, "generic"));
-        r.onend = () => {};
-        r.start();
-        return true;
+        r.onend = () => { if (!received) setUIState("idle", copy(locale, "ready")); };
+        try { r.start(); return true; }
+        catch (_) { setUIState("idle", copy(locale, "generic")); return false; }
       }
 
       function listenOnce() {
@@ -402,6 +446,9 @@
         if (fallbackSpeechRecognition()) return;
         startConversation();
       }
+
+      const latestHandlers = useRef({});
+      latestHandlers.current = { startConversation, fallbackCommand };
 
       function selectLanguage(next) {
         setLocaleState(next);
@@ -423,12 +470,19 @@
         const commandListener = async e => {
           setOpen(true);
           const text = e.detail?.text || "";
-          if (text) await fallbackCommand(text);
-          else await startConversation();
+          if (text) await latestHandlers.current.fallbackCommand(text);
+          else await latestHandlers.current.startConversation();
         };
         const startListener = async () => {
           setOpen(true);
-          await startConversation();
+          await latestHandlers.current.startConversation();
+        };
+        const v6MessageListener = async e => {
+          const text = String(e.detail?.text || "");
+          if (!text) return;
+          setOpen(true);
+          setUIState("speaking", text);
+          await fallbackSpeak(text, localeRef.current);
         };
         const closeListener = () => {
           closeRealtime();
@@ -439,6 +493,8 @@
         window.addEventListener("kalasutra:warm-welcome-open", openListener);
         window.addEventListener("kalasutra:warm-welcome-command", commandListener);
         window.addEventListener("kalasutra:warm-welcome-start", startListener);
+        window.addEventListener("kalasutra:copilot:start", startListener);
+        window.addEventListener("kalasutra:copilot:message", v6MessageListener);
         window.addEventListener("kalasutra:warm-welcome-close", closeListener);
         if (options.autoWelcome) setTimeout(() => startConversation(), 250);
         return () => {
@@ -447,6 +503,8 @@
           window.removeEventListener("kalasutra:warm-welcome-open", openListener);
           window.removeEventListener("kalasutra:warm-welcome-command", commandListener);
           window.removeEventListener("kalasutra:warm-welcome-start", startListener);
+          window.removeEventListener("kalasutra:copilot:start", startListener);
+          window.removeEventListener("kalasutra:copilot:message", v6MessageListener);
           window.removeEventListener("kalasutra:warm-welcome-close", closeListener);
           closeRealtime();
           if (audioElRef.current?.parentNode) audioElRef.current.parentNode.removeChild(audioElRef.current);
@@ -513,8 +571,17 @@
     const root = document.getElementById("kalasutra-v72-warm-welcome-root") || document.createElement("div");
     root.id = "kalasutra-v72-warm-welcome-root";
     if (!root.parentNode) document.body.appendChild(root);
+    if (!document.getElementById("ks-v72-style-link")) {
+      const link = document.createElement("link"); link.id = "ks-v72-style-link"; link.rel = "stylesheet"; link.href = "/karigar-warm-welcome-v7.css"; document.head.appendChild(link);
+    }
+    if (!document.getElementById("ks-v72-hide-old-copilot")) {
+      const style = document.createElement("style"); style.id = "ks-v72-hide-old-copilot";
+      style.textContent = ".ai-talker,.karigar-v3-card{display:none!important}.ks-v72-center{max-height:calc(100dvh - 18px);overflow-y:auto}";
+      document.head.appendChild(style);
+    }
 
-    if (ReactDOM.createRoot) ReactDOM.createRoot(root).render(React.createElement(WarmWelcomeCenter));
+    const reactRoot = ReactDOM.createRoot ? ReactDOM.createRoot(root) : null;
+    if (reactRoot) reactRoot.render(React.createElement(WarmWelcomeCenter));
     else ReactDOM.render(React.createElement(WarmWelcomeCenter), root);
 
     // Expose a tiny stable API for the existing V6 button/voice handler.
@@ -525,7 +592,7 @@
       speak: (text, loc) => fallbackSpeak(String(text || ""), loc || getLocale()),
       setLanguage: loc => setLocale(loc),
       LANGS,
-      unmount: () => { closeRealtimeFromOutside(); root.remove(); }
+      unmount: () => { closeRealtimeFromOutside(); try { reactRoot?.unmount?.(); } catch (_) {} root.remove(); }
     };
 
     function closeRealtimeFromOutside() {
