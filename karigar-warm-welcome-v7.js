@@ -552,10 +552,8 @@
           if (isAccountBlocked(error)) {
             LOCAL_VOICE_MODE = true;
             await speakWelcome();
-            fallbackListeningRef.current = true;
-            if (fallbackCaptureAudio()) return;
             fallbackListeningRef.current = false;
-            setUIState("idle", "Free voice mode is ready. If this browser cannot hear speech, use the on-screen app buttons.");
+            setUIState("idle", "I’m ready. Tap the microphone and speak; free mode can open app sections by voice.");
             return;
           }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
@@ -780,6 +778,14 @@
 
       function listenOnce() {
         setOpen(true);
+        if (LOCAL_VOICE_MODE) {
+          setRealtimeUnavailable(true);
+          fallbackListeningRef.current = true;
+          // Start speech recognition synchronously from the user's mic tap.
+          // Mobile browsers may reject it if it follows a network/API await.
+          if (!fallbackCaptureAudio()) fallbackListeningRef.current = false;
+          return;
+        }
         if (connected) {
           fallbackListeningRef.current = false;
           armRealtimeTurnTimer(20000, "I didn't hear anything. Tap the mic and try again.", false);
