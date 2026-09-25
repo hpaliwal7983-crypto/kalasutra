@@ -269,6 +269,19 @@
         try { go(target); return true; } catch (_) { return false; }
       }
 
+      async function ensureProductActions() {
+        const current = window.__KALASUTRA_PRODUCT_ACTIONS__;
+        if (current?.applyFields) return current;
+        if (role !== "artisan") return null;
+        runAction("ADD_PRODUCT");
+        for (let attempt = 0; attempt < 25; attempt++) {
+          const api = window.__KALASUTRA_PRODUCT_ACTIONS__;
+          if (api?.applyFields) return api;
+          await new Promise(resolve => window.setTimeout(resolve, 100));
+        }
+        return null;
+      }
+
       async function getArtisanModuleContext(module) {
         if (role !== "artisan") return { available: false, reason: "artisan_only" };
         const actions = { price: "FAIR_PRICE", capital: "CRAFT_CAPITAL", material: "MATERIAL_HUB", design: "DESIGN_LAB", passport: "CRAFT_PASSPORT", market: "MARKET_MATCH", gurukul: "CRAFT_GURUKUL" };
@@ -527,10 +540,10 @@
                     result = { status: "ready", product: { id: data.id, title: data.title, description: data.description, price: data.price, category: data.category, craftInfo: { material: data.craftInfo?.material, region: data.craftInfo?.region, originalStory: data.craftInfo?.originalStory }, verificationStatus: data.verificationStatus }, artisan: data.artisan ? { name: data.artisan.name, profile: { craft: data.artisan.profile?.craft, location: data.artisan.profile?.location, bio: data.artisan.profile?.bio, trustScore: data.artisan.profile?.trustScore } } : null, reviews: (data.reviews || []).map(review => ({ stars: review.stars, text: review.text, createdAt: review.createdAt })).slice(0, 20) };
                   } catch (_) { result = { status: "unavailable", message: "Open a product first, then I can look up its details." }; }
                 } else if (call.name === "set_product_fields") {
-                  const apply = window.__KALASUTRA_PRODUCT_ACTIONS__?.applyFields;
+                  const productApi = role === "artisan" ? await ensureProductActions() : null;
                   const fields = { title: args.title, story: args.story, description: args.description, price: args.price, category: args.category, material: args.material, region: args.region, size: args.size, productionCost: args.productionCost };
-                  const applied = role === "artisan" && typeof apply === "function" && apply(fields);
-                  result = { status: applied ? "updated" : "add_product_screen_not_open" };
+                  const applied = Boolean(productApi?.applyFields?.(fields));
+                  result = { status: applied ? "updated" : "add_product_screen_unavailable" };
                   if (applied && args.reply) setMessage(args.reply);
                 } else if (call.name === "read_product_description") {
                   const read = window.__KALASUTRA_PRODUCT_ACTIONS__?.readDescription;
