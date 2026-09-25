@@ -37,7 +37,11 @@ function productContext(db, productId) {
   return { available: true, product: { id: product.id, title: product.title, description: product.description, price: product.price, category: product.category, craftInfo: { material: product.craftInfo?.material, region: product.craftInfo?.region, originalStory: product.craftInfo?.originalStory }, verificationStatus: product.verificationStatus }, artisan: artisan ? { name: artisan.name, profile: { craft: artisan.profile?.craft, location: artisan.profile?.location, bio: artisan.profile?.bio, trustScore: artisan.profile?.trustScore } } : null, reviews: (db.reviews || []).filter(review => String(review.productId) === String(product.id)).map(review => ({ rating: review.stars, text: review.text, date: review.createdAt })).slice(0, 20) };
 }
 function instructions(role, language) {
-  return `You are Karigar AI inside KalaSutra, a warm, human, voice-first companion. Speak naturally and briefly in ${language}; understand mixed Hindi-English and the user's chosen language. Current role: ${role === "artisan" ? "artisan" : "buyer"}. For artisan, help with products, orders, reels, profile and the seven existing dashboard panels. For buyer, help with product details, artisan information, reviews, orders, profile, wishlist and cart. Continue the current conversation without reintroducing yourself or repeating a welcome. Use recent conversation and provided app data as the source of truth. Never invent order counts, order details, prices, balances, market matches, inventory, artisan history, product details or module results. When asked about data that is unavailable, say so clearly. When the user asks to open a screen or an existing dashboard panel, return its action. Actions: ${actions.join(", ")}. Never claim you opened something unless action is set. Keep the answer warm and conversational. When helping create a product, use only facts the artisan stated; never invent its material, region, making process, price or origin.`;
+  return `You are Karigar AI inside KalaSutra, a warm, human, voice-first companion. Use ${language} when the user's language is unclear; otherwise match the language of their latest message, including multilingual code-switching. Understand spoken and Romanized Hindi, Hinglish, and the supported Indian languages. When replying in Hindi or another language with a native script, use that script, except mirror Romanized Hindi/Hinglish when the user consistently writes it in Latin script. Keep the language consistent with the latest message and return the matching locale. Current role: ${role === "artisan" ? "artisan" : "buyer"}.`);
+}
+function responseLocale(value, fallback) {
+  const entry = LANGS[String(value || "")];
+  return entry ? entry[1] : fallback;
 }
 async function openai(path, payload, contentType = "application/json") {
   const key = process.env.OPENAI_API_KEY;
@@ -93,9 +97,9 @@ module.exports = async function aiRoute(req, res, url, b, context = {}) {
       const r = await openai("responses", { model: process.env.KALASUTRA_AI_MODEL || "gpt-5.6-luna", input: [{ role: "system", content: instructions(b.role, language) }, { role: "system", content: `Verified KalaSutra data for this turn (never infer missing records): ${JSON.stringify(appFacts)}` }, ...history, { role: "user", content: message }], text: { format: { type: "json_schema", name: "kalasutra_copilot_reply", strict: true, schema } } });
       const out = await r.json(); let data = {};
       try { data = JSON.parse(out.output_text || "{}"); } catch (_) {}
-      if (!LANGS[data.locale]) data.locale = locale;
+      const replyLocale = responseLocale(data.locale, locale);
       if (!actions.includes(data.action)) data.action = "NONE";
-      return json(res, 200, { reply: String(data.reply || "I’m here with you. Tell me what you’d like to do."), action: data.action, locale });
+      return json(res, 200, { reply: String(data.reply || "I’m here with you. Tell me what you’d like to do."), action: data.action, locale: replyLocale });
     }
     if (url.pathname === "/api/ai/transcribe") {
       const encoded = String(b.audioBase64 || "");
@@ -108,7 +112,7 @@ module.exports = async function aiRoute(req, res, url, b, context = {}) {
       const form = new FormData();
       form.append("file", new Blob([bytes], { type: mime }), `karigar-voice.${extensions[mime]}`);
       form.append("model", process.env.KALASUTRA_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe");
-      form.append("language", String(b.locale || "hi-IN").slice(0, 2));
+      // Let transcription identify the spoken language so a stale selector cannot mis-transcribe the user.
       form.append("response_format", "json");
       const r = await openai("audio/transcriptions", form, "multipart/form-data");
       const result = await r.json();
@@ -129,12 +133,12 @@ module.exports = async function aiRoute(req, res, url, b, context = {}) {
       ];
       const r = await openai("responses", { model: process.env.KALASUTRA_AI_MODEL || "gpt-5.6-luna", input: prompt, text: { format: { type: "json_schema", name: "kalasutra_product_assist", strict: true, schema } }, max_output_tokens: 700 }, "application/json");
       let data = {}; try { data = JSON.parse((await r.json()).output_text || "{}"); } catch (_) {}
-      if (!LANGS[data.locale]) data.locale = locale;
+      const replyLocale = responseLocale(data.locale, locale);
       const fields = Object.fromEntries(Object.keys(fieldsSchema).map(k => [k, typeof data.fields?.[k] === "string" ? data.fields[k].slice(0, k === "story" ? 3000 : 1200) : null]));
       if (fields.category && !["Pottery", "Textiles", "Woodwork", "Metalwork", "Basketry", "Other"].includes(fields.category)) fields.category = null;
       if (fields.price && !/^\d+(\.\d{1,2})?$/.test(fields.price.replace(/[^0-9.]/g, ""))) fields.price = null;
       const productActions = ["NONE", "READ_DESCRIPTION", "REVIEW_PRODUCT", "REQUEST_SUBMIT_CONFIRMATION", "SUBMIT_PRODUCT"];
-      return json(res, 200, { reply: String(data.reply || "Theek hai. Batao, main kaunsi detail update karoon?"), action: productActions.includes(data.action) ? data.action : "NONE", locale, fields });
+      return json(res, 200, { reply: String(data.reply || "Theek hai. Batao, main kaunsi detail update karoon?"), action: productActions.includes(data.action) ? data.action : "NONE", locale: replyLocale, fields });
     }
     if (url.pathname === "/api/ai/translate") {
       const [language] = localeInfo(b.locale || b.language);
