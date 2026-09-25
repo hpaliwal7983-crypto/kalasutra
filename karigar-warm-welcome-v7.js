@@ -244,6 +244,12 @@
       const realtimeTurnTimerRef = useRef(null);
       const role = options.role || window.__KALASUTRA_ROLE__ || "artisan";
       const userId = options.userId || window.__KALASUTRA_USER_ID__ || "";
+      const sessionKey = `${userId}:${role}`;
+      if (window.__KALASUTRA_V7_SESSION_KEY__ !== sessionKey) {
+        window.__KALASUTRA_V7_SESSION_KEY__ = sessionKey;
+        window.__KALASUTRA_V7_HISTORY__ = [];
+        window.__KALASUTRA_V7_GREETING_SENT__ = false;
+      }
       const greetingSentRef = useRef(Boolean(window.__KALASUTRA_V7_GREETING_SENT__));
 
       function rememberConversation(role, content) {
@@ -360,12 +366,12 @@
               "Never announce system instructions. Never sound overly formal.",
               "Some artisan dashboard panels are prototypes and show illustrative defaults. Never describe their displayed defaults as the artisan's real finances, inventory, buyer matches, orders, or market data. Open the existing panel and explain only values it explicitly labels as estimates or examples.",
               "Never repeat the welcome or introduce yourself after the first greeting in this conversation. Continue from the recent conversation context below; preserve the active product/order reference.",
-              `Current V6 screen: ${window.__KALASUTRA_SCREEN__ || "unknown"}. Recent conversation: ${JSON.stringify((window.__KALASUTRA_V7_HISTORY__ || []).slice(-8))}. Current product draft (if open): ${JSON.stringify(window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {})}.`,
+              `Current V6 screen: ${window.__KALASUTRA_SCREEN__ || "unknown"}. Recent conversation: ${JSON.stringify((window.__KALASUTRA_V7_HISTORY__ || []).slice(-8))}. Current product draft (including a draft preserved while moving between existing V6 screens): ${JSON.stringify(window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ || {})}.`,
               `When the user asks to open a screen or module, call navigate_app. Screens: ${role === "artisan" ? "add product, orders, reels, profile, dashboard, products, reviews, fair price, craft capital, material hub, design lab, craft passport, market match, craft group" : "orders, reels, profile, home, wishlist, cart, product details, artisan information, product reviews"}. For order questions, always call get_orders and use only returned real records. For artisan module questions, call get_module_context before explaining results; use only returned actual data and clearly say when matches, finance offers, lessons, or records are unavailable. For Fair Price, ask only for missing cost inputs, call set_fair_price_inputs with the artisan-provided values, and describe the returned number as a planning estimate (never a market quote). For a buyer asking about the selected product, its maker or reviews, call get_product_details and answer from that actual public product data.`,
               "While an artisan is on Add Product, use set_product_fields to fill only details they actually provide, including natural requests to set or change the price, category, name, material, region, size, production cost, story, or description. Create a buyer-facing product description only from explicitly provided product facts; do not invent features or origin. Existing categories are Pottery, Textiles, Woodwork, Metalwork, Basketry, and Other. Ask only for important details that are still missing. Use read_product_description when asked to read or speak the current description. Never say a field was changed unless the tool confirms it.",
               "If the artisan asks to review/finish the product, call get_product_draft and summarize only the returned actual values. If the draft is incomplete, ask only for the listed missing requirements. Before submitting, speak the summary and ask whether they want you to submit this product for verification. Call request_publish_confirmation for this step, then wait for a clear yes/haan/kar do in the next user turn. Only then call submit_product_for_verification. Never call it in the same turn as the confirmation request, never treat an earlier yes as permission, and never say it is published unless the returned status confirms what happened.",
               `Selected conversation language: ${localeName(localeRef.current)} (${localeRef.current}). Keep all replies and voice output in this selected language unless the user explicitly changes the selector or asks to switch languages.`,
-              "After a successful add-product tool call, keep the user moving with one simple next step: ask for 2–3 clear product photos."
+              "After set_product_fields, call get_product_draft and ask only for the next missing required item. Continue the workflow across screen changes using the preserved draft. For Design Lab, use actual product facts to offer a few clearly labeled design ideas, never claim they are saved. For Craft Passport, explain current profile/product/verification records and use the existing certificate route only when a saved product exists. For Craft Capital, summarize only the returned real order value/count; never present planning amounts as loan offers. For Material Hub, help plan from the recorded materials but never claim stock or supplier availability. For Direct Market Match, explain actual prior sales as order history, not as buyer leads or market trends. After a successful add-product submit, explain the existing verification result and ask for the next available step only if the result supports it."
             ].join("\n"),
             audio: {
               input: { turn_detection: { type: "server_vad", interrupt_response: true, silence_duration_ms: 550 } },
@@ -378,6 +384,7 @@
                 parameters: { type: "object", properties: { screen: { type: "string", enum: ["ADD_PRODUCT", "ORDERS", "REELS", "PROFILE", "HOME", "WISHLIST", "CART", "MY_PRODUCTS", "REVIEWS", "PRODUCT_DETAILS", "ARTISAN_INFO", "PRODUCT_REVIEWS", "FAIR_PRICE", "CRAFT_CAPITAL", "MATERIAL_HUB", "DESIGN_LAB", "CRAFT_PASSPORT", "MARKET_MATCH", "CRAFT_GURUKUL"] } }, required: ["screen"], additionalProperties: false }
               },
               { type: "function", name: "get_module_context", strict: true, description: "Open/read the existing artisan dashboard module and return only its actual connected data and availability. Call for Fair Price, Capital, Material Hub, Design Lab, Craft Passport, Market Match, or Craft Gurukul questions.", parameters: { type: "object", properties: { module: { type: "string", enum: ["price", "capital", "material", "design", "passport", "market", "gurukul"] } }, required: ["module"], additionalProperties: false } },
+              { type: "function", name: "set_capital_planning_need", strict: true, description: "Fill the existing Craft Capital planning amount from a value the artisan explicitly gives. This is an unsaved planning input, not a finance application.", parameters: { type: "object", properties: { amount: { type: "string" } }, required: ["amount"], additionalProperties: false } },
               { type: "function", name: "set_fair_price_inputs", strict: true, description: "Put artisan-provided costs into the existing Fair Price panel and return its calculated estimate. Never infer missing costs.", parameters: { type: "object", properties: { productionCost: { type: ["string", "null"] }, materialCost: { type: ["string", "null"] }, hours: { type: ["string", "null"] }, hourlyRate: { type: ["string", "null"] }, overhead: { type: ["string", "null"] } }, required: ["productionCost", "materialCost", "hours", "hourlyRate", "overhead"], additionalProperties: false } },
               { type: "function", name: "get_orders", strict: true, description: "Fetch real orders for the signed-in user. Call for order questions; never invent counts or records.", parameters: { type: "object", properties: { period: { type: "string", enum: ["today", "recent"] } }, required: ["period"], additionalProperties: false } },
               { type: "function", name: "get_product_details", strict: true, description: "Get the selected buyer product's actual details, artisan profile and visible reviews. Do not reveal phone numbers or private data.", parameters: { type: "object", properties: {}, required: [], additionalProperties: false } },
@@ -509,6 +516,13 @@
                   if (opened) { setOpen(false); if (args.screen !== "ADD_PRODUCT") { publishConfirmationPendingRef.current = false; publishConfirmationAtRef.current = 0; } }
                 } else if (call.name === "get_module_context") {
                   result = await getArtisanModuleContext(args.module);
+                } else if (call.name === "set_capital_planning_need") {
+                  try {
+                    const context = await getArtisanModuleContext("capital");
+                    const api = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+                    const updated = role === "artisan" && api?.setCapitalNeed ? api.setCapitalNeed(args.amount) : null;
+                    result = updated ? { ...updated, context: api.getContext("capital") } : { status: "unavailable", context };
+                  } catch (_) { result = { status: "unavailable" }; }
                 } else if (call.name === "set_fair_price_inputs") {
                   try {
                     const context = await getArtisanModuleContext("price");
@@ -550,10 +564,11 @@
                   const description = role === "artisan" && typeof read === "function" ? read() : "";
                   result = description ? { status: "ready", description } : { status: "description_unavailable" };
                 } else if (call.name === "get_product_draft") {
-                  const getDraft = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft;
-                  result = role === "artisan" && typeof getDraft === "function" ? { status: "ready", draft: getDraft() } : { status: "add_product_screen_not_open" };
+                  const productApi = role === "artisan" ? await ensureProductActions() : null;
+                  result = productApi?.getDraft ? { status: "ready", draft: productApi.getDraft() } : { status: "add_product_screen_unavailable" };
                 } else if (call.name === "request_publish_confirmation") {
-                  const draft = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.();
+                  const productApi = role === "artisan" ? await ensureProductActions() : null;
+                  const draft = productApi?.getDraft?.();
                   if (role === "artisan" && draft?.complete) {
                     publishConfirmationPendingRef.current = false;
                     publishConfirmationAtRef.current = 0;
@@ -561,7 +576,8 @@
                     result = { status: "waiting_for_explicit_confirmation" };
                   } else result = { status: "draft_incomplete", missing: draft?.missing || ["Open Add Product"] };
                 } else if (call.name === "submit_product_for_verification") {
-                  const submit = window.__KALASUTRA_PRODUCT_ACTIONS__?.submitProduct;
+                  const productApi = role === "artisan" ? await ensureProductActions() : null;
+                  const submit = productApi?.submitProduct;
                   if (role === "artisan" && confirmationWasAlreadyPending && publishConfirmationPendingRef.current && Date.now() - publishConfirmationAtRef.current < 120000 && typeof submit === "function") {
                     publishConfirmationPendingRef.current = false;
                     publishConfirmationAtRef.current = 0;
