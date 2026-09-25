@@ -723,17 +723,20 @@ function ArtisanNav({ screen, go }) {
 }
 function ArtisanGrowthHub({ user, featured, products, setToast }) {
     const [open, setOpen] = useState(null);
-    const [materialCost, setMaterialCost] = useState("450");
-    const [hours, setHours] = useState("6");
-    const [hourlyRate, setHourlyRate] = useState("180");
-    const [overhead, setOverhead] = useState("150");
-    const [capitalNeed, setCapitalNeed] = useState("25000");
+    const [materialCost, setMaterialCost] = useState("");
+    const [hours, setHours] = useState("");
+    const [hourlyRate, setHourlyRate] = useState("");
+    const [overhead, setOverhead] = useState("");
+    const [capitalNeed, setCapitalNeed] = useState("");
     const [materialJoin, setMaterialJoin] = useState({});
     const [designCraft, setDesignCraft] = useState("Pottery");
     const [passportMade, setPassportMade] = useState(false);
     const [lessonSaved, setLessonSaved] = useState({});
-    const fairBase = Number(materialCost || 0) + Number(hours || 0) * Number(hourlyRate || 0) + Number(overhead || 0);
-    const fairPrice = Math.round(fairBase * 1.20);
+    const [productionCost, setProductionCost] = useState("");
+    const [artisanOrders, setArtisanOrders] = useState([]);
+    const fairBase = productionCost ? Number(productionCost) : Number(materialCost || 0) + Number(hours || 0) * Number(hourlyRate || 0) + Number(overhead || 0);
+    const hasFairInputs = !!productionCost || (!!materialCost && !!hours && !!hourlyRate && !!overhead);
+    const fairPrice = hasFairInputs ? Math.round(fairBase * 1.20) : null;
     const productTitle = featured?.title || "Your handmade piece";
     const productPrice = Number(featured?.price || fairPrice || 0);
     const modules = [
@@ -745,27 +748,41 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
         { id: "market", icon: "↗", title: "Direct Market Match", problem: "Middlemen & isolation", desc: "Match your craft with buyer needs so demand can reach the maker directly.", accent: "market" },
         { id: "gurukul", icon: "⌘", title: "Craft Gurukul", problem: "Youth brain drain", desc: "Preserve techniques and pass practical craft knowledge to the next generation.", accent: "gurukul" },
     ];
-    const materials = [
-        ["Natural dyes", "18 artisans", "62% funded"],
-        ["Terracotta clay", "31 artisans", "78% funded"],
-        ["Eri silk yarn", "12 artisans", "45% funded"]
-    ];
-    const designs = {
-        Pottery: ["Stackable serving set for modern kitchens", "Minimal terracotta planter with regional motif", "Giftable chai + snack set with artisan story"],
-        Weaving: ["Lightweight everyday stole with heritage border", "Contemporary cushion series using traditional weave", "Small-batch table runner for premium homes"],
-        Woodcraft: ["Modular desk organiser with local carving", "Modern wall accent with traditional geometry", "Compact gifting box with maker mark"],
-        "Metal Craft": ["Minimal statement diya set", "Modern table centrepiece with traditional form", "Collector's mini decor series"]
-    };
-    const demand = [
-        ["Boutique home stores", "Pottery & tableware", "92% match"],
-        ["Conscious gifting brands", "Small handcrafted sets", "86% match"],
-        ["Hotels & cafés", "Regional decor pieces", "79% match"]
-    ];
-    const lessons = [
-        ["01", "Record a technique", "Capture one signature step before it is lost."],
-        ["02", "Teach a family member", "Create a simple repeatable learning lesson."],
-        ["03", "Build a craft archive", "Save stories, tools and process notes with each piece."]
-    ];
+    const materials = [...new Set((products || []).map(p => String(p.craftInfo?.material || "").trim()).filter(Boolean))];
+    const designs = {};
+    const demand = [];
+    const lessons = [];
+    useEffect(() => {
+        let active = true;
+        apiGet(`/orders?userId=${encodeURIComponent(user.id)}`).then(rows => { if (active) setArtisanOrders(Array.isArray(rows) ? rows : []); }).catch(() => { if (active) setArtisanOrders([]); });
+        return () => { active = false; };
+    }, [user.id]);
+    function moduleContext(moduleName) {
+        const product = featured ? { id: featured.id, title: featured.title, category: featured.category, price: featured.price, description: featured.description, verificationStatus: featured.verificationStatus, craftInfo: { material: featured.craftInfo?.material || "", size: featured.craftInfo?.size || "", productionCost: featured.craftInfo?.productionCost || null, region: featured.craftInfo?.region || "", originalStory: featured.craftInfo?.originalStory || "" } } : null;
+        if (moduleName === "price") return { available: true, product, formula: "20% planning buffer over artisan-provided production cost, or over supplied material cost + hours × hourly rate + overhead.", inputs: { productionCost, materialCost, hours, hourlyRate, overhead }, fairPrice, complete: fairPrice !== null, estimateOnly: true };
+        if (moduleName === "capital") return { available: true, product, capitalNeed: capitalNeed || null, orders: artisanOrders.slice(0, 20), financeOffersAvailable: false };
+        if (moduleName === "material") return { available: true, product, artisanMaterials: materials, sourcingAvailability: false };
+        if (moduleName === "design") return { available: true, product, savedDesigns: [], designRecordsAvailable: false };
+        if (moduleName === "passport") return { available: true, artisan: { name: user.name || "", craft: user.profile?.craft || "", location: user.profile?.location || "", bio: user.profile?.bio || "" }, product, passportRecordAvailable: false };
+        if (moduleName === "market") return { available: true, product, recentOrders: artisanOrders.slice(0, 20), buyerMatchesAvailable: false, marketSignalsAvailable: false };
+        if (moduleName === "gurukul") return { available: true, groups: [], lessons: [], groupRecordsAvailable: false };
+        return { available: false };
+    }
+    useEffect(() => {
+        const api = {
+            getContext: moduleContext,
+            setFairPriceInputs: values => {
+                if (!values || typeof values !== "object") return { status: "invalid_inputs" };
+                for (const [key, setter] of [["productionCost", setProductionCost], ["materialCost", setMaterialCost], ["hours", setHours], ["hourlyRate", setHourlyRate], ["overhead", setOverhead]]) {
+                    if (values[key] !== undefined && values[key] !== null && String(values[key]).trim() !== "") setter(String(values[key]).replace(/[^0-9.]/g, ""));
+                }
+                setOpen("price");
+                return { status: "updated" };
+            }
+        };
+        window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__ = api;
+        return () => { if (window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__ === api) delete window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__; };
+    }, [productionCost, materialCost, hours, hourlyRate, overhead, fairPrice, capitalNeed, artisanOrders, featured, products, user, materials]);
     function toggle(id) { setOpen(open === id ? null : id); }
     useEffect(() => {
         const valid = new Set(modules.map((module) => module.id));
@@ -812,11 +829,9 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
                     "Overhead \u20B9",
                     React.createElement("input", { value: overhead, onChange: e => setOverhead(e.target.value.replace(/\D/g, "")) }))),
             React.createElement("div", { className: "growth-result-card" },
-                React.createElement("span", null, "Suggested fair maker price"),
-                React.createElement("strong", null,
-                    "\u20B9",
-                    fairPrice.toLocaleString("en-IN")),
-                React.createElement("small", null, "Includes a 20% craft-value buffer over direct cost. Use it as a planning benchmark.")),
+                React.createElement("span", null, "Estimated fair maker price"),
+                React.createElement("strong", null, fairPrice === null ? "Add cost inputs" : `₹${fairPrice.toLocaleString("en-IN")}`),
+                React.createElement("small", null, fairPrice === null ? "Enter production cost, or complete all four cost inputs. No market-price data is used." : "Planning estimate: artisan-provided cost plus a 20% buffer; this is not a market quote.")),
             React.createElement("button", { className: "growth-action", onClick: () => setToast(`Fair price benchmark saved: ₹${fairPrice.toLocaleString("en-IN")}`) }, "Use this price benchmark \u2192")),
         open === "capital" && React.createElement("div", { className: "growth-module-panel" },
             React.createElement("div", { className: "panel-kicker" }, "CRAFT CAPITAL"),
