@@ -23,22 +23,18 @@
   ];
 
   const COPY = {
-    "hi-IN": {
-      welcome: "नमस्ते! मैं Karigar AI हूँ। आज आपके साथ क्या करते हैं?",
-      listening: "मैं सुन रहा हूँ…",
-      thinking: "एक पल, मैं समझ रहा हूँ…",
-      addProduct: "बिल्कुल। चलिए आपका product add करते हैं। पहले उसकी 2–3 साफ़ photos ले लेते हैं।",
-      generic: "समझ गया। आप बस आराम से बताइए, मैं आपके साथ-साथ करूँगा।",
-      ready: "बोलकर बताइए, मैं सुन रहा हूँ।",
-    },
-    "en-IN": {
-      welcome: "Namaste! I’m Karigar AI. What shall we work on today?",
-      listening: "I’m listening…",
-      thinking: "One moment, I’m with you…",
-      addProduct: "Absolutely. Let’s add your product. We’ll start with two or three clear photos, and I’ll guide you through the rest.",
-      generic: "Got it. Just tell me naturally what you’d like to do. I’ll stay with you and guide you step by step.",
-      ready: "Go ahead. I’m listening.",
-    },
+    "hi-IN": { welcome:"नमस्ते! मैं Karigar AI हूँ। आज हम क्या करें?", listening:"मैं सुन रही हूँ…", thinking:"एक पल, मैं समझ रही हूँ…", generic:"समझ गई। आप आराम से बताइए, मैं एक-एक कदम पर मदद करूँगी।", ready:"बताइए, मैं सुन रही हूँ।" },
+    "en-IN": { welcome:"Namaste! I’m Karigar AI. What shall we work on today?", listening:"I’m listening…", thinking:"One moment, I’m understanding…", generic:"Got it. Tell me naturally what you need, and I’ll guide you step by step.", ready:"Go ahead. I’m listening." },
+    "mr-IN": { welcome:"नमस्कार! मी Karigar AI आहे. आज आपण काय करूया?", listening:"मी ऐकत आहे…", thinking:"एक क्षण, मी समजून घेत आहे…", generic:"समजलं. तुम्हाला काय करायचं आहे ते सहज सांगा; मी प्रत्येक टप्प्यावर मदत करेन.", ready:"सांगा, मी ऐकत आहे." },
+    "gu-IN": { welcome:"નમસ્તે! હું Karigar AI છું. આજે આપણે શું કરીએ?", listening:"હું સાંભળી રહી છું…", thinking:"એક ક્ષણ, હું સમજી રહી છું…", generic:"સમજાયું. તમને શું કરવું છે તે આરામથી કહો; હું દરેક પગલે મદદ કરીશ.", ready:"કહો, હું સાંભળી રહી છું." },
+    "pa-IN": { welcome:"ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ Karigar AI ਹਾਂ। ਅੱਜ ਅਸੀਂ ਕੀ ਕਰੀਏ?", listening:"ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ…", thinking:"ਇੱਕ ਪਲ, ਮੈਂ ਸਮਝ ਰਹੀ ਹਾਂ…", generic:"ਸਮਝ ਗਈ। ਤੁਸੀਂ ਆਰਾਮ ਨਾਲ ਦੱਸੋ ਕਿ ਕੀ ਕਰਨਾ ਹੈ; ਮੈਂ ਹਰ ਕਦਮ ਤੇ ਮਦਦ ਕਰਾਂਗੀ।", ready:"ਦੱਸੋ, ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ।" },
+    "bn-IN": { welcome:"নমস্কার! আমি Karigar AI। আজ আমরা কী করতে পারি?", listening:"আমি শুনছি…", thinking:"একটু সময় দিন, আমি বুঝে নিচ্ছি…", generic:"বুঝেছি। আপনার কী দরকার স্বাভাবিকভাবে বলুন; আমি ধাপে ধাপে সাহায্য করব।", ready:"বলুন, আমি শুনছি।" },
+    "ta-IN": { welcome:"வணக்கம்! நான் Karigar AI. இன்று நாம் என்ன செய்யலாம்?", listening:"நான் கேட்டுக்கொண்டிருக்கிறேன்…", thinking:"ஒரு நிமிடம், புரிந்துகொள்கிறேன்…", generic:"புரிந்தது. உங்களுக்கு என்ன வேண்டும் என்று இயல்பாகச் சொல்லுங்கள்; படிப்படியாக உதவுகிறேன்.", ready:"சொல்லுங்கள், நான் கேட்கிறேன்." },
+    "te-IN": { welcome:"నమస్కారం! నేను Karigar AI. ఈరోజు మనం ఏం చేద్దాం?", listening:"నేను వింటున్నాను…", thinking:"ఒక్క క్షణం, అర్థం చేసుకుంటున్నాను…", generic:"అర్థమైంది. మీకు ఏం కావాలో సహజంగా చెప్పండి; ఒక్కో దశలో సహాయం చేస్తాను.", ready:"చెప్పండి, నేను వింటున్నాను." },
+    "kn-IN": { welcome:"ನಮಸ್ಕಾರ! ನಾನು Karigar AI. ಇಂದು ನಾವು ಏನು ಮಾಡೋಣ?", listening:"ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ…", thinking:"ಒಂದು ಕ್ಷಣ, ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತಿದ್ದೇನೆ…", generic:"ಅರ್ಥವಾಯಿತು. ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ಸಹಜವಾಗಿ ಹೇಳಿ; ಹಂತ ಹಂತವಾಗಿ ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.", ready:"ಹೇಳಿ, ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ." },
+    "ml-IN": { welcome:"നമസ്കാരം! ഞാൻ Karigar AI. ഇന്ന് നമുക്ക് എന്ത് ചെയ്യാം?", listening:"ഞാൻ കേൾക്കുന്നുണ്ട്…", thinking:"ഒരു നിമിഷം, മനസ്സിലാക്കട്ടെ…", generic:"മനസ്സിലായി. എന്താണ് വേണ്ടതെന്ന് സ്വാഭാവികമായി പറയൂ; ഓരോ ഘട്ടത്തിലും ഞാൻ സഹായിക്കാം.", ready:"പറയൂ, ഞാൻ കേൾക്കുന്നുണ്ട്." },
+    "or-IN": { welcome:"ନମସ୍କାର! ମୁଁ Karigar AI। ଆଜି ଆମେ କ'ଣ କରିବା?", listening:"ମୁଁ ଶୁଣୁଛି…", thinking:"ଟିକେ ରୁହନ୍ତୁ, ମୁଁ ବୁଝୁଛି…", generic:"ବୁଝିଲି। ଆପଣଙ୍କୁ କ'ଣ ଦରକାର ସହଜରେ କୁହନ୍ତୁ; ମୁଁ ପ୍ରତି ପଦକ୍ଷେପରେ ସାହାଯ୍ୟ କରିବି।", ready:"କୁହନ୍ତୁ, ମୁଁ ଶୁଣୁଛି।" },
+    "ur-IN": { welcome:"السلام علیکم! میں Karigar AI ہوں۔ آج ہم کیا کریں؟", listening:"میں سن رہی ہوں…", thinking:"ایک لمحہ، میں سمجھ رہی ہوں…", generic:"سمجھ گئی۔ آپ آرام سے بتائیں کہ آپ کو کیا چاہیے؛ میں ہر قدم پر مدد کروں گی۔", ready:"بتائیے، میں سن رہی ہوں۔" }
   };
 
   let LOCAL_VOICE_MODE = false;
