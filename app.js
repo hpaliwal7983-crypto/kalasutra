@@ -1026,8 +1026,10 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
     const [story, setStory] = useState("");
     const [englishDescription, setEnglishDescription] = useState("");
     const [price, setPrice] = useState("");
-    const [category, setCategory] = useState("Pottery");
+    const [category, setCategory] = useState("");
     const [material, setMaterial] = useState("");
+    const [size, setSize] = useState("");
+    const [productionCost, setProductionCost] = useState("");
     const [region, setRegion] = useState("");
     const [storyLang, setStoryLang] = useState("hi-IN");
     const [galleryImages, setGalleryImages] = useState([]);
@@ -1054,8 +1056,8 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
         const api = {
             getDraft: () => {
                 const priceValid = !!price && /^\d+(\.\d{1,2})?$/.test(price);
-                const missing = [!imageDataUrl && "a product photo", !story.trim() && "the product story", !priceValid && "a valid price", !proofVideo && "making proof"].filter(Boolean);
-                return { title, story, description: englishDescription, price, category, material, region, photoCount: galleryImages.length, hasPhoto: !!imageDataUrl, hasStory: !!story.trim(), hasPrice: priceValid, hasMakingProof: !!proofVideo, complete: missing.length === 0, missing };
+                const missing = [!title.trim() && "a product name", !category && "a product category", !imageDataUrl && "a product photo", !story.trim() && "the product story", !priceValid && "a valid price", !proofVideo && "making proof"].filter(Boolean);
+                return { title, story, description: englishDescription, price, category, material, size, productionCost, region, photoCount: galleryImages.length, hasPhoto: !!imageDataUrl, hasStory: !!story.trim(), hasPrice: priceValid, hasMakingProof: !!proofVideo, complete: missing.length === 0, missing };
             },
             readDescription: () => englishDescription || "",
             submitProduct: async () => {
@@ -1076,14 +1078,16 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                     if (/^\d+(\.\d{1,2})?$/.test(numericPrice)) setPrice(numericPrice);
                 }
                 if (typeof fields.category === "string" && Object.prototype.hasOwnProperty.call(CATEGORY_EMOJI, fields.category)) setCategory(fields.category);
-                if (typeof fields.material === "string" && fields.material.trim()) setMaterial(fields.material.trim().slice(0, 120));
+                if (typeof fields.material === "string" && fields.material.trim()) setMaterial(fields.material.trim().slice(0, 200));
+                if (typeof fields.size === "string" && fields.size.trim()) setSize(fields.size.trim().slice(0, 100));
+                if (fields.productionCost !== null && fields.productionCost !== undefined && String(fields.productionCost).trim()) { const cost=String(fields.productionCost).replace(/[^0-9.]/g, ""); if (/^\d+(\.\d{1,2})?$/.test(cost)) setProductionCost(cost); }
                 if (typeof fields.region === "string" && fields.region.trim()) setRegion(fields.region.trim().slice(0, 120));
                 return true;
             }
         };
         window.__KALASUTRA_PRODUCT_ACTIONS__ = api;
         return () => { if (window.__KALASUTRA_PRODUCT_ACTIONS__ === api) delete window.__KALASUTRA_PRODUCT_ACTIONS__; };
-    }, [title, story, englishDescription, price, category, material, region, imageDataUrl, galleryImages, proofVideo]);
+    }, [title, story, englishDescription, price, category, material, size, productionCost, region, imageDataUrl, galleryImages, proofVideo]);
     useEffect(() => () => window.dispatchEvent(new Event("kalasutra:add-product-screen-closed")), []);
     async function handleImagePick(e) {
         const files = Array.from(e.target.files || []);
@@ -1197,6 +1201,14 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
         e.target.value = "";
     }
     async function handleCreateAndScan(options = {}) {
+        if (!title.trim()) {
+            setErr("Please add the product name.");
+            return { status: "draft_incomplete", missing: ["a product name"] };
+        }
+        if (!category) {
+            setErr("Please choose the product category.");
+            return { status: "draft_incomplete", missing: ["a product category"] };
+        }
         if (!imageDataUrl) {
             setErr("First upload/take a photo of the piece.");
             return { status: "draft_incomplete", missing: ["a product photo"] };
@@ -1215,11 +1227,11 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
         }
         setErr(null);
         try {
-            const finalTitle = title.trim() || `${category} Handmade Piece`;
-            const finalDescription = englishDescription || `Handcrafted ${category.toLowerCase()} made by a traditional artisan. Story: “${story.trim()}”.`;
+            const finalTitle = title.trim();
+            const finalDescription = englishDescription.trim();
             const created = await apiPost("/products", {
                 artisanId: user.id, title: finalTitle, description: finalDescription, price: price,
-                category, image: imageDataUrl, craftInfo: { material, region, storyLanguage: storyLang, originalStory: story, verificationProof: proofVideo, gallery: galleryImages },
+                category, image: imageDataUrl, craftInfo: { material, size, productionCost: productionCost ? Number(productionCost) : null, region, storyLanguage: storyLang, originalStory: story, verificationProof: proofVideo, gallery: galleryImages },
             });
             setProduct(created);
             setStepState("scanning");
@@ -1367,13 +1379,19 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                                 React.createElement("input", { value: title, onChange: (e) => setTitle(e.target.value), placeholder: "e.g. Blue Pottery Vase" })),
                             React.createElement("label", null,
                                 "Category",
-                                React.createElement("select", { value: category, onChange: (e) => setCategory(e.target.value) }, Object.keys(CATEGORY_EMOJI).map(c => React.createElement("option", { key: c }, c)))),
+                                React.createElement("select", { value: category, onChange: (e) => setCategory(e.target.value) }, React.createElement("option", { value: "" }, "Choose a category"), Object.keys(CATEGORY_EMOJI).map(c => React.createElement("option", { key: c }, c)))),
                             React.createElement("label", null,
                                 "Price (\u20B9)",
                                 React.createElement("input", { value: price, onChange: (e) => setPrice(e.target.value.replace(/[^0-9.]/g, "")), placeholder: "2000", inputMode: "decimal" })),
                             React.createElement("label", null,
                                 "Material",
                                 React.createElement("input", { value: material, onChange: (e) => setMaterial(e.target.value), placeholder: "Terracotta clay" })),
+                            React.createElement("label", null,
+                                "Approximate size / dimensions",
+                                React.createElement("input", { value: size, onChange: (e) => setSize(e.target.value), placeholder: "e.g. 3 feet" })),
+                            React.createElement("label", null,
+                                "Production cost (₹)",
+                                React.createElement("input", { value: productionCost, onChange: (e) => setProductionCost(e.target.value.replace(/[^0-9.]/g, "")), placeholder: "Optional", inputMode: "decimal" })),
                             React.createElement("label", null,
                                 "Region",
                                 React.createElement("input", { value: region, onChange: (e) => setRegion(e.target.value), placeholder: "Rajasthan" })),
