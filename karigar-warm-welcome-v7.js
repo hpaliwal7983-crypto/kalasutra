@@ -244,7 +244,7 @@
       const realtimeTurnTimerRef = useRef(null);
       const role = options.role || window.__KALASUTRA_ROLE__ || "artisan";
       const userId = options.userId || window.__KALASUTRA_USER_ID__ || "";
-      const greetingSentRef = useRef(false);
+      const greetingSentRef = useRef(Boolean(window.__KALASUTRA_V7_GREETING_SENT__));
 
       function rememberConversation(role, content) {
         const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
@@ -267,6 +267,24 @@
         const target = routes[action];
         if (!target) return false;
         try { go(target); return true; } catch (_) { return false; }
+      }
+
+      async function getArtisanModuleContext(module) {
+        if (role !== "artisan") return { available: false, reason: "artisan_only" };
+        const actions = { price: "FAIR_PRICE", capital: "CRAFT_CAPITAL", material: "MATERIAL_HUB", design: "DESIGN_LAB", passport: "CRAFT_PASSPORT", market: "MARKET_MATCH", gurukul: "CRAFT_GURUKUL" };
+        if (!actions[module]) return { available: false, reason: "unknown_module" };
+        const apiNow = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+        if (apiNow) window.dispatchEvent(new CustomEvent("kalasutra:artisan-module-open", { detail: { module } }));
+        else runAction(actions[module]);
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const api = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+          if (api?.getContext) {
+            window.dispatchEvent(new CustomEvent("kalasutra:artisan-module-open", { detail: { module } }));
+            return api.getContext(module);
+          }
+          await new Promise(resolve => window.setTimeout(resolve, 100));
+        }
+        return { available: false, reason: "module_not_mounted" };
       }
 
       function setUIState(next, text) {
@@ -330,8 +348,8 @@
               "Some artisan dashboard panels are prototypes and show illustrative defaults. Never describe their displayed defaults as the artisan's real finances, inventory, buyer matches, orders, or market data. Open the existing panel and explain only values it explicitly labels as estimates or examples.",
               "Never repeat the welcome or introduce yourself after the first greeting in this conversation. Continue from the recent conversation context below; preserve the active product/order reference.",
               `Current V6 screen: ${window.__KALASUTRA_SCREEN__ || "unknown"}. Recent conversation: ${JSON.stringify((window.__KALASUTRA_V7_HISTORY__ || []).slice(-8))}. Current product draft (if open): ${JSON.stringify(window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {})}.`,
-              `When the user asks to open a screen or module, call navigate_app. Screens: ${role === "artisan" ? "add product, orders, reels, profile, dashboard, products, reviews, fair price, craft capital, material hub, design lab, craft passport, market match, craft group" : "orders, reels, profile, home, wishlist, cart, product details, artisan information, product reviews"}. For order questions, always call get_orders and use only returned real records. For a buyer asking about the selected product, its maker or reviews, call get_product_details and answer from that actual public product data.`,
-              "While an artisan is on Add Product, use set_product_fields to fill only details they actually provide, including natural requests to set or change the price, category, name, material, region, story, or description. Existing categories are Pottery, Textiles, Woodwork, Metalwork, Basketry, and Other. Ask only for important details that are still missing. Use read_product_description when asked to read or speak the current description. Never say a field was changed unless the tool confirms it.",
+              `When the user asks to open a screen or module, call navigate_app. Screens: ${role === "artisan" ? "add product, orders, reels, profile, dashboard, products, reviews, fair price, craft capital, material hub, design lab, craft passport, market match, craft group" : "orders, reels, profile, home, wishlist, cart, product details, artisan information, product reviews"}. For order questions, always call get_orders and use only returned real records. For artisan module questions, call get_module_context before explaining results; use only returned actual data and clearly say when matches, finance offers, lessons, or records are unavailable. For Fair Price, ask only for missing cost inputs, call set_fair_price_inputs with the artisan-provided values, and describe the returned number as a planning estimate (never a market quote). For a buyer asking about the selected product, its maker or reviews, call get_product_details and answer from that actual public product data.`,
+              "While an artisan is on Add Product, use set_product_fields to fill only details they actually provide, including natural requests to set or change the price, category, name, material, region, size, production cost, story, or description. Create a buyer-facing product description only from explicitly provided product facts; do not invent features or origin. Existing categories are Pottery, Textiles, Woodwork, Metalwork, Basketry, and Other. Ask only for important details that are still missing. Use read_product_description when asked to read or speak the current description. Never say a field was changed unless the tool confirms it.",
               "If the artisan asks to review/finish the product, call get_product_draft and summarize only the returned actual values. If the draft is incomplete, ask only for the listed missing requirements. Before submitting, speak the summary and ask whether they want you to submit this product for verification. Call request_publish_confirmation for this step, then wait for a clear yes/haan/kar do in the next user turn. Only then call submit_product_for_verification. Never call it in the same turn as the confirmation request, never treat an earlier yes as permission, and never say it is published unless the returned status confirms what happened.",
               `Preferred language fallback: ${localeName(localeRef.current)} (${localeRef.current}); the latest utterance takes priority when it is clearly in another language.`,
               "After a successful add-product tool call, keep the user moving with one simple next step: ask for 2–3 clear product photos."
@@ -346,6 +364,8 @@
                 description: "Navigate to a screen already present in KalaSutra. Use ADD_PRODUCT only for artisan role.",
                 parameters: { type: "object", properties: { screen: { type: "string", enum: ["ADD_PRODUCT", "ORDERS", "REELS", "PROFILE", "HOME", "WISHLIST", "CART", "MY_PRODUCTS", "REVIEWS", "PRODUCT_DETAILS", "ARTISAN_INFO", "PRODUCT_REVIEWS", "FAIR_PRICE", "CRAFT_CAPITAL", "MATERIAL_HUB", "DESIGN_LAB", "CRAFT_PASSPORT", "MARKET_MATCH", "CRAFT_GURUKUL"] } }, required: ["screen"], additionalProperties: false }
               },
+              { type: "function", name: "get_module_context", strict: true, description: "Open/read the existing artisan dashboard module and return only its actual connected data and availability. Call for Fair Price, Capital, Material Hub, Design Lab, Craft Passport, Market Match, or Craft Gurukul questions.", parameters: { type: "object", properties: { module: { type: "string", enum: ["price", "capital", "material", "design", "passport", "market", "gurukul"] } }, required: ["module"], additionalProperties: false } },
+              { type: "function", name: "set_fair_price_inputs", strict: true, description: "Put artisan-provided costs into the existing Fair Price panel and return its calculated estimate. Never infer missing costs.", parameters: { type: "object", properties: { productionCost: { type: ["string", "null"] }, materialCost: { type: ["string", "null"] }, hours: { type: ["string", "null"] }, hourlyRate: { type: ["string", "null"] }, overhead: { type: ["string", "null"] } }, required: ["productionCost", "materialCost", "hours", "hourlyRate", "overhead"], additionalProperties: false } },
               { type: "function", name: "get_orders", strict: true, description: "Fetch real orders for the signed-in user. Call for order questions; never invent counts or records.", parameters: { type: "object", properties: { period: { type: "string", enum: ["today", "recent"] } }, required: ["period"], additionalProperties: false } },
               { type: "function", name: "get_product_details", strict: true, description: "Get the selected buyer product's actual details, artisan profile and visible reviews. Do not reveal phone numbers or private data.", parameters: { type: "object", properties: {}, required: [], additionalProperties: false } },
               {
@@ -353,9 +373,9 @@
                 description: "Fill or revise only product details the artisan actually said. Call after hearing product information. Do not invent missing values. Use null for fields not stated. Description should be a concise buyer-facing draft grounded only in the artisan's story.",
                 parameters: { type: "object", properties: {
                   title: { type: ["string", "null"] }, story: { type: ["string", "null"] }, description: { type: ["string", "null"] },
-                  price: { type: ["string", "null"] }, category: { type: ["string", "null"], enum: ["Pottery", "Textiles", "Woodwork", "Metalwork", "Basketry", "Other", null] }, material: { type: ["string", "null"] }, region: { type: ["string", "null"] },
+                  price: { type: ["string", "null"] }, category: { type: ["string", "null"], enum: ["Pottery", "Textiles", "Woodwork", "Metalwork", "Basketry", "Other", null] }, material: { type: ["string", "null"] }, region: { type: ["string", "null"] }, size: { type: ["string", "null"] }, productionCost: { type: ["string", "null"] },
                   reply: { type: "string" }
-                }, required: ["title", "story", "description", "price", "category", "material", "region", "reply"], additionalProperties: false }
+                }, required: ["title", "story", "description", "price", "category", "material", "region", "size", "productionCost", "reply"], additionalProperties: false }
               },
               { type: "function", name: "read_product_description", strict: true, description: "Speak the current product description aloud using Karigar AI's voice.", parameters: { type: "object", properties: {}, required: [], additionalProperties: false } },
               { type: "function", name: "get_product_draft", strict: true, description: "Read the current values and required missing steps from the existing Add Product form. Use this before giving a product summary.", parameters: { type: "object", properties: {}, required: [], additionalProperties: false } },
@@ -474,14 +494,27 @@
                   const opened = runAction(args.screen);
                   result = { status: opened ? "opened" : "not_available_for_role", screen: args.screen };
                   if (opened) { setOpen(false); if (args.screen !== "ADD_PRODUCT") { publishConfirmationPendingRef.current = false; publishConfirmationAtRef.current = 0; } }
+                } else if (call.name === "get_module_context") {
+                  result = await getArtisanModuleContext(args.module);
+                } else if (call.name === "set_fair_price_inputs") {
+                  try {
+                    const context = await getArtisanModuleContext("price");
+                    const api = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+                    if (role !== "artisan" || !api?.setFairPriceInputs) result = { status: "unavailable", context };
+                    else {
+                      const update = api.setFairPriceInputs(args);
+                      result = { status: update?.status || "updated", context: api.getContext("price") };
+                    }
+                  } catch (_) { result = { status: "unavailable" }; }
                 } else if (call.name === "get_orders") {
                   try {
                     if (!userId) throw new Error("User session is unavailable");
                     const response = await fetchWithTimeout(`${API}/orders?userId=${encodeURIComponent(userId)}`, {}, 12000);
-                    const data = await response.json();
-                    if (!response.ok || !Array.isArray(data.orders)) throw new Error("Orders unavailable");
+                    const payload = await response.json();
+                    const rows = Array.isArray(payload) ? payload : payload?.orders;
+                    if (!response.ok || !Array.isArray(rows)) throw new Error("Orders unavailable");
                     const todayDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-                    const orders = data.orders.filter(order => args.period !== "today" || (order.date && new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(order.date)) === todayDate));
+                    const orders = rows.filter(order => args.period !== "today" || (order.date && new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(order.date)) === todayDate));
                     result = { status: "ready", period: args.period, todayDate, orders: orders.map(order => ({ id: order.id, status: order.status, date: order.date, products: (order.artisanItems || order.products || []).map(item => ({ title: item.title, qty: item.qty, price: item.price })) })) };
                   } catch (_) { result = { status: "unavailable", message: "I can't access your order data right now." }; }
                 } else if (call.name === "get_product_details") {
@@ -495,7 +528,7 @@
                   } catch (_) { result = { status: "unavailable", message: "Open a product first, then I can look up its details." }; }
                 } else if (call.name === "set_product_fields") {
                   const apply = window.__KALASUTRA_PRODUCT_ACTIONS__?.applyFields;
-                  const fields = { title: args.title, story: args.story, description: args.description, price: args.price, category: args.category, material: args.material, region: args.region };
+                  const fields = { title: args.title, story: args.story, description: args.description, price: args.price, category: args.category, material: args.material, region: args.region, size: args.size, productionCost: args.productionCost };
                   const applied = role === "artisan" && typeof apply === "function" && apply(fields);
                   result = { status: applied ? "updated" : "add_product_screen_not_open" };
                   if (applied && args.reply) setMessage(args.reply);
@@ -583,6 +616,7 @@
         updateSession();
         if (!greetingSentRef.current) {
           greetingSentRef.current = true;
+        window.__KALASUTRA_V7_GREETING_SENT__ = true;
           rememberConversation("assistant", copy(locale, "welcome"));
           sendRealtime({
             type: "response.create",
