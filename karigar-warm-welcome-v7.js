@@ -516,7 +516,7 @@
                     if (role !== "artisan" || !api?.setFairPriceInputs) result = { status: "unavailable", context };
                     else {
                       const update = api.setFairPriceInputs(args);
-                      result = { status: update?.status || "updated", context: api.getContext("price") };
+                      result = { ...(update || { status: "updated" }), context: api.getContext("price") };
                     }
                   } catch (_) { result = { status: "unavailable" }; }
                 } else if (call.name === "get_orders") {
