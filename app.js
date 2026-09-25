@@ -1033,11 +1033,41 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
     const proofStreamRef = useRef(null);
     const proofChunksRef = useRef([]);
     const storyRecognitionRef = useRef(null);
-    function copilotSay(text, action) {
-        try {
-            window.dispatchEvent(new CustomEvent('kalasutra:copilot:message', { detail: { text, action } }));
-        } catch (_) {}
-    }
+    useEffect(() => {
+        const api = {
+            getDraft: () => {
+                const priceValid = !!price && /^\d+(\.\d{1,2})?$/.test(price);
+                const missing = [!imageDataUrl && "a product photo", !story.trim() && "the product story", !priceValid && "a valid price", !proofVideo && "making proof"].filter(Boolean);
+                return { title, story, description: englishDescription, price, category, material, region, photoCount: galleryImages.length, hasPhoto: !!imageDataUrl, hasStory: !!story.trim(), hasPrice: priceValid, hasMakingProof: !!proofVideo, complete: missing.length === 0, missing };
+            },
+            readDescription: () => englishDescription || "",
+            submitProduct: async () => {
+                const current = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.();
+                if (!current?.complete) return { status: "draft_incomplete", missing: current?.missing || [] };
+                return await handleCreateAndScan({ source: "copilot" });
+            },
+            applyFields: (fields) => {
+                if (!fields || typeof fields !== "object") return false;
+                if (typeof fields.title === "string" && fields.title.trim()) setTitle(fields.title.trim().slice(0, 90));
+                if (typeof fields.story === "string" && fields.story.trim()) {
+                    setStory(fields.story.trim().slice(0, 3000));
+                    try { const code = localStorage.getItem("kalasutra_language") || "hi"; const match = window.KalaSutraV7?.LANGS?.find(item => item[0].slice(0, 2) === code); if (match) setStoryLang(match[0]); } catch (_) {}
+                }
+                if (typeof fields.description === "string" && fields.description.trim()) setEnglishDescription(fields.description.trim().slice(0, 1200));
+                if (fields.price !== null && fields.price !== undefined && String(fields.price).trim()) {
+                    const numericPrice = String(fields.price).replace(/[^0-9.]/g, "");
+                    if (/^\d+(\.\d{1,2})?$/.test(numericPrice)) setPrice(numericPrice);
+                }
+                if (typeof fields.category === "string" && Object.prototype.hasOwnProperty.call(CATEGORY_EMOJI, fields.category)) setCategory(fields.category);
+                if (typeof fields.material === "string" && fields.material.trim()) setMaterial(fields.material.trim().slice(0, 120));
+                if (typeof fields.region === "string" && fields.region.trim()) setRegion(fields.region.trim().slice(0, 120));
+                return true;
+            }
+        };
+        window.__KALASUTRA_PRODUCT_ACTIONS__ = api;
+        return () => { if (window.__KALASUTRA_PRODUCT_ACTIONS__ === api) delete window.__KALASUTRA_PRODUCT_ACTIONS__; };
+    }, [title, story, englishDescription, price, category, material, region, imageDataUrl, galleryImages, proofVideo]);
+    useEffect(() => () => window.dispatchEvent(new Event("kalasutra:add-product-screen-closed")), []);
     async function handleImagePick(e) {
         const files = Array.from(e.target.files || []);
         if (!files.length)
@@ -1047,7 +1077,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             setGalleryImages(prev => [...prev, ...urls].slice(0, 6));
             setImageDataUrl(prev => prev || urls[0]);
             setErr(null);
-            window.setTimeout(() => copilotSay('Bahut badhiya! Photos aa gayi hain. Ab mujhe apne product ke baare mein batao — kya hai, kis material se bana hai aur iska naam kya rakhna hai?'), 120);
+            window.setTimeout(() => window.dispatchEvent(new CustomEvent("kalasutra:product-progress", { detail: { step: "photos", count: urls.length } })), 120);
         }
         catch {
             setErr("Couldn't read that image — please try another file.");
@@ -1090,7 +1120,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                 if (heard) {
                     setStory(heard);
                     generateEnglishDescription(heard);
-                    copilotSay('Bahut khoob! Maine aapki story samajh li. Ab main details ko listing ke liye ready kar raha hoon. Agla step making-proof video hai.');
+                    window.dispatchEvent(new CustomEvent("kalasutra:product-progress", { detail: { step: "story" } }));
                 }
             };
             storyRecognitionRef.current = rec;
@@ -1118,7 +1148,7 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                 const reader = new FileReader();
                 reader.onload = () => {
                     setProofVideo(reader.result);
-                    copilotSay('Perfect! Making-proof video mil gaya. Ab ek baar details review karte hain, phir verification ke liye ready hain.');
+                    window.dispatchEvent(new CustomEvent("kalasutra:product-progress", { detail: { step: "proof" } }));
                 }
                 reader.readAsDataURL(blob);
                 stream.getTracks().forEach((t) => t.stop());
@@ -1142,29 +1172,29 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
         try {
             setProofVideo(await fileToDataURL(file));
             setErr(null);
-            copilotSay('Proof video add ho gaya. Ab details review karke verification shuru kar sakte hain.');
+            window.dispatchEvent(new CustomEvent("kalasutra:product-progress", { detail: { step: "proof" } }));
         }
         catch {
             setErr("Couldn't read that video. Please try another clip.");
         }
         e.target.value = "";
     }
-    async function handleCreateAndScan() {
+    async function handleCreateAndScan(options = {}) {
         if (!imageDataUrl) {
             setErr("First upload/take a photo of the piece.");
-            return;
+            return { status: "draft_incomplete", missing: ["a product photo"] };
         }
         if (!story.trim()) {
             setErr("Please tell your craft story by voice before verification.");
-            return;
+            return { status: "draft_incomplete", missing: ["the product story"] };
         }
         if (!price || !/^\d+(\.\d{1,2})?$/.test(price)) {
             setErr("Please enter a valid price in ₹.");
-            return;
+            return { status: "draft_incomplete", missing: ["a valid price"] };
         }
         if (!proofVideo) {
             setErr("The 5-second making-proof video is required before verification.");
-            return;
+            return { status: "draft_incomplete", missing: ["making proof"] };
         }
         setErr(null);
         try {
@@ -1185,20 +1215,16 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             setVerifyResult(result);
             await new Promise((r) => setTimeout(r, 700));
             setStepState("result");
-            copilotSay('Verification complete. Aapki listing review ke liye ready hai. Publish karne se pehle result dekh lo.');
+            if (options?.source !== "copilot") window.dispatchEvent(new CustomEvent("kalasutra:product-progress", { detail: { step: "verification", status: result.status } }));
             setLastVerifiedProductId(created.id);
             saveRecentProduct(user.id, created.id);
+            return { status: "verification_complete", verificationStatus: result.status, title: finalTitle, productId: created.id };
         }
         catch (e) {
             setErr(e.message || "Verification failed.");
+            return { status: "error", error: e.message || "Verification failed." };
         }
     }
-    useEffect(() => {
-        const timer = window.setTimeout(() => {
-            copilotSay('Great! Let’s add a new product. First, take 2 or 3 clear photos from different angles. I’ll guide you through the rest.');
-        }, 900);
-        return () => window.clearTimeout(timer);
-    }, []);
     useEffect(() => () => { try {
         storyRecognitionRef.current?.stop();
     }
@@ -1301,7 +1327,8 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                         React.createElement("textarea", { className: "story-box-new", value: story, onChange: (e) => setStory(e.target.value), placeholder: "Or type your story here\u2026" }),
                         englishDescription && React.createElement("div", { className: "ai-draft-new" },
                             React.createElement("b", null, "\u2728 AI buyer description"),
-                            React.createElement("span", null, englishDescription))),
+                            React.createElement("span", null, englishDescription),
+                            React.createElement("button", { type: "button", onClick: () => window.KalaSutraV7?.speak?.(englishDescription, "en-IN"), style: { alignSelf: "flex-start", border: 0, background: "transparent", padding: "4px 0", color: "#8d3c20", fontWeight: 700, cursor: "pointer" } }, "\uD83D\uDD0A Read Description"))),
                     React.createElement("section", { className: "addpiece-card details-card-new" },
                         React.createElement("div", { className: "addpiece-section-head" },
                             React.createElement("div", null,
@@ -3190,14 +3217,14 @@ function App() {
             setShowPermissions(true);
     }, [phase]);
     useEffect(() => {
-        if (phase !== 'app' || !window.KalaSutraV7?.mount) return;
+        if (phase !== 'app' || user?.role !== 'artisan' || !window.KalaSutraV7?.mount) return;
         const role = user?.role || pendingRole || 'buyer';
         window.__KALASUTRA_ROLE__ = role;
         window.__KALASUTRA_GO__ = (target) => {
             window.__KALASUTRA_SCREEN__ = target;
             setScreen(target);
         };
-        // Keep the requested warm welcome visible as soon as the V6 app opens.
+        // Keep the requested artisan warm welcome visible as soon as the V6 app opens.
         // Voice capture still waits for the user's mic-button tap.
         const copilot = window.KalaSutraV7.mount({ role, go: window.__KALASUTRA_GO__, open: true, greetOnOpen: true });
         return () => { copilot?.unmount?.(); };
