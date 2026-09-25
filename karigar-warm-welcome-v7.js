@@ -41,6 +41,32 @@
     },
   };
 
+  let LOCAL_VOICE_MODE = false;
+
+  function localIntent(transcript, role, locale) {
+    const text = String(transcript || "").trim().toLocaleLowerCase().replace(/[.,!?।]/g, " ");
+    const artisan = role === "artisan";
+    const routes = [
+      { action: "ADD_PRODUCT", route: artisan ? "addProduct" : null, words: ["add product", "new product", "product add", "प्रोडक्ट जोड़", "प्रोडक्ट जोड़", "नया प्रोडक्ट", "सामान जोड़", "सामान जोड़", "नया सामान"] },
+      { action: "ORDERS", route: "orders", words: ["orders", "order", "ऑर्डर", "आर्डर"] },
+      { action: "REELS", route: artisan ? "myReels" : "buyerReels", words: ["reels", "reel", "रील"] },
+      { action: "PROFILE", route: artisan ? "profile" : "buyerProfile", words: ["profile", "प्रोफाइल", "मेरी जानकारी"] },
+      { action: "HOME", route: artisan ? "dashboard" : "buyerHome", words: ["home", "होम", "डैशबोर्ड", "dashboard"] },
+      { action: "MY_PRODUCTS", route: artisan ? "myProducts" : null, words: ["my products", "मेरे प्रोडक्ट", "मेरे उत्पाद", "उत्पाद"] },
+      { action: "REVIEWS", route: artisan ? "reviews" : null, words: ["reviews", "review", "रेटिंग", "समीक्षा"] },
+      { action: "WISHLIST", route: artisan ? null : "wishlist", words: ["wishlist", "wish list", "पसंदीदा"] },
+      { action: "CART", route: artisan ? null : "cart", words: ["cart", "कार्ट", "टोकरी"] },
+    ];
+    const match = routes.find(item => item.route && item.words.some(word => text.includes(word)));
+    const english = String(locale || "").startsWith("en");
+    if (match) {
+      const name = { ADD_PRODUCT: english ? "Add Product" : "प्रोडक्ट जोड़ने का पेज", ORDERS: english ? "Orders" : "ऑर्डर्स", REELS: "Reels", PROFILE: english ? "Profile" : "प्रोफाइल", HOME: "Home", MY_PRODUCTS: english ? "My Products" : "मेरे प्रोडक्ट", REVIEWS: english ? "Reviews" : "रिव्यू", WISHLIST: "Wishlist", CART: "Cart" }[match.action];
+      return { action: match.action, route: match.route, reply: english ? `Sure, opening ${name}.` : `जी, ${name} खोल रही हूँ।` };
+    }
+    if (/(help|मदद|क्या कर|kya kar|क्या खोल|kya khol)/.test(text)) return { action: "NONE", reply: english ? "I can open Add Product, Orders, Reels, Profile, or Home by voice. For other tasks, use the app buttons." : "मैं बोलकर Add Product, Orders, Reels, Profile या Home खोल सकती हूँ। बाकी कामों के लिए ऐप के बटन इस्तेमाल करें।" };
+    return { action: "NONE", reply: english ? "I heard you, but free voice mode can only open app sections right now. Try saying ‘Open Orders’ or tap a screen button." : "मैंने आपकी बात सुनी, लेकिन अभी बिना paid AI के voice से app sections खोल सकती हूँ। ‘Orders खोलो’ बोलें या स्क्रीन का बटन दबाएँ।" };
+  }
+
   function getLocale() {
     try {
       const saved = localStorage.getItem("kalasutra_language") || "hi";
@@ -123,6 +149,7 @@
     let spoken = false;
     let objectUrl = "";
     try {
+      if (LOCAL_VOICE_MODE) throw new Error("Use browser voice");
       const data = await postJSON("/ai/tts", { text, locale });
       const src = data instanceof Blob ? (objectUrl = URL.createObjectURL(data)) : (data.audioUrl || (data.audioBase64 ? `data:audio/mpeg;base64,${data.audioBase64}` : ""));
       if (!src) throw new Error("No audio returned");
@@ -521,8 +548,12 @@
           setRealtimeUnavailable(true);
           closeRealtime(true);
           if (isAccountBlocked(error)) {
+            LOCAL_VOICE_MODE = true;
+            await speakWelcome();
+            fallbackListeningRef.current = true;
+            if (fallbackCaptureAudio()) return;
             fallbackListeningRef.current = false;
-            setUIState("error", error.message);
+            setUIState("idle", "Free voice mode is ready. If this browser cannot hear speech, use the on-screen app buttons.");
             return;
           }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
@@ -541,6 +572,17 @@
         fallbackBusyRef.current = true;
         try {
           setUIState("thinking", copy(locale, "thinking"));
+          const local = localIntent(transcript, role, locale);
+          if (local.action !== "NONE") {
+            await fallbackSpeak(local.reply, locale);
+            const opened = runAction(local.action);
+            if (opened) {
+              if (local.action === "ADD_PRODUCT") emitFlow({ step: "photos" });
+              setOpen(false);
+            }
+            return;
+          }
+          if (LOCAL_VOICE_MODE) { await fallbackSpeak(local.reply, locale); return; }
           if (role === "artisan" && window.__KALASUTRA_SCREEN__ === ADD_PRODUCT_ROUTE) {
             const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
             const data = await postJSON("/ai/product-assist", { message: transcript, locale, role, history: history.slice(-8), draft: window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {} });
@@ -601,9 +643,10 @@
           }
         } catch (error) {
           if (isAccountBlocked(error)) {
+            LOCAL_VOICE_MODE = true;
             fallbackListeningRef.current = false;
             setRealtimeUnavailable(true);
-            setUIState("error", error.message);
+            setUIState("idle", "Free voice mode is ready. Try saying ‘Open Orders’ or ‘Add Product’.");
             return;
           }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
@@ -628,6 +671,8 @@
       }
 
       function fallbackCaptureAudio() {
+        const BrowserSR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (BrowserSR) return fallbackSpeechRecognition();
         if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
           const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
           if (SR) return fallbackSpeechRecognition();
@@ -859,7 +904,9 @@
 
             React.createElement("div", { className: "ks-v72-helper" },
               realtimeUnavailable
-                ? (navigator.mediaDevices?.getUserMedia && window.MediaRecorder
+                ? (LOCAL_VOICE_MODE
+                  ? "Free voice mode: ask to open Orders, Reels, Profile, Home, or Add Product."
+                  : navigator.mediaDevices?.getUserMedia && window.MediaRecorder
                   ? "Realtime is unavailable. Tap the mic for the audio fallback."
                   : (window.SpeechRecognition || window.webkitSpeechRecognition)
                     ? "Realtime is unavailable. Tap the mic for browser voice input."
