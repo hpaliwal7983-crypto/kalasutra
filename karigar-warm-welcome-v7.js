@@ -479,18 +479,20 @@
             closeRealtime();
             const failureCode = event.error?.code || nested?.error?.code || event.code;
             fallbackListeningRef.current = false;
-            setUIState("error", isAccountBlocked({ code: failureCode })
-              ? "OpenAI API billing has no credits remaining. Add API credits, then try again."
-              : "Voice connection stopped. Tap the microphone to retry.");
+            if (isAccountBlocked({ code: failureCode })) {
+              LOCAL_VOICE_MODE = true;
+              setUIState("idle", "Free voice mode is ready. Ask me to open an app section.");
+            } else setUIState("error", "Voice connection stopped. Tap the microphone to retry.");
           }
           if (actualType === "response.failed" || actualType === "input_audio_transcription.failed") {
             clearRealtimeTurnTimer();
             const failureCode = event.response?.status_details?.error?.code || event.error?.code || nested?.error?.code;
             if (isAccountBlocked({ code: failureCode })) {
+              LOCAL_VOICE_MODE = true;
               setRealtimeUnavailable(true);
               fallbackListeningRef.current = false;
               closeRealtime();
-              setUIState("error", "OpenAI API billing has no credits remaining. Add API credits, then try again.");
+              setUIState("idle", "Free voice mode is ready. Ask me to open an app section.");
             } else setUIState("error", "I couldn't understand that. Tap the mic and say it once more.");
           }
         };
@@ -578,6 +580,7 @@
             const opened = runAction(local.action);
             if (opened) {
               if (local.action === "ADD_PRODUCT") emitFlow({ step: "photos" });
+              fallbackListeningRef.current = false;
               setOpen(false);
             }
             return;
@@ -673,6 +676,11 @@
       function fallbackCaptureAudio() {
         const BrowserSR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (BrowserSR) return fallbackSpeechRecognition();
+        if (LOCAL_VOICE_MODE) {
+          fallbackListeningRef.current = false;
+          setUIState("idle", "This browser does not provide built-in speech recognition. Use the app buttons or try a browser with voice input.");
+          return false;
+        }
         if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
           const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
           if (SR) return fallbackSpeechRecognition();
@@ -892,8 +900,9 @@
               React.createElement("div", { className: "ks-v72-orbit orbit-c" }),
               React.createElement("div", { className: "ks-v72-glow" }),
               React.createElement("img", { className: `ks-v72-avatar ks-v72-avatar-${state}`, src: "/ai-avatar.png", alt: "Karigar AI" }),
-              React.createElement("div", { className: `ks-v72-wave ks-v72-wave-${state}` }, [1,2,3,4,5,6,7,8,9].map(i => React.createElement("i", { key: i }))),
-              React.createElement("div", { className: `ks-v72-speech-bubble ks-v72-bubble-${state}${realtimeUnavailable ? " ks-v72-realtime-warning" : ""}` }, shownMessage)),
+              React.createElement("div", { className: `ks-v72-wave ks-v72-wave-${state}` }, [1,2,3,4,5,6,7,8,9].map(i => React.createElement("i", { key: i })))),
+
+            React.createElement("div", { className: `ks-v72-speech-bubble ks-v72-bubble-${state}${realtimeUnavailable ? " ks-v72-realtime-warning" : ""}` }, shownMessage),
 
             React.createElement("div", { className: "ks-v72-state" },
               state === "listening" ? "Listening…" :
@@ -938,7 +947,7 @@
     root.id = "kalasutra-v72-warm-welcome-root";
     if (!root.parentNode) document.body.appendChild(root);
     if (!document.getElementById("ks-v72-style-link")) {
-      const link = document.createElement("link"); link.id = "ks-v72-style-link"; link.rel = "stylesheet"; link.href = "/karigar-warm-welcome-v7.css?v=20260925-quota-error-5"; document.head.appendChild(link);
+      const link = document.createElement("link"); link.id = "ks-v72-style-link"; link.rel = "stylesheet"; link.href = "/karigar-warm-welcome-v7.css?v=20260925-conversation-overlay-7"; document.head.appendChild(link);
     }
     if (!document.getElementById("ks-v72-hide-old-copilot")) {
       const style = document.createElement("style"); style.id = "ks-v72-hide-old-copilot";
