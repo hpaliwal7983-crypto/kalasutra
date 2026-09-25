@@ -727,18 +727,25 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
     const [hours, setHours] = useState("");
     const [hourlyRate, setHourlyRate] = useState("");
     const [overhead, setOverhead] = useState("");
-    const [capitalNeed, setCapitalNeed] = useState("");
     const [materialJoin, setMaterialJoin] = useState({});
     const [designCraft, setDesignCraft] = useState("Pottery");
     const [passportMade, setPassportMade] = useState(false);
     const [lessonSaved, setLessonSaved] = useState({});
-    const [productionCost, setProductionCost] = useState("");
+    const [productionCost, setProductionCost] = useState(() => window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__?.productionCost || featured?.craftInfo?.productionCost || "");
     const [artisanOrders, setArtisanOrders] = useState([]);
+    const [capitalNeed, setCapitalNeedState] = useState(() => window.__KALASUTRA_CAPITAL_PLANNING_NEED__ || "");
+    function setCapitalNeed(value) {
+        const clean = String(value || "").replace(/[^0-9]/g, "");
+        window.__KALASUTRA_CAPITAL_PLANNING_NEED__ = clean;
+        setCapitalNeedState(clean);
+    }
     const fairBase = productionCost ? Number(productionCost) : Number(materialCost || 0) + Number(hours || 0) * Number(hourlyRate || 0) + Number(overhead || 0);
     const hasFairInputs = !!productionCost || (!!materialCost && !!hours && !!hourlyRate && !!overhead);
     const fairPrice = hasFairInputs ? Math.round(fairBase * 1.20) : null;
-    const productTitle = featured?.title || "Your handmade piece";
-    const productPrice = Number(featured?.price || fairPrice || 0);
+    const activeDraft = window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ || {};
+    const workingProduct = activeDraft.title ? { id: null, title: activeDraft.title, category: activeDraft.category, price: activeDraft.price, description: activeDraft.description, verificationStatus: "draft", craftInfo: { material: activeDraft.material, size: activeDraft.size, productionCost: activeDraft.productionCost, region: activeDraft.region, originalStory: activeDraft.story } } : featured;
+    const productTitle = workingProduct?.title || "Your handmade piece";
+    const productPrice = Number(workingProduct?.price || fairPrice || 0);
     const modules = [
         { id: "price", icon: "₹", title: "Fair Price AI", problem: "Low margins", desc: "Estimate a fair maker price from real time, material and overhead.", accent: "money" },
         { id: "capital", icon: "◈", title: "Craft Capital", problem: "Limited capital", desc: "Prepare an order-ready funding plan without relying on informal lenders.", accent: "capital" },
@@ -758,12 +765,13 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
         return () => { active = false; };
     }, [user.id]);
     function moduleContext(moduleName) {
-        const product = featured ? { id: featured.id, title: featured.title, category: featured.category, price: featured.price, description: featured.description, verificationStatus: featured.verificationStatus, craftInfo: { material: featured.craftInfo?.material || "", size: featured.craftInfo?.size || "", productionCost: featured.craftInfo?.productionCost || null, region: featured.craftInfo?.region || "", originalStory: featured.craftInfo?.originalStory || "" } } : null;
+        const sourceProduct = workingProduct;
+        const product = sourceProduct ? { id: sourceProduct.id || null, uniqueProductId: sourceProduct.uniqueProductId || null, title: sourceProduct.title, category: sourceProduct.category, price: sourceProduct.price, description: sourceProduct.description, verificationStatus: sourceProduct.verificationStatus, craftInfo: { material: sourceProduct.craftInfo?.material || "", size: sourceProduct.craftInfo?.size || "", productionCost: sourceProduct.craftInfo?.productionCost || null, region: sourceProduct.craftInfo?.region || "", originalStory: sourceProduct.craftInfo?.originalStory || "" } } : null;
         if (moduleName === "price") return { available: true, product, formula: "20% planning buffer over artisan-provided production cost, or over supplied material cost + hours × hourly rate + overhead.", inputs: { productionCost, materialCost, hours, hourlyRate, overhead }, fairPrice, complete: fairPrice !== null, estimateOnly: true };
-        if (moduleName === "capital") return { available: true, product, capitalNeed: capitalNeed || null, orders: artisanOrders.slice(0, 20), financeOffersAvailable: false };
+        if (moduleName === "capital") return { available: true, product, capitalNeed: capitalNeed || null, orderCount: artisanOrders.length, orderValue: artisanOrders.reduce((sum, order) => sum + (Number(order.amount) || 0), 0), orders: artisanOrders.slice(0, 20), financeOffersAvailable: false };
         if (moduleName === "material") return { available: true, product, artisanMaterials: materials, sourcingAvailability: false };
         if (moduleName === "design") return { available: true, product, savedDesigns: [], designRecordsAvailable: false };
-        if (moduleName === "passport") return { available: true, artisan: { name: user.name || "", craft: user.profile?.craft || "", location: user.profile?.location || "", bio: user.profile?.bio || "" }, product, passportRecordAvailable: false };
+        if (moduleName === "passport") return { available: true, artisan: { name: user.name || "", craft: user.profile?.craft || "", location: user.profile?.location || "", bio: user.profile?.bio || "" }, product, productRecords: (products || []).slice(0, 20).map(item => ({ id: item.id, uniqueProductId: item.uniqueProductId || null, title: item.title, category: item.category, verificationStatus: item.verificationStatus, material: item.craftInfo?.material || "", region: item.craftInfo?.region || "" })), certificateAvailable: Boolean(sourceProduct?.id), certificateId: sourceProduct?.uniqueProductId || sourceProduct?.id || null };
         if (moduleName === "market") return { available: true, product, recentOrders: artisanOrders.slice(0, 20), buyerMatchesAvailable: false, marketSignalsAvailable: false };
         if (moduleName === "gurukul") return { available: true, groups: [], lessons: [], groupRecordsAvailable: false };
         return { available: false };
@@ -771,6 +779,10 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
     useEffect(() => {
         const api = {
             getContext: moduleContext,
+            setCapitalNeed: value => {
+                setCapitalNeed(value);
+                return { status: "updated", amount: String(value || "").replace(/[^0-9]/g, "") };
+            },
             setFairPriceInputs: values => {
                 if (!values || typeof values !== "object") return { status: "invalid_inputs" };
                 const inputs = { productionCost, materialCost, hours, hourlyRate, overhead };
@@ -790,12 +802,12 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
         window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__ = api;
         return () => { if (window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__ === api) delete window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__; };
     }, [productionCost, materialCost, hours, hourlyRate, overhead, fairPrice, capitalNeed, artisanOrders, featured, products, user, materials]);
-    function toggle(id) { setOpen(open === id ? null : id); }
+    function toggle(id) { const next = open === id ? null : id; setOpen(next); window.__KALASUTRA_CURRENT_ARTISAN_MODULE__ = next; }
     useEffect(() => {
         const valid = new Set(modules.map((module) => module.id));
         const onCopilotModule = (event) => {
             const id = event.detail?.module;
-            if (valid.has(id)) setOpen(id);
+            if (valid.has(id)) { setOpen(id); window.__KALASUTRA_CURRENT_ARTISAN_MODULE__ = id; }
         };
         window.addEventListener("kalasutra:artisan-module-open", onCopilotModule);
         return () => window.removeEventListener("kalasutra:artisan-module-open", onCopilotModule);
@@ -848,7 +860,12 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
             React.createElement("h4", null, "Review actual orders and note your working-capital need."),
             React.createElement("p", { className: "panel-copy" }, "This panel does not have loan offers or a funding service. The amount below is only your current planning input."),
             React.createElement("label", { className: "wide-field" }, "Working capital needed ₹", React.createElement("input", { value: capitalNeed, onChange: e => setCapitalNeed(e.target.value.replace(/\\D/g, "")) })),
-            React.createElement("div", { className: "panel-note" }, artisanOrders.length ? `Actual order records available: ${artisanOrders.length}. No finance offers are available.` : "No artisan order records or finance offers are available.")),
+            React.createElement("div", { className: "panel-note" }, artisanOrders.length ? `Actual order records available: ${artisanOrders.length}. Recorded order value: ₹${artisanOrders.reduce((sum, order) => sum + (Number(order.amount) || 0), 0).toLocaleString("en-IN")}. No finance offers are available.` : "No artisan order records or finance offers are available."),
+            React.createElement("div", { className: "demand-list" }, artisanOrders.slice(0, 5).map(order => React.createElement("div", { className: "demand-row", key: order.id },
+                React.createElement("div", null,
+                    React.createElement("strong", null, (order.products || order.artisanItems || []).map(item => item.title).filter(Boolean).join(", ") || "Order"),
+                    React.createElement("small", null, `${order.status || "Status unavailable"} · ${order.date ? new Date(order.date).toLocaleDateString("en-IN") : ""}`)),
+                React.createElement("b", null, `₹${Number(order.amount || 0).toLocaleString("en-IN")}`))))),
         open === "material" && React.createElement("div", { className: "growth-module-panel" },
             React.createElement("div", { className: "panel-kicker" }, "MATERIAL HUB"),
             React.createElement("h4", null, "Materials recorded on your products"),
@@ -864,17 +881,18 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
             React.createElement("div", { className: "panel-kicker" }, "CRAFT PASSPORT"),
             React.createElement("h4", null, "Recorded artisan and product identity"),
             React.createElement("div", { className: "passport-mini" },
-                React.createElement("div", { className: "passport-code" }, "Preview"),
+                React.createElement("div", { className: "passport-code" }, workingProduct?.uniqueProductId || "Draft"),
                 React.createElement("div", null,
                     React.createElement("small", null, "DETAILS FROM YOUR CURRENT RECORDS"),
                     React.createElement("strong", null, productTitle),
-                    React.createElement("span", null, [user.name, featured?.category, featured?.craftInfo?.material, featured?.craftInfo?.region].filter(Boolean).join(" · ") || "No identity details recorded"))),
+                    React.createElement("span", null, [user.name, workingProduct?.category, workingProduct?.craftInfo?.material, workingProduct?.craftInfo?.region].filter(Boolean).join(" · ") || "No identity details recorded"))),
             React.createElement("div", { className: "passport-points" },
                 React.createElement("span", null, user.name ? "✓ Artisan name recorded" : "Artisan name not recorded"),
-                React.createElement("span", null, featured?.craftInfo?.material ? "✓ Material recorded" : "Material not recorded"),
-                React.createElement("span", null, featured?.craftInfo?.originalStory ? "✓ Story recorded" : "Story not recorded"),
-                React.createElement("span", null, featured?.verificationStatus ? `Verification: ${featured.verificationStatus}` : "Verification not recorded")),
-            React.createElement("div", { className: "panel-note" }, "This is a preview only. No passport credential or generated certificate is stored yet.")),
+                React.createElement("span", null, workingProduct?.craftInfo?.material ? "✓ Material recorded" : "Material not recorded"),
+                React.createElement("span", null, workingProduct?.craftInfo?.originalStory ? "✓ Story recorded" : "Story not recorded"),
+                React.createElement("span", null, workingProduct?.verificationStatus ? `Verification: ${workingProduct.verificationStatus}` : "Verification not recorded")),
+            React.createElement("button", { className: "growth-action", disabled: !workingProduct?.id, onClick: () => { const certificateId = workingProduct?.uniqueProductId || workingProduct?.id; if (certificateId) window.open(`${window.location.pathname}?certificate=${encodeURIComponent(certificateId)}`, "_blank", "noopener"); } }, workingProduct?.id ? "Open existing product certificate →" : "Create the product before viewing its certificate"),
+            React.createElement("div", { className: "panel-note" }, workingProduct?.id ? "The existing public certificate screen reads this product’s actual record. It does not create a new credential." : "Add the product first; its existing public certificate route will then use the saved product and maker records.")),
         open === "market" && React.createElement("div", { className: "growth-module-panel" },
             React.createElement("div", { className: "panel-kicker" }, "DIRECT MARKET MATCH"),
             React.createElement("h4", null, featured?.title ? `Actual orders for ${featured.title}` : "Actual artisan orders"),
@@ -1010,19 +1028,20 @@ function ArtisanIdentityChip({ artisan, user, compact = false, tone = "light" })
 // ---------------------------------------------------------------------------
 function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
     const [step, setStepState] = useState("form");
-    const [title, setTitle] = useState("");
-    const [story, setStory] = useState("");
-    const [englishDescription, setEnglishDescription] = useState("");
-    const [price, setPrice] = useState("");
-    const [category, setCategory] = useState("");
-    const [material, setMaterial] = useState("");
-    const [size, setSize] = useState("");
-    const [productionCost, setProductionCost] = useState("");
-    const [region, setRegion] = useState("");
-    const [storyLang, setStoryLang] = useState("hi-IN");
-    const [galleryImages, setGalleryImages] = useState([]);
-    const [imageDataUrl, setImageDataUrl] = useState(null);
-    const [proofVideo, setProofVideo] = useState(null);
+    const rememberedDraft = window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ || {};
+    const [title, setTitle] = useState(rememberedDraft.title || "");
+    const [story, setStory] = useState(rememberedDraft.story || "");
+    const [englishDescription, setEnglishDescription] = useState(rememberedDraft.description || "");
+    const [price, setPrice] = useState(rememberedDraft.price || "");
+    const [category, setCategory] = useState(rememberedDraft.category || "");
+    const [material, setMaterial] = useState(rememberedDraft.material || "");
+    const [size, setSize] = useState(rememberedDraft.size || "");
+    const [productionCost, setProductionCost] = useState(rememberedDraft.productionCost || "");
+    const [region, setRegion] = useState(rememberedDraft.region || "");
+    const [storyLang, setStoryLang] = useState(rememberedDraft.storyLang || "hi-IN");
+    const [galleryImages, setGalleryImages] = useState(Array.isArray(rememberedDraft.galleryImages) ? rememberedDraft.galleryImages : []);
+    const [imageDataUrl, setImageDataUrl] = useState(rememberedDraft.imageDataUrl || null);
+    const [proofVideo, setProofVideo] = useState(rememberedDraft.proofVideo || null);
     const [recording, setRecording] = useState(false);
     const [storyRecording, setStoryRecording] = useState(false);
     const [err, setErr] = useState(null);
@@ -1074,8 +1093,23 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             }
         };
         window.__KALASUTRA_PRODUCT_ACTIONS__ = api;
-        return () => { if (window.__KALASUTRA_PRODUCT_ACTIONS__ === api) delete window.__KALASUTRA_PRODUCT_ACTIONS__; };
-    }, [title, story, englishDescription, price, category, material, size, productionCost, region, imageDataUrl, galleryImages, proofVideo]);
+        const rememberDraft = () => {
+            if (window.__KALASUTRA_V7_SESSION_LOGGED_OUT__) {
+                window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ = null;
+                return;
+            }
+            if (product) {
+                window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ = null;
+                return;
+            }
+            window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ = { ...api.getDraft(), storyLang, galleryImages, imageDataUrl, proofVideo };
+        };
+        rememberDraft();
+        return () => {
+            rememberDraft();
+            if (window.__KALASUTRA_PRODUCT_ACTIONS__ === api) delete window.__KALASUTRA_PRODUCT_ACTIONS__;
+        };
+    }, [title, story, englishDescription, price, category, material, size, productionCost, region, storyLang, imageDataUrl, galleryImages, proofVideo, product]);
     useEffect(() => () => window.dispatchEvent(new Event("kalasutra:add-product-screen-closed")), []);
     async function handleImagePick(e) {
         const files = Array.from(e.target.files || []);
@@ -1102,12 +1136,15 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
     }
     function generateEnglishDescription(transcript) {
         const clean = transcript.trim();
-        if (!clean)
-            return;
-        const titleGuess = clean.split(/\s+/).slice(0, 5).join(" ");
-        if (!title.trim())
-            setTitle(`${category} — ${titleGuess}`.slice(0, 70));
-        setEnglishDescription(`Handcrafted ${category.toLowerCase()} created by an artisan. Story shared in ${storyLang === "hi-IN" ? "Hindi" : storyLang === "mr-IN" ? "Marathi" : storyLang === "ta-IN" ? "Tamil" : storyLang === "bn-IN" ? "Bangla" : "the artisan's language"}: “${clean}”. KalaSutra AI has prepared this English listing draft for buyers.`);
+        if (!clean) return;
+        const facts = [];
+        if (title.trim()) facts.push(title.trim());
+        if (category) facts.push(category);
+        if (material.trim()) facts.push(`Materials: ${material.trim()}.`);
+        if (size.trim()) facts.push(`Size: ${size.trim()}.`);
+        if (region.trim()) facts.push(`Made in ${region.trim()}.`);
+        facts.push(clean);
+        setEnglishDescription(facts.join(" ").slice(0, 1200));
     }
     function startStoryRecording() {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1235,6 +1272,8 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
             if (options?.source !== "copilot") window.dispatchEvent(new CustomEvent("kalasutra:product-progress", { detail: { step: "verification", status: result.status } }));
             setLastVerifiedProductId(created.id);
             saveRecentProduct(user.id, created.id);
+            window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ = null;
+            window.__KALASUTRA_V7_SESSION_LOGGED_OUT__ = false;
             return { status: "verification_complete", verificationStatus: result.status, title: finalTitle, productId: created.id };
         }
         catch (e) {
@@ -3304,6 +3343,7 @@ function App() {
     async function handleRolePick(role) {
         try {
             const created = await apiPost("/users", { name: pendingName, contact: "demo", role });
+            window.__KALASUTRA_V7_SESSION_LOGGED_OUT__ = false;
             setUser(created);
             setPendingRole(role);
             setPhase("app");
@@ -3320,6 +3360,11 @@ function App() {
     function logout() {
         window.__KALASUTRA_USER_ID__ = '';
         window.__KALASUTRA_ACTIVE_PRODUCT_ID__ = '';
+        window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ = null;
+        window.__KALASUTRA_CAPITAL_PLANNING_NEED__ = null;
+        window.__KALASUTRA_V7_SESSION_LOGGED_OUT__ = true;
+        window.__KALASUTRA_V7_GREETING_SENT__ = false;
+        window.__KALASUTRA_V7_HISTORY__ = [];
         setUser(null);
         setPhase("splash");
         setScreen("dashboard");
