@@ -16,7 +16,7 @@ function instructions(role, language) {
 }
 async function openai(path, payload, contentType = "application/json") {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) throw Object.assign(new Error("AI voice needs OPENAI_API_KEY in the server environment."), { status: 503 });
+  if (!key) throw Object.assign(new Error("The KalaSutra server cannot see OPENAI_API_KEY. Check the Render Web Service environment and redeploy."), { status: 503, code: "missing_api_key" });
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 35000);
   let r;
@@ -29,7 +29,20 @@ async function openai(path, payload, contentType = "application/json") {
     if (error?.name === "AbortError") throw Object.assign(new Error("AI took too long to respond. Please try again."), { status: 504 });
     throw error;
   } finally { clearTimeout(timeout); }
-  if (!r.ok) throw Object.assign(new Error((await r.text()).slice(0, 800) || "OpenAI request failed"), { status: r.status });
+  if (!r.ok) {
+    const raw = await r.text();
+    let details = {};
+    try { details = JSON.parse(raw).error || {}; } catch (_) {}
+    const code = String(details.code || details.type || "openai_request_failed");
+    const message = code === "credit_balance_exhausted" || code === "insufficient_quota"
+      ? "OpenAI API billing has no credits remaining. Add API credits in the OpenAI Platform billing settings, then try again."
+      : r.status === 401
+        ? "The OpenAI API key on the Render service is invalid or inactive. Check the key in the service environment."
+        : r.status === 429
+          ? "The OpenAI API is temporarily rate-limited. Please wait a moment and try again."
+          : "The OpenAI voice service is temporarily unavailable. Please try again shortly.";
+    throw Object.assign(new Error(message), { status: r.status, code });
+  }
   return r;
 }
 module.exports = async function aiRoute(req, res, url, b) {
@@ -110,5 +123,5 @@ module.exports = async function aiRoute(req, res, url, b) {
       res.writeHead(200, { "Content-Type": "audio/mpeg", "Cache-Control": "no-store" }); return res.end(audio);
     }
     return json(res, 404, { error: "AI route not found" });
-  } catch (e) { return json(res, e.status || 502, { error: e.message || "AI request failed" }); }
+  } catch (e) { return json(res, e.status || 502, { error: e.message || "AI request failed", code: e.code || "ai_request_failed" }); }
 };

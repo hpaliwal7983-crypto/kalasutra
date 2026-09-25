@@ -94,8 +94,12 @@
     const contentType = r.headers.get("content-type") || "";
     if (r.ok && contentType.startsWith("audio/")) return r.blob();
     const data = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(data?.error || "AI request failed");
+    if (!r.ok) throw Object.assign(new Error(data?.error || "AI request failed"), { code: data?.code, status: r.status });
     return data;
+  }
+
+  function isAccountBlocked(error) {
+    return ["credit_balance_exhausted", "insufficient_quota", "missing_api_key"].includes(error?.code);
   }
 
   async function fallbackChat(transcript, locale) {
@@ -308,7 +312,7 @@
         if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) throw new Error("WebRTC voice is not available here.");
         const tokenRes = await fetchWithTimeout(API + "/ai/realtime-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale, role }) });
         const tokenData = await tokenRes.json().catch(() => ({}));
-        if (!tokenRes.ok) throw new Error(tokenData?.error || "Voice service is temporarily unavailable.");
+        if (!tokenRes.ok) throw Object.assign(new Error(tokenData?.error || "Voice service is temporarily unavailable."), { code: tokenData?.code, status: tokenRes.status });
         if (!tokenData?.client_secret?.value) throw new Error(tokenData?.error || "Realtime session token unavailable");
 
         const pc = new RTCPeerConnection();
@@ -446,11 +450,21 @@
             clearRealtimeTurnTimer();
             setRealtimeUnavailable(true);
             closeRealtime();
-            setUIState("error", "Voice connection stopped. Tap the microphone to retry.");
+            const failureCode = event.error?.code || nested?.error?.code || event.code;
+            fallbackListeningRef.current = false;
+            setUIState("error", isAccountBlocked({ code: failureCode })
+              ? "OpenAI API billing has no credits remaining. Add API credits, then try again."
+              : "Voice connection stopped. Tap the microphone to retry.");
           }
           if (actualType === "response.failed" || actualType === "input_audio_transcription.failed") {
             clearRealtimeTurnTimer();
-            setUIState("error", "I couldn't understand that. Tap the mic and say it once more.");
+            const failureCode = event.response?.status_details?.error?.code || event.error?.code || nested?.error?.code;
+            if (isAccountBlocked({ code: failureCode })) {
+              setRealtimeUnavailable(true);
+              fallbackListeningRef.current = false;
+              closeRealtime();
+              setUIState("error", "OpenAI API billing has no credits remaining. Add API credits, then try again.");
+            } else setUIState("error", "I couldn't understand that. Tap the mic and say it once more.");
           }
         };
 
@@ -506,6 +520,11 @@
         } catch (error) {
           setRealtimeUnavailable(true);
           closeRealtime(true);
+          if (isAccountBlocked(error)) {
+            fallbackListeningRef.current = false;
+            setUIState("error", error.message);
+            return;
+          }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
             fallbackListeningRef.current = false;
             setUIState("idle", "Microphone permission is off. Please allow microphone access and try again.");
@@ -581,6 +600,12 @@
             }
           }
         } catch (error) {
+          if (isAccountBlocked(error)) {
+            fallbackListeningRef.current = false;
+            setRealtimeUnavailable(true);
+            setUIState("error", error.message);
+            return;
+          }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
             fallbackListeningRef.current = false;
             setUIState("idle", "Microphone permission is off. Please allow microphone access and try again.");
@@ -646,7 +671,8 @@
               await fallbackCommand(transcript);
             } catch (error) {
               fallbackListeningRef.current = false;
-              setUIState("idle", error?.message || "AI connection is temporarily unavailable. Please try again.");
+              if (isAccountBlocked(error)) setRealtimeUnavailable(true);
+              setUIState(isAccountBlocked(error) ? "error" : "idle", error?.message || "AI connection is temporarily unavailable. Please try again.");
             }
           };
           try {
@@ -820,7 +846,7 @@
               React.createElement("div", { className: "ks-v72-orbit orbit-b" }),
               React.createElement("div", { className: "ks-v72-orbit orbit-c" }),
               React.createElement("div", { className: "ks-v72-glow" }),
-              React.createElement("img", { className: "ks-v72-avatar", src: "/ai-avatar.png", alt: "Karigar AI" }),
+              React.createElement("img", { className: `ks-v72-avatar ks-v72-avatar-${state}`, src: "/ai-avatar.png", alt: "Karigar AI" }),
               React.createElement("div", { className: `ks-v72-wave ks-v72-wave-${state}` }, [1,2,3,4,5,6,7,8,9].map(i => React.createElement("i", { key: i }))),
               React.createElement("div", { className: `ks-v72-speech-bubble ks-v72-bubble-${state}${realtimeUnavailable ? " ks-v72-realtime-warning" : ""}` }, shownMessage)),
 
@@ -865,7 +891,7 @@
     root.id = "kalasutra-v72-warm-welcome-root";
     if (!root.parentNode) document.body.appendChild(root);
     if (!document.getElementById("ks-v72-style-link")) {
-      const link = document.createElement("link"); link.id = "ks-v72-style-link"; link.rel = "stylesheet"; link.href = "/karigar-warm-welcome-v7.css?v=20260925-transparent-clickthrough-4"; document.head.appendChild(link);
+      const link = document.createElement("link"); link.id = "ks-v72-style-link"; link.rel = "stylesheet"; link.href = "/karigar-warm-welcome-v7.css?v=20260925-quota-error-5"; document.head.appendChild(link);
     }
     if (!document.getElementById("ks-v72-hide-old-copilot")) {
       const style = document.createElement("style"); style.id = "ks-v72-hide-old-copilot";
