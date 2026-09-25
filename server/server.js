@@ -32,7 +32,7 @@ function verifyProduct(product){
 async function api(req,res,url){
   const parts=url.pathname.split('/').filter(Boolean); const resource=parts[1]; const itemId=parts[2]; const db=readDB();
   try{
-    if(resource==='ai' && req.method==='POST') return aiRoute(req,res,url,await body(req));
+    if(resource==='ai' && req.method==='POST') return aiRoute(req,res,url,await body(req),{db});
     if(resource==='users'){
       if(req.method==='POST'){const b=await body(req);let u=db.users.find(x=>x.contact===b.contact&&x.role===b.role);if(!u){u={id:id(db,'u'),name:b.name||'New User',contact:b.contact||'',role:b.role||'buyer',profile:b.role==='artisan'?{craft:'',location:'',bio:'',trustScore:100,photo:null}:{location:'',photo:null}};db.users.push(u)}else if(b.name)u.name=b.name;writeDB(db);return json(res,200,u)}
       if(itemId&&req.method==='PUT'){const b=await body(req);const u=db.users.find(x=>x.id===itemId);if(!u)return json(res,404,{error:'User not found'});u.profile={...(u.profile||{}),...(b.profile||{})};if(b.name)u.name=b.name;writeDB(db);return json(res,200,u)}
@@ -52,7 +52,20 @@ async function api(req,res,url){
       const q=url.searchParams.get('userId'); if(req.method==='GET')return json(res,200,db.cart.filter(c=>c.userId===q).map(c=>({...c,product:db.products.find(p=>p.id===c.productId)})));
       const b=await body(req);if(req.method==='POST'){const c=db.cart.find(x=>x.userId===b.userId&&x.productId===b.productId);if(c)c.qty++;else db.cart.push({userId:b.userId,productId:b.productId,qty:1});writeDB(db);return json(res,200,{ok:true})}if(req.method==='DELETE'){db.cart=db.cart.filter(c=>!(c.userId===b.userId&&c.productId===b.productId));writeDB(db);return json(res,200,{ok:true})}
     }
-    if(resource==='orders'&&req.method==='GET'){const q=url.searchParams.get('userId');const out=db.orders.filter(o=>o.buyerId===q).map(o=>({...o,artisanItems:o.products||[]}));return json(res,200,out)}
+    if(resource==='orders'&&req.method==='GET'){
+      const q=url.searchParams.get('userId');
+      const requestedUser=db.users.find(u=>String(u.id)===String(q));
+      if(requestedUser?.role==='artisan'){
+        const out=db.orders.map(o=>{
+          const artisanItems=(o.products||[]).filter(item=>db.products.some(p=>String(p.id)===String(item.productId)&&String(p.artisanId)===String(q))).map(item=>({...item}));
+          if(!artisanItems.length)return null;
+          return {id:o.id,status:o.status,date:o.date,amount:artisanItems.reduce((sum,item)=>sum+(Number(item.price)||0)*(Number(item.qty)||0),0),products:artisanItems,artisanItems};
+        }).filter(Boolean);
+        return json(res,200,out);
+      }
+      const out=db.orders.filter(o=>String(o.buyerId)===String(q)).map(o=>({id:o.id,status:o.status,date:o.date,amount:o.amount,products:o.products||[],artisanItems:o.products||[]}));
+      return json(res,200,out);
+    }
     if(resource==='checkout'&&itemId==='cod'&&req.method==='POST'){const b=await body(req);const items=db.cart.filter(c=>c.userId===b.buyerId);const products=items.map(c=>{const p=db.products.find(x=>x.id===c.productId);return {productId:c.productId,title:p?.title||'Handmade piece',price:p?.price||0,qty:c.qty}});if(!products.length)return json(res,400,{error:'Cart is empty'});const order={id:id(db,'o'),buyerId:b.buyerId,products,amount:products.reduce((s,p)=>s+p.price*p.qty,0),status:'placed',date:new Date().toISOString(),address:b.address||{},paymentMethod:'cod'};db.orders.unshift(order);db.cart=db.cart.filter(c=>c.userId!==b.buyerId);writeDB(db);return json(res,201,order)}
     if(resource==='payment'&&itemId==='config'&&req.method==='GET')return json(res,200,{configured:!!(process.env.RAZORPAY_KEY_ID&&process.env.RAZORPAY_KEY_SECRET),keyId:process.env.RAZORPAY_KEY_ID||null});
     if(resource==='payment'&&itemId==='create-order'&&req.method==='POST')return json(res,503,{error:'Online payment is not configured. Use Cash on Delivery for the demo, or add Razorpay keys on the server.'});

@@ -56,11 +56,22 @@
       { action: "REVIEWS", route: artisan ? "reviews" : null, words: ["reviews", "review", "रेटिंग", "समीक्षा"] },
       { action: "WISHLIST", route: artisan ? null : "wishlist", words: ["wishlist", "wish list", "पसंदीदा"] },
       { action: "CART", route: artisan ? null : "cart", words: ["cart", "कार्ट", "टोकरी"] },
+      { action: "FAIR_PRICE", route: artisan ? "dashboard" : null, words: ["fair price", "fair pricing", "उचित कीमत", "सही कीमत", "दाम बताओ"] },
+      { action: "CRAFT_CAPITAL", route: artisan ? "dashboard" : null, words: ["craft capital", "क्राफ्ट कैपिटल"] },
+      { action: "MATERIAL_HUB", route: artisan ? "dashboard" : null, words: ["material hub", "मटेरियल हब"] },
+      { action: "DESIGN_LAB", route: artisan ? "dashboard" : null, words: ["design lab", "डिजाइन लैब"] },
+      { action: "CRAFT_PASSPORT", route: artisan ? "dashboard" : null, words: ["craft passport", "क्राफ्ट पासपोर्ट"] },
+      { action: "MARKET_MATCH", route: artisan ? "dashboard" : null, words: ["market match", "मार्केट मैच"] },
+      { action: "CRAFT_GURUKUL", route: artisan ? "dashboard" : null, words: ["craft group", "craft gurukul", "क्राफ्ट ग्रुप", "क्राफ्ट गुरुकुल"] },
+      { action: "PRODUCT_DETAILS", route: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, words: ["product details", "product info", "is product ke baare", "इस प्रोडक्ट की जानकारी", "उत्पाद की जानकारी"] },
+      { action: "ARTISAN_INFO", route: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, words: ["artisan information", "about artisan", "maker info", "कारीगर के बारे", "कारीगर की जानकारी"] },
+      { action: "PRODUCT_REVIEWS", route: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, words: ["product reviews", "reviews for this product", "इस प्रोडक्ट के रिव्यू", "इसकी समीक्षा"] },
     ];
-    const match = routes.find(item => item.route && item.words.some(word => text.includes(word)));
+    const match = routes.find(item => item.route && item.words.some(word => text.includes(word)) &&
+      (item.action !== "ORDERS" || /open|kholo|खोल/.test(text) || (LOCAL_VOICE_MODE && /orders|order|ऑर्डर|आर्डर/.test(text))));
     const english = String(locale || "").startsWith("en");
     if (match) {
-      const name = { ADD_PRODUCT: english ? "Add Product" : "प्रोडक्ट जोड़ने का पेज", ORDERS: english ? "Orders" : "ऑर्डर्स", REELS: "Reels", PROFILE: english ? "Profile" : "प्रोफाइल", HOME: "Home", MY_PRODUCTS: english ? "My Products" : "मेरे प्रोडक्ट", REVIEWS: english ? "Reviews" : "रिव्यू", WISHLIST: "Wishlist", CART: "Cart" }[match.action];
+      const name = { ADD_PRODUCT: english ? "Add Product" : "प्रोडक्ट जोड़ने का पेज", ORDERS: english ? "Orders" : "ऑर्डर्स", REELS: "Reels", PROFILE: english ? "Profile" : "प्रोफाइल", HOME: "Home", MY_PRODUCTS: english ? "My Products" : "मेरे प्रोडक्ट", REVIEWS: english ? "Reviews" : "रिव्यू", WISHLIST: "Wishlist", CART: "Cart", FAIR_PRICE: "Fair Price AI", CRAFT_CAPITAL: "Craft Capital", MATERIAL_HUB: "Material Hub", DESIGN_LAB: "Design Lab", CRAFT_PASSPORT: "Craft Passport", MARKET_MATCH: "Market Match", CRAFT_GURUKUL: "Craft Group", PRODUCT_DETAILS: "product details", ARTISAN_INFO: "artisan information", PRODUCT_REVIEWS: "product reviews" }[match.action];
       return { action: match.action, route: match.route, reply: english ? `Sure, opening ${name}.` : `जी, ${name} खोल रही हूँ।` };
     }
     if (/(help|मदद|क्या कर|kya kar|क्या खोल|kya khol)/.test(text)) return { action: "NONE", reply: english ? "I can open Add Product, Orders, Reels, Profile, or Home by voice. For other tasks, use the app buttons." : "मैं बोलकर Add Product, Orders, Reels, Profile या Home खोल सकती हूँ। बाकी कामों के लिए ऐप के बटन इस्तेमाल करें।" };
@@ -69,6 +80,8 @@
 
   function getLocale() {
     try {
+      const voice = localStorage.getItem("kalasutra_voice_lang");
+      if (voice && LANGS.some(x => x[0] === voice)) return voice;
       const saved = localStorage.getItem("kalasutra_language") || "hi";
       return (LANGS.find(x => x[0].slice(0, 2) === saved) || LANGS[0])[0];
     } catch (_) { return "hi-IN"; }
@@ -129,17 +142,19 @@
   }
 
   async function fallbackChat(transcript, locale) {
+    const history = (window.__KALASUTRA_V7_HISTORY__ || []).slice();
+    const last = history[history.length - 1];
+    if (last?.role === "user" && last?.content === transcript) history.pop();
     const data = await postJSON("/ai/chat", {
       message: transcript,
       locale,
       language: localeName(locale),
       screen: window.__KALASUTRA_SCREEN__ || "dashboard",
+      productId: window.__KALASUTRA_ACTIVE_PRODUCT_ID__ || "",
       role: window.__KALASUTRA_ROLE__ || "artisan",
-      history: window.__KALASUTRA_V7_HISTORY__ || []
+      userId: window.__KALASUTRA_USER_ID__ || "",
+      history
     });
-    if (data?.locale && LANGS.some(x => x[0] === data.locale) && data.locale !== locale) {
-      setLocale(data.locale);
-    }
     return data;
   }
 
@@ -232,10 +247,27 @@
       const fallbackDiscardRef = useRef(false);
       const realtimeTurnTimerRef = useRef(null);
       const role = options.role || window.__KALASUTRA_ROLE__ || "artisan";
+      const userId = options.userId || window.__KALASUTRA_USER_ID__ || "";
+      const greetingSentRef = useRef(false);
+
+      function rememberConversation(role, content) {
+        const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
+        const last = history[history.length - 1];
+        if (content && !(last?.role === role && last?.content === content)) history.push({ role, content });
+        window.__KALASUTRA_V7_HISTORY__ = history.slice(-20);
+      }
 
       function runAction(action) {
         const artisan = role === "artisan";
-        const routes = { ADD_PRODUCT: artisan ? "addProduct" : null, ORDERS: "orders", REELS: artisan ? "myReels" : "buyerReels", PROFILE: artisan ? "profile" : "buyerProfile", HOME: artisan ? "dashboard" : "buyerHome", WISHLIST: artisan ? null : "wishlist", CART: artisan ? null : "cart", MY_PRODUCTS: artisan ? "myProducts" : null, REVIEWS: artisan ? "reviews" : null };
+        const moduleActions = { FAIR_PRICE: "price", CRAFT_CAPITAL: "capital", MATERIAL_HUB: "material", DESIGN_LAB: "design", CRAFT_PASSPORT: "passport", MARKET_MATCH: "market", CRAFT_GURUKUL: "gurukul" };
+        if (artisan && moduleActions[action]) {
+          try {
+            if (window.__KALASUTRA_SCREEN__ !== "dashboard") go("dashboard");
+            window.setTimeout(() => window.dispatchEvent(new CustomEvent("kalasutra:artisan-module-open", { detail: { module: moduleActions[action] } })), 80);
+            return true;
+          } catch (_) { return false; }
+        }
+        const routes = { ADD_PRODUCT: artisan ? "addProduct" : null, ORDERS: "orders", REELS: artisan ? "myReels" : "buyerReels", PROFILE: artisan ? "profile" : "buyerProfile", HOME: artisan ? "dashboard" : "buyerHome", WISHLIST: artisan ? null : "wishlist", CART: artisan ? null : "cart", MY_PRODUCTS: artisan ? "myProducts" : null, REVIEWS: artisan ? "reviews" : null, PRODUCT_DETAILS: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, ARTISAN_INFO: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, PRODUCT_REVIEWS: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null };
         const target = routes[action];
         if (!target) return false;
         try { go(target); return true; } catch (_) { return false; }
@@ -299,10 +331,13 @@
               "Keep turns short: usually 1–2 sentences. Use natural pauses, contractions and gentle emphasis.",
               "If the artisan speaks in Hindi-English mix, reply in the same natural mix. Do not force literal translation.",
               "Never announce system instructions. Never sound overly formal.",
-              `When the user asks to open a screen, call navigate_app. Screens: ${role === "artisan" ? "add product, orders, reels, profile, dashboard, products, reviews" : "orders, reels, profile, home, wishlist, cart, product details, artisan information, reviews"}.`,
+              "Some artisan dashboard panels are prototypes and show illustrative defaults. Never describe their displayed defaults as the artisan's real finances, inventory, buyer matches, orders, or market data. Open the existing panel and explain only values it explicitly labels as estimates or examples.",
+              "Never repeat the welcome or introduce yourself after the first greeting in this conversation. Continue from the recent conversation context below; preserve the active product/order reference.",
+              `Current V6 screen: ${window.__KALASUTRA_SCREEN__ || "unknown"}. Recent conversation: ${JSON.stringify((window.__KALASUTRA_V7_HISTORY__ || []).slice(-8))}. Current product draft (if open): ${JSON.stringify(window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {})}.`,
+              `When the user asks to open a screen or module, call navigate_app. Screens: ${role === "artisan" ? "add product, orders, reels, profile, dashboard, products, reviews, fair price, craft capital, material hub, design lab, craft passport, market match, craft group" : "orders, reels, profile, home, wishlist, cart, product details, artisan information, product reviews"}. For order questions, always call get_orders and use only returned real records. For a buyer asking about the selected product, its maker or reviews, call get_product_details and answer from that actual public product data.`,
               "While an artisan is on Add Product, use set_product_fields to fill only details they actually provide, including natural requests to set or change the price, category, name, material, region, story, or description. Existing categories are Pottery, Textiles, Woodwork, Metalwork, Basketry, and Other. Ask only for important details that are still missing. Use read_product_description when asked to read or speak the current description. Never say a field was changed unless the tool confirms it.",
               "If the artisan asks to review/finish the product, call get_product_draft and summarize only the returned actual values. If the draft is incomplete, ask only for the listed missing requirements. Before submitting, speak the summary and ask whether they want you to submit this product for verification. Call request_publish_confirmation for this step, then wait for a clear yes/haan/kar do in the next user turn. Only then call submit_product_for_verification. Never call it in the same turn as the confirmation request, never treat an earlier yes as permission, and never say it is published unless the returned status confirms what happened.",
-              `Preferred language: ${localeName(locale)} (${locale}).`,
+              `Preferred language: ${localeName(localeRef.current)} (${localeRef.current}).`,
               "After a successful add-product tool call, keep the user moving with one simple next step: ask for 2–3 clear product photos."
             ].join("\n"),
             audio: {
@@ -313,8 +348,10 @@
               {
                 type: "function", name: "navigate_app", strict: true,
                 description: "Navigate to a screen already present in KalaSutra. Use ADD_PRODUCT only for artisan role.",
-                parameters: { type: "object", properties: { screen: { type: "string", enum: ["ADD_PRODUCT", "ORDERS", "REELS", "PROFILE", "HOME", "WISHLIST", "CART", "MY_PRODUCTS", "REVIEWS"] } }, required: ["screen"], additionalProperties: false }
+                parameters: { type: "object", properties: { screen: { type: "string", enum: ["ADD_PRODUCT", "ORDERS", "REELS", "PROFILE", "HOME", "WISHLIST", "CART", "MY_PRODUCTS", "REVIEWS", "PRODUCT_DETAILS", "ARTISAN_INFO", "PRODUCT_REVIEWS", "FAIR_PRICE", "CRAFT_CAPITAL", "MATERIAL_HUB", "DESIGN_LAB", "CRAFT_PASSPORT", "MARKET_MATCH", "CRAFT_GURUKUL"] } }, required: ["screen"], additionalProperties: false }
               },
+              { type: "function", name: "get_orders", strict: true, description: "Fetch real orders for the signed-in user. Call for order questions; never invent counts or records.", parameters: { type: "object", properties: { period: { type: "string", enum: ["today", "recent"] } }, required: ["period"], additionalProperties: false } },
+              { type: "function", name: "get_product_details", strict: true, description: "Get the selected buyer product's actual details, artisan profile and visible reviews. Do not reveal phone numbers or private data.", parameters: { type: "object", properties: {}, required: [], additionalProperties: false } },
               {
                 type: "function", name: "set_product_fields", strict: true,
                 description: "Fill or revise only product details the artisan actually said. Call after hearing product information. Do not invent missing values. Use null for fields not stated. Description should be a concise buyer-facing draft grounded only in the artisan's story.",
@@ -337,7 +374,7 @@
       async function connectRealtime() {
         fallbackAudioRequiredRef.current = false;
         if (!navigator.mediaDevices?.getUserMedia || !window.RTCPeerConnection) throw new Error("WebRTC voice is not available here.");
-        const tokenRes = await fetchWithTimeout(API + "/ai/realtime-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale, role }) });
+          const tokenRes = await fetchWithTimeout(API + "/ai/realtime-token", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale: localeRef.current, role }) });
         const tokenData = await tokenRes.json().catch(() => ({}));
         if (!tokenRes.ok) throw Object.assign(new Error(tokenData?.error || "Voice service is temporarily unavailable."), { code: tokenData?.code, status: tokenRes.status });
         if (!tokenData?.client_secret?.value) throw new Error(tokenData?.error || "Realtime session token unavailable");
@@ -401,13 +438,18 @@
 
           if (actualType === "response.output_audio_transcript.done" || actualType === "response.audio_transcript.done") {
             const text = event.transcript || nested?.transcript || interim;
-            if (text) setMessage(text);
+            if (text) { setMessage(text); rememberConversation("assistant", text); }
             setInterim("");
             setState("speaking");
             if (text && fallbackAudioRequiredRef.current) {
               fallbackAudioRequiredRef.current = false;
               fallbackSpeak(text, localeRef.current);
             }
+          }
+
+          if (actualType === "conversation.item.input_audio_transcription.completed") {
+            const text = String(event.transcript || "").trim();
+            if (text) rememberConversation("user", text);
           }
 
           if (actualType === "response.done") {
@@ -436,6 +478,25 @@
                   const opened = runAction(args.screen);
                   result = { status: opened ? "opened" : "not_available_for_role", screen: args.screen };
                   if (opened) { setOpen(false); if (args.screen !== "ADD_PRODUCT") { publishConfirmationPendingRef.current = false; publishConfirmationAtRef.current = 0; } }
+                } else if (call.name === "get_orders") {
+                  try {
+                    if (!userId) throw new Error("User session is unavailable");
+                    const response = await fetchWithTimeout(`${API}/orders?userId=${encodeURIComponent(userId)}`, {}, 12000);
+                    const data = await response.json();
+                    if (!response.ok || !Array.isArray(data.orders)) throw new Error("Orders unavailable");
+                    const todayDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+                    const orders = data.orders.filter(order => args.period !== "today" || (order.date && new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(order.date)) === todayDate));
+                    result = { status: "ready", period: args.period, todayDate, orders: orders.map(order => ({ id: order.id, status: order.status, date: order.date, products: (order.artisanItems || order.products || []).map(item => ({ title: item.title, qty: item.qty, price: item.price })) })) };
+                  } catch (_) { result = { status: "unavailable", message: "I can't access your order data right now." }; }
+                } else if (call.name === "get_product_details") {
+                  try {
+                    const productId = window.__KALASUTRA_ACTIVE_PRODUCT_ID__;
+                    if (role !== "buyer" || !productId) throw new Error("No selected buyer product");
+                    const response = await fetchWithTimeout(`${API}/products/${encodeURIComponent(productId)}`, {}, 12000);
+                    if (!response.ok) throw new Error("Product unavailable");
+                    const data = await response.json();
+                    result = { status: "ready", product: { id: data.id, title: data.title, description: data.description, price: data.price, category: data.category, craftInfo: { material: data.craftInfo?.material, region: data.craftInfo?.region, originalStory: data.craftInfo?.originalStory }, verificationStatus: data.verificationStatus }, artisan: data.artisan ? { name: data.artisan.name, profile: { craft: data.artisan.profile?.craft, location: data.artisan.profile?.location, bio: data.artisan.profile?.bio, trustScore: data.artisan.profile?.trustScore } } : null, reviews: (data.reviews || []).map(review => ({ stars: review.stars, text: review.text, createdAt: review.createdAt })).slice(0, 20) };
+                  } catch (_) { result = { status: "unavailable", message: "Open a product first, then I can look up its details." }; }
                 } else if (call.name === "set_product_fields") {
                   const apply = window.__KALASUTRA_PRODUCT_ACTIONS__?.applyFields;
                   const fields = { title: args.title, story: args.story, description: args.description, price: args.price, category: args.category, material: args.material, region: args.region };
@@ -524,14 +585,21 @@
 
         setConnected(true);
         updateSession();
-        sendRealtime({
-          type: "response.create",
-          response: { instructions: `Greet the user warmly in ${localeName(locale)}. Say: “${copy(locale, "welcome") }” Then invite them to tell you what they need, and listen for their reply.` }
-        });
-        armRealtimeTurnTimer(35000, "Karigar AI is taking a little longer. Tap the mic to try again.", true);
+        if (!greetingSentRef.current) {
+          greetingSentRef.current = true;
+          rememberConversation("assistant", copy(locale, "welcome"));
+          sendRealtime({
+            type: "response.create",
+            response: { instructions: `Greet the user warmly in ${localeName(locale)}. Say: “${copy(locale, "welcome") }” Then invite them to tell you what they need, and listen for their reply.` }
+          });
+          armRealtimeTurnTimer(35000, "Karigar AI is taking a little longer. Tap the mic to try again.", true);
+        }
       }
 
       async function speakWelcome() {
+        if (greetingSentRef.current) return false;
+        greetingSentRef.current = true;
+        rememberConversation("assistant", copy(locale, "welcome"));
         setUIState("speaking", copy(locale, "welcome"));
         const spoken = await fallbackSpeak(copy(locale, "welcome"), locale);
         if (spoken) setUIState("idle", copy(locale, "ready"));
@@ -553,7 +621,7 @@
             LOCAL_VOICE_MODE = true;
             await speakWelcome();
             fallbackListeningRef.current = false;
-            setUIState("idle", "I’m ready. Tap the microphone and speak; free mode can open app sections by voice.");
+            setUIState("idle", copy(locale, "ready"));
             return;
           }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
@@ -571,10 +639,12 @@
         if (fallbackBusyRef.current) return;
         fallbackBusyRef.current = true;
         try {
+          rememberConversation("user", transcript);
           setUIState("thinking", copy(locale, "thinking"));
           const local = localIntent(transcript, role, locale);
           if (local.action !== "NONE") {
             await fallbackSpeak(local.reply, locale);
+            rememberConversation("assistant", local.reply);
             const opened = runAction(local.action);
             if (opened) {
               if (local.action === "ADD_PRODUCT") emitFlow({ step: "photos" });
@@ -586,12 +656,14 @@
           if (LOCAL_VOICE_MODE) { await fallbackSpeak(local.reply, locale); return; }
           if (role === "artisan" && window.__KALASUTRA_SCREEN__ === ADD_PRODUCT_ROUTE) {
             const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
-            const data = await postJSON("/ai/product-assist", { message: transcript, locale, role, history: history.slice(-8), draft: window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {} });
+            const lastHistoryItem = history[history.length - 1];
+            const priorHistory = lastHistoryItem?.role === "user" && lastHistoryItem?.content === transcript ? history.slice(0, -1) : history;
+            const data = await postJSON("/ai/product-assist", { message: transcript, locale, role, history: priorHistory.slice(-8), draft: window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {} });
             if (data.action === "READ_DESCRIPTION") {
               const description = window.__KALASUTRA_PRODUCT_ACTIONS__?.readDescription?.();
               if (description) await fallbackSpeak(description, "en-IN");
               else await fallbackSpeak(data.reply || "Description abhi taiyaar nahi hai. Pehle product ki story bata dijiye.", data.locale || locale);
-              history.push({ role: "user", content: transcript }, { role: "assistant", content: description ? "I read the current product description aloud." : data.reply });
+              history.push({ role: "assistant", content: description ? "I read the current product description aloud." : data.reply });
               window.__KALASUTRA_V7_HISTORY__ = history.slice(-16);
               return;
             }
@@ -602,7 +674,7 @@
                 publishConfirmationAtRef.current = 0;
                 const retry = "Pehle main product ka summary suna kar aapse dobara confirmation le loon?";
                 await fallbackSpeak(retry, locale);
-                history.push({ role: "user", content: transcript }, { role: "assistant", content: retry });
+                history.push({ role: "assistant", content: retry });
                 window.__KALASUTRA_V7_HISTORY__ = history.slice(-16);
                 return;
               }
@@ -614,7 +686,7 @@
                 : outcome?.status === "draft_incomplete" ? `Abhi submit nahi hua. ${String(outcome.missing?.join(", ") || "kuch details")} baaki hain.`
                 : "Product abhi submit nahi ho saka. Main aapke details save rakhti hoon; chalo phir se try karte hain.";
               await fallbackSpeak(statusText, data.locale || locale);
-              history.push({ role: "user", content: transcript }, { role: "assistant", content: statusText });
+              history.push({ role: "assistant", content: statusText });
               window.__KALASUTRA_V7_HISTORY__ = history.slice(-16);
               return;
             }
@@ -625,15 +697,17 @@
               publishConfirmationPendingRef.current = true;
               publishConfirmationAtRef.current = Date.now();
             }
-            history.push({ role: "user", content: transcript }, { role: "assistant", content: reply });
+            history.push({ role: "assistant", content: reply });
             window.__KALASUTRA_V7_HISTORY__ = history.slice(-16);
             return;
           }
+          rememberConversation("user", transcript);
           const data = await fallbackChat(transcript, locale);
           const reply = data?.reply || copy(locale, "generic");
           await fallbackSpeak(reply, data?.locale || locale);
+          rememberConversation("assistant", reply);
           const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
-          history.push({ role: "user", content: transcript }, { role: "assistant", content: reply });
+          history.push({ role: "assistant", content: reply });
           window.__KALASUTRA_V7_HISTORY__ = history.slice(-16);
           if (data?.action && data.action !== "NONE") {
             const opened = runAction(data.action);
@@ -797,14 +871,21 @@
       }
 
       const latestHandlers = useRef({});
-      latestHandlers.current = { startConversation, fallbackCommand };
+      latestHandlers.current = { startConversation, fallbackCommand, updateSession };
 
       function selectLanguage(next) {
+        const changed = localeRef.current !== next;
         setLocaleState(next);
         setLocale(next);
         setShowLang(false);
         try { updateSession(); } catch (_) {}
-        speakWelcome().catch(() => {});
+        if (!greetingSentRef.current) speakWelcome().catch(() => {});
+        else if (changed) {
+          const notice = next.startsWith("en") ? "Language changed to English. We can continue." : next.startsWith("hi") ? "भाषा हिन्दी कर दी है। हम यहीं से आगे बात करेंगे।" : `${localeName(next)} selected. We can continue from here.`;
+          rememberConversation("assistant", notice);
+          setUIState("speaking", notice);
+          fallbackSpeak(notice, next).catch(() => {});
+        }
       }
 
       useEffect(() => {
@@ -813,7 +894,8 @@
           if (e.detail?.text) setMessage(e.detail.text);
         };
         const langListener = e => {
-          if (e.detail?.locale) setLocaleState(e.detail.locale);
+          const next = e.detail?.locale || (e.detail?.voice && LANGS.some(x => x[0] === e.detail.voice) ? e.detail.voice : null) || (e.detail?.code ? LANGS.find(x => x[0].slice(0, 2) === e.detail.code)?.[0] : null);
+          if (next) { setLocaleState(next); localeRef.current = next; window.setTimeout(() => latestHandlers.current.updateSession?.(), 0); }
         };
         const openListener = () => setOpen(true);
         const commandListener = async e => {

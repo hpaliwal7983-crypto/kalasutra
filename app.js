@@ -767,6 +767,15 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
         ["03", "Build a craft archive", "Save stories, tools and process notes with each piece."]
     ];
     function toggle(id) { setOpen(open === id ? null : id); }
+    useEffect(() => {
+        const valid = new Set(modules.map((module) => module.id));
+        const onCopilotModule = (event) => {
+            const id = event.detail?.module;
+            if (valid.has(id)) setOpen(id);
+        };
+        window.addEventListener("kalasutra:artisan-module-open", onCopilotModule);
+        return () => window.removeEventListener("kalasutra:artisan-module-open", onCopilotModule);
+    }, []);
     return React.createElement("section", { className: "artisan-growth-hub" },
         React.createElement("div", { className: "growth-hub-heading" },
             React.createElement("div", null,
@@ -1033,6 +1042,14 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
     const proofStreamRef = useRef(null);
     const proofChunksRef = useRef([]);
     const storyRecognitionRef = useRef(null);
+    useEffect(() => {
+        const syncStoryLocale = (event) => {
+            const locale = event.detail?.locale || event.detail?.voice || (event.detail?.code ? `${event.detail.code}-IN` : null);
+            if (locale && window.KalaSutraV7?.LANGS?.some(item => item[0] === locale)) setStoryLang(locale);
+        };
+        window.addEventListener("kalasutra:language-changed", syncStoryLocale);
+        return () => window.removeEventListener("kalasutra:language-changed", syncStoryLocale);
+    }, []);
     useEffect(() => {
         const api = {
             getDraft: () => {
@@ -1319,10 +1336,17 @@ function AddProductScreen({ user, go, setToast, setLastVerifiedProductId }) {
                         React.createElement("div", { className: "story-controls" },
                             React.createElement("select", { value: storyLang, onChange: (e) => setStoryLang(e.target.value) },
                                 React.createElement("option", { value: "hi-IN" }, "Hindi"),
+                                React.createElement("option", { value: "en-IN" }, "English"),
                                 React.createElement("option", { value: "mr-IN" }, "Marathi"),
-                                React.createElement("option", { value: "ta-IN" }, "Tamil"),
+                                React.createElement("option", { value: "gu-IN" }, "Gujarati"),
+                                React.createElement("option", { value: "pa-IN" }, "Punjabi"),
                                 React.createElement("option", { value: "bn-IN" }, "Bangla"),
-                                React.createElement("option", { value: "en-IN" }, "English")),
+                                React.createElement("option", { value: "ta-IN" }, "Tamil"),
+                                React.createElement("option", { value: "te-IN" }, "Telugu"),
+                                React.createElement("option", { value: "kn-IN" }, "Kannada"),
+                                React.createElement("option", { value: "ml-IN" }, "Malayalam"),
+                                React.createElement("option", { value: "or-IN" }, "Odia"),
+                                React.createElement("option", { value: "ur-IN" }, "Urdu")),
                             React.createElement("button", { className: `story-big-mic ${storyRecording ? "recording" : ""}`, onClick: storyRecording ? stopStoryRecording : startStoryRecording }, storyRecording ? "■ Stop listening" : "🎙 Start speaking")),
                         React.createElement("textarea", { className: "story-box-new", value: story, onChange: (e) => setStory(e.target.value), placeholder: "Or type your story here\u2026" }),
                         englishDescription && React.createElement("div", { className: "ai-draft-new" },
@@ -3217,18 +3241,19 @@ function App() {
             setShowPermissions(true);
     }, [phase]);
     useEffect(() => {
-        if (phase !== 'app' || user?.role !== 'artisan' || !window.KalaSutraV7?.mount) return;
+        if (phase !== 'app' || !user?.id || !window.KalaSutraV7?.mount) return;
         const role = user?.role || pendingRole || 'buyer';
         window.__KALASUTRA_ROLE__ = role;
+        window.__KALASUTRA_USER_ID__ = user?.id || '';
         window.__KALASUTRA_GO__ = (target) => {
             window.__KALASUTRA_SCREEN__ = target;
             setScreen(target);
         };
         // Keep the requested artisan warm welcome visible as soon as the V6 app opens.
         // Voice capture still waits for the user's mic-button tap.
-        const copilot = window.KalaSutraV7.mount({ role, go: window.__KALASUTRA_GO__, open: true });
+        const copilot = window.KalaSutraV7.mount({ role, userId: user?.id || '', go: window.__KALASUTRA_GO__, open: role === 'artisan' });
         return () => { copilot?.unmount?.(); };
-    }, [phase, user?.role]);
+    }, [phase, user?.role, user?.id]);
     const certificateId = new URLSearchParams(window.location.search).get('certificate');
     if (certificateId)
         return React.createElement(CertificateScreen, { certificateId: certificateId });
@@ -3287,6 +3312,8 @@ function App() {
         }
     }
     function logout() {
+        window.__KALASUTRA_USER_ID__ = '';
+        window.__KALASUTRA_ACTIVE_PRODUCT_ID__ = '';
         setUser(null);
         setPhase("splash");
         setScreen("dashboard");
@@ -3306,6 +3333,7 @@ function App() {
         });
     }
     function openProduct(id) {
+        window.__KALASUTRA_ACTIVE_PRODUCT_ID__ = id;
         if (user?.id)
             saveRecentProduct(user.id, id);
         setActiveProductId(id);

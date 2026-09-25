@@ -8,11 +8,36 @@ const LANGS = {
   "ta-IN": ["Tamil", "ta-IN"], "te-IN": ["Telugu", "te-IN"], "kn-IN": ["Kannada", "kn-IN"],
   "ml-IN": ["Malayalam", "ml-IN"], "or-IN": ["Odia", "or-IN"], "ur-IN": ["Urdu", "ur-IN"]
 };
-const actions = ["ADD_PRODUCT", "ORDERS", "REELS", "PROFILE", "HOME", "WISHLIST", "CART", "MY_PRODUCTS", "REVIEWS", "NONE"];
+const actions = ["ADD_PRODUCT", "ORDERS", "REELS", "PROFILE", "HOME", "WISHLIST", "CART", "MY_PRODUCTS", "REVIEWS", "PRODUCT_DETAILS", "ARTISAN_INFO", "PRODUCT_REVIEWS", "FAIR_PRICE", "CRAFT_CAPITAL", "MATERIAL_HUB", "DESIGN_LAB", "CRAFT_PASSPORT", "MARKET_MATCH", "CRAFT_GURUKUL", "NONE"];
 const json = (res, code, data) => { res.writeHead(code, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }); res.end(JSON.stringify(data)); };
 function localeInfo(value) { return LANGS[value] || LANGS.hi; }
+function indiaDate(value) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value));
+}
+function orderContext(db, userId, role) {
+  const user = db?.users?.find(item => String(item.id) === String(userId) && item.role === role);
+  if (!user) return { available: false, reason: "Current user's order data is unavailable.", todayDate: indiaDate(Date.now()), today: [], recent: [] };
+  const catalog = new Map((db.products || []).map(p => [String(p.id), p]));
+  const orders = (db.orders || []).map(order => {
+    if (role === "buyer" && String(order.buyerId) !== String(userId)) return null;
+    const products = (order.products || []).filter(item => role !== "artisan" || String(catalog.get(String(item.productId))?.artisanId) === String(userId));
+    if (role === "artisan" && !products.length) return null;
+    return {
+      id: String(order.id || ""), status: String(order.status || "unknown"), date: order.date || null,
+      items: products.map(item => ({ product: String(item.title || catalog.get(String(item.productId))?.title || "Handmade product"), quantity: Number(item.qty) || 0, price: Number(item.price) || 0 }))
+    };
+  }).filter(Boolean);
+  const todayDate = indiaDate(Date.now());
+  return { available: true, todayDate, today: orders.filter(order => order.date && indiaDate(order.date) === todayDate), recent: orders.slice(0, 30) };
+}
+function productContext(db, productId) {
+  const product = db?.products?.find(item => String(item.id) === String(productId));
+  if (!product) return { available: false };
+  const artisan = db.users?.find(user => String(user.id) === String(product.artisanId));
+  return { available: true, product: { id: product.id, title: product.title, description: product.description, price: product.price, category: product.category, craftInfo: { material: product.craftInfo?.material, region: product.craftInfo?.region, originalStory: product.craftInfo?.originalStory }, verificationStatus: product.verificationStatus }, artisan: artisan ? { name: artisan.name, profile: { craft: artisan.profile?.craft, location: artisan.profile?.location, bio: artisan.profile?.bio, trustScore: artisan.profile?.trustScore } } : null, reviews: (db.reviews || []).filter(review => String(review.productId) === String(product.id)).map(review => ({ rating: review.stars, text: review.text, date: review.createdAt })).slice(0, 20) };
+}
 function instructions(role, language) {
-  return `You are Karigar AI inside KalaSutra, a warm, human, voice-first companion. Speak naturally and briefly in ${language}; understand mixed Hindi-English and the user's chosen language. Current role: ${role === "artisan" ? "artisan" : "buyer"}. For artisan, help with products, orders, reels, profile and dashboard. For buyer, help with product details, artisan information, reviews, orders, profile, wishlist and cart. When the user asks to open a screen, return its action. Actions: ${actions.join(", ")}. Never claim you opened something unless action is set. Keep the answer warm and conversational. When helping create a product, use only facts the artisan stated; never invent its material, region, making process, price or origin.`;
+  return `You are Karigar AI inside KalaSutra, a warm, human, voice-first companion. Speak naturally and briefly in ${language}; understand mixed Hindi-English and the user's chosen language. Current role: ${role === "artisan" ? "artisan" : "buyer"}. For artisan, help with products, orders, reels, profile and the seven existing dashboard panels. For buyer, help with product details, artisan information, reviews, orders, profile, wishlist and cart. Continue the current conversation without reintroducing yourself or repeating a welcome. Use recent conversation and provided app data as the source of truth. Never invent order counts, order details, prices, balances, market matches, inventory, artisan history, product details or module results. When asked about data that is unavailable, say so clearly. When the user asks to open a screen or an existing dashboard panel, return its action. Actions: ${actions.join(", ")}. Never claim you opened something unless action is set. Keep the answer warm and conversational. When helping create a product, use only facts the artisan stated; never invent its material, region, making process, price or origin.`;
 }
 async function openai(path, payload, contentType = "application/json") {
   const key = process.env.OPENAI_API_KEY;
@@ -45,11 +70,14 @@ async function openai(path, payload, contentType = "application/json") {
   }
   return r;
 }
-module.exports = async function aiRoute(req, res, url, b) {
+module.exports = async function aiRoute(req, res, url, b, context = {}) {
   try {
     if (url.pathname === "/api/ai/realtime-token" || url.pathname === "/api/ai/realtime") {
       const [language] = localeInfo(b.locale || b.language);
-      const r = await openai("realtime/client_secrets", { session: { type: "realtime", model: process.env.KALASUTRA_REALTIME_MODEL || "gpt-realtime-2.1", instructions: instructions(b.role, language), audio: { output: { voice: process.env.KALASUTRA_TTS_VOICE || "marin" } }, tools: [{ type: "function", name: "navigate_app", description: "Navigate an existing KalaSutra screen", parameters: { type: "object", properties: { screen: { type: "string", enum: actions.filter(x => x !== "NONE") } }, required: ["screen"], additionalProperties: false } }], tool_choice: "auto" } });
+      const r = await openai("realtime/client_secrets", { session: { type: "realtime", model: process.env.KALASUTRA_REALTIME_MODEL || "gpt-realtime-2.1", instructions: instructions(b.role, language), audio: { output: { voice: process.env.KALASUTRA_TTS_VOICE || "marin" } }, tools: [
+        { type: "function", name: "navigate_app", description: "Navigate an existing KalaSutra screen or open an existing artisan dashboard panel", parameters: { type: "object", properties: { screen: { type: "string", enum: actions.filter(x => x !== "NONE") } }, required: ["screen"], additionalProperties: false } },
+        { type: "function", name: "get_orders", description: "Read real, privacy-filtered order records for the current user. Use for order counts, lists and follow-up questions; never guess.", parameters: { type: "object", properties: { period: { type: "string", enum: ["today", "recent"] } }, required: ["period"], additionalProperties: false } }
+      ], tool_choice: "auto" } });
       return json(res, 200, await r.json());
     }
     if (url.pathname === "/api/ai/chat") {
@@ -60,12 +88,14 @@ module.exports = async function aiRoute(req, res, url, b) {
       const sourceHistory = b.history || b.messages || [];
       const historyItems = b.message && b.messages ? sourceHistory.slice(0, -1) : sourceHistory;
       const history = historyItems.slice(-8).map(x => ({ role: x.role === "assistant" ? "assistant" : "user", content: String(x.content || "").slice(0, 1200) }));
-      const r = await openai("responses", { model: process.env.KALASUTRA_AI_MODEL || "gpt-5.6-luna", input: [{ role: "system", content: instructions(b.role, language) }, ...history, { role: "user", content: message }], text: { format: { type: "json_schema", name: "kalasutra_copilot_reply", strict: true, schema } } });
+      const facts = orderContext(context.db, b.userId, b.role === "artisan" ? "artisan" : "buyer");
+      const appFacts = { user: { id: String(b.userId || ""), role: b.role || "buyer" }, currentScreen: String(b.screen || ""), orders: facts, selectedProduct: productContext(context.db, b.productId) };
+      const r = await openai("responses", { model: process.env.KALASUTRA_AI_MODEL || "gpt-5.6-luna", input: [{ role: "system", content: instructions(b.role, language) }, { role: "system", content: `Verified KalaSutra data for this turn (never infer missing records): ${JSON.stringify(appFacts)}` }, ...history, { role: "user", content: message }], text: { format: { type: "json_schema", name: "kalasutra_copilot_reply", strict: true, schema } } });
       const out = await r.json(); let data = {};
       try { data = JSON.parse(out.output_text || "{}"); } catch (_) {}
       if (!LANGS[data.locale]) data.locale = locale;
       if (!actions.includes(data.action)) data.action = "NONE";
-      return json(res, 200, { reply: String(data.reply || "I’m here with you. Tell me what you’d like to do."), action: data.action, locale: data.locale });
+      return json(res, 200, { reply: String(data.reply || "I’m here with you. Tell me what you’d like to do."), action: data.action, locale });
     }
     if (url.pathname === "/api/ai/transcribe") {
       const encoded = String(b.audioBase64 || "");
@@ -104,7 +134,7 @@ module.exports = async function aiRoute(req, res, url, b) {
       if (fields.category && !["Pottery", "Textiles", "Woodwork", "Metalwork", "Basketry", "Other"].includes(fields.category)) fields.category = null;
       if (fields.price && !/^\d+(\.\d{1,2})?$/.test(fields.price.replace(/[^0-9.]/g, ""))) fields.price = null;
       const productActions = ["NONE", "READ_DESCRIPTION", "REVIEW_PRODUCT", "REQUEST_SUBMIT_CONFIRMATION", "SUBMIT_PRODUCT"];
-      return json(res, 200, { reply: String(data.reply || "Theek hai. Batao, main kaunsi detail update karoon?"), action: productActions.includes(data.action) ? data.action : "NONE", locale: data.locale, fields });
+      return json(res, 200, { reply: String(data.reply || "Theek hai. Batao, main kaunsi detail update karoon?"), action: productActions.includes(data.action) ? data.action : "NONE", locale, fields });
     }
     if (url.pathname === "/api/ai/translate") {
       const [language] = localeInfo(b.locale || b.language);
