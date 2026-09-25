@@ -773,11 +773,18 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
             getContext: moduleContext,
             setFairPriceInputs: values => {
                 if (!values || typeof values !== "object") return { status: "invalid_inputs" };
+                const inputs = { productionCost, materialCost, hours, hourlyRate, overhead };
                 for (const [key, setter] of [["productionCost", setProductionCost], ["materialCost", setMaterialCost], ["hours", setHours], ["hourlyRate", setHourlyRate], ["overhead", setOverhead]]) {
-                    if (values[key] !== undefined && values[key] !== null && String(values[key]).trim() !== "") setter(String(values[key]).replace(/[^0-9.]/g, ""));
+                    if (values[key] !== undefined && values[key] !== null && String(values[key]).trim() !== "") {
+                        const clean = String(values[key]).replace(/[^0-9.]/g, "");
+                        inputs[key] = clean;
+                        setter(clean);
+                    }
                 }
+                const complete = !!inputs.productionCost || (!!inputs.materialCost && !!inputs.hours && !!inputs.hourlyRate && !!inputs.overhead);
+                const cost = inputs.productionCost ? Number(inputs.productionCost) : Number(inputs.materialCost || 0) + Number(inputs.hours || 0) * Number(inputs.hourlyRate || 0) + Number(inputs.overhead || 0);
                 setOpen("price");
-                return { status: "updated" };
+                return { status: "updated", inputs, estimate: complete ? Math.round(cost * 1.2) : null, estimateType: "artisan_cost_plus_20_percent_planning_estimate" };
             }
         };
         window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__ = api;
