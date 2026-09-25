@@ -777,11 +777,7 @@
         window.addEventListener("kalasutra:warm-welcome-close", closeListener);
         window.addEventListener("kalasutra:add-product-screen-closed", productCloseListener);
         if (options.autoWelcome) setTimeout(() => startConversation(), 250);
-        const welcomeTimer = options.greetOnOpen && !options.autoWelcome
-          ? setTimeout(() => speakWelcome().catch(() => {}), 350)
-          : null;
         return () => {
-          if (welcomeTimer) clearTimeout(welcomeTimer);
           window.removeEventListener("kalasutra:copilot-state", stateListener);
           window.removeEventListener("kalasutra:language-changed", langListener);
           window.removeEventListener("kalasutra:warm-welcome-open", openListener);
@@ -869,7 +865,7 @@
     root.id = "kalasutra-v72-warm-welcome-root";
     if (!root.parentNode) document.body.appendChild(root);
     if (!document.getElementById("ks-v72-style-link")) {
-      const link = document.createElement("link"); link.id = "ks-v72-style-link"; link.rel = "stylesheet"; link.href = "/karigar-warm-welcome-v7.css?v=20260925-add-product-copilot-1"; document.head.appendChild(link);
+      const link = document.createElement("link"); link.id = "ks-v72-style-link"; link.rel = "stylesheet"; link.href = "/karigar-warm-welcome-v7.css?v=20260925-add-product-copilot-2"; document.head.appendChild(link);
     }
     if (!document.getElementById("ks-v72-hide-old-copilot")) {
       const style = document.createElement("style"); style.id = "ks-v72-hide-old-copilot";
