@@ -23,18 +23,18 @@
   ];
 
   const COPY = {
-    "hi-IN": { welcome:"नमस्ते! मैं Karigar AI हूँ। आज हम क्या करें?", listening:"मैं सुन रही हूँ…", thinking:"एक पल, मैं समझ रही हूँ…", generic:"समझ गई। आप आराम से बताइए, मैं एक-एक कदम पर मदद करूँगी।", ready:"बताइए, मैं सुन रही हूँ।" },
-    "en-IN": { welcome:"Namaste! I’m Karigar AI. What shall we work on today?", listening:"I’m listening…", thinking:"One moment, I’m understanding…", generic:"Got it. Tell me naturally what you need, and I’ll guide you step by step.", ready:"Go ahead. I’m listening." },
-    "mr-IN": { welcome:"नमस्कार! मी Karigar AI आहे. आज आपण काय करूया?", listening:"मी ऐकत आहे…", thinking:"एक क्षण, मी समजून घेत आहे…", generic:"समजलं. तुम्हाला काय करायचं आहे ते सहज सांगा; मी प्रत्येक टप्प्यावर मदत करेन.", ready:"सांगा, मी ऐकत आहे." },
-    "gu-IN": { welcome:"નમસ્તે! હું Karigar AI છું. આજે આપણે શું કરીએ?", listening:"હું સાંભળી રહી છું…", thinking:"એક ક્ષણ, હું સમજી રહી છું…", generic:"સમજાયું. તમને શું કરવું છે તે આરામથી કહો; હું દરેક પગલે મદદ કરીશ.", ready:"કહો, હું સાંભળી રહી છું." },
-    "pa-IN": { welcome:"ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ Karigar AI ਹਾਂ। ਅੱਜ ਅਸੀਂ ਕੀ ਕਰੀਏ?", listening:"ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ…", thinking:"ਇੱਕ ਪਲ, ਮੈਂ ਸਮਝ ਰਹੀ ਹਾਂ…", generic:"ਸਮਝ ਗਈ। ਤੁਸੀਂ ਆਰਾਮ ਨਾਲ ਦੱਸੋ ਕਿ ਕੀ ਕਰਨਾ ਹੈ; ਮੈਂ ਹਰ ਕਦਮ ਤੇ ਮਦਦ ਕਰਾਂਗੀ।", ready:"ਦੱਸੋ, ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ।" },
-    "bn-IN": { welcome:"নমস্কার! আমি Karigar AI। আজ আমরা কী করতে পারি?", listening:"আমি শুনছি…", thinking:"একটু সময় দিন, আমি বুঝে নিচ্ছি…", generic:"বুঝেছি। আপনার কী দরকার স্বাভাবিকভাবে বলুন; আমি ধাপে ধাপে সাহায্য করব।", ready:"বলুন, আমি শুনছি।" },
-    "ta-IN": { welcome:"வணக்கம்! நான் Karigar AI. இன்று நாம் என்ன செய்யலாம்?", listening:"நான் கேட்டுக்கொண்டிருக்கிறேன்…", thinking:"ஒரு நிமிடம், புரிந்துகொள்கிறேன்…", generic:"புரிந்தது. உங்களுக்கு என்ன வேண்டும் என்று இயல்பாகச் சொல்லுங்கள்; படிப்படியாக உதவுகிறேன்.", ready:"சொல்லுங்கள், நான் கேட்கிறேன்." },
-    "te-IN": { welcome:"నమస్కారం! నేను Karigar AI. ఈరోజు మనం ఏం చేద్దాం?", listening:"నేను వింటున్నాను…", thinking:"ఒక్క క్షణం, అర్థం చేసుకుంటున్నాను…", generic:"అర్థమైంది. మీకు ఏం కావాలో సహజంగా చెప్పండి; ఒక్కో దశలో సహాయం చేస్తాను.", ready:"చెప్పండి, నేను వింటున్నాను." },
-    "kn-IN": { welcome:"ನಮಸ್ಕಾರ! ನಾನು Karigar AI. ಇಂದು ನಾವು ಏನು ಮಾಡೋಣ?", listening:"ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ…", thinking:"ಒಂದು ಕ್ಷಣ, ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತಿದ್ದೇನೆ…", generic:"ಅರ್ಥವಾಯಿತು. ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ಸಹಜವಾಗಿ ಹೇಳಿ; ಹಂತ ಹಂತವಾಗಿ ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.", ready:"ಹೇಳಿ, ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ." },
-    "ml-IN": { welcome:"നമസ്കാരം! ഞാൻ Karigar AI. ഇന്ന് നമുക്ക് എന്ത് ചെയ്യാം?", listening:"ഞാൻ കേൾക്കുന്നുണ്ട്…", thinking:"ഒരു നിമിഷം, മനസ്സിലാക്കട്ടെ…", generic:"മനസ്സിലായി. എന്താണ് വേണ്ടതെന്ന് സ്വാഭാവികമായി പറയൂ; ഓരോ ഘട്ടത്തിലും ഞാൻ സഹായിക്കാം.", ready:"പറയൂ, ഞാൻ കേൾക്കുന്നുണ്ട്." },
-    "or-IN": { welcome:"ନମସ୍କାର! ମୁଁ Karigar AI। ଆଜି ଆମେ କ'ଣ କରିବା?", listening:"ମୁଁ ଶୁଣୁଛି…", thinking:"ଟିକେ ରୁହନ୍ତୁ, ମୁଁ ବୁଝୁଛି…", generic:"ବୁଝିଲି। ଆପଣଙ୍କୁ କ'ଣ ଦରକାର ସହଜରେ କୁହନ୍ତୁ; ମୁଁ ପ୍ରତି ପଦକ୍ଷେପରେ ସାହାଯ୍ୟ କରିବି।", ready:"କୁହନ୍ତୁ, ମୁଁ ଶୁଣୁଛି।" },
-    "ur-IN": { welcome:"السلام علیکم! میں Karigar AI ہوں۔ آج ہم کیا کریں؟", listening:"میں سن رہی ہوں…", thinking:"ایک لمحہ، میں سمجھ رہی ہوں…", generic:"سمجھ گئی۔ آپ آرام سے بتائیں کہ آپ کو کیا چاہیے؛ میں ہر قدم پر مدد کروں گی۔", ready:"بتائیے، میں سن رہی ہوں۔" }
+    "hi-IN": { welcome:"नमस्ते! मैं Karigar AI हूँ। आज हम क्या करें?", listening:"मैं सुन रही हूँ…", thinking:"एक पल, मैं समझ रही हूँ…", generic:"समझ गई। आप आराम से बताइए, मैं एक-एक कदम पर मदद करूँगी।", ready:"बताइए, मैं सुन रही हूँ।", error:"आवाज़ अभी नहीं चल पा रही। कृपया फिर कोशिश करें।", noSpeech:"मैं ठीक से सुन नहीं पाई। कृपया एक बार फिर बोलें।", micPermission:"माइक्रोफ़ोन की अनुमति दें और फिर कोशिश करें।", timeout:"AI को थोड़ा समय लग रहा है। माइक्रोफ़ोन टैप करके फिर कोशिश करें।" },
+    "en-IN": { welcome:"Namaste! I’m Karigar AI. What shall we work on today?", listening:"I’m listening…", thinking:"One moment, I’m understanding…", generic:"Got it. Tell me naturally what you need, and I’ll guide you step by step.", ready:"Go ahead. I’m listening.", error:"Voice playback isn’t available right now. Please try again.", noSpeech:"I couldn’t understand that. Please say it once more.", micPermission:"Please allow microphone access and try again.", timeout:"Karigar AI is taking a little longer. Tap the mic to try again." },
+    "mr-IN": { welcome:"नमस्कार! मी Karigar AI आहे. आज आपण काय करूया?", listening:"मी ऐकत आहे…", thinking:"एक क्षण, मी समजून घेत आहे…", generic:"समजलं. तुम्हाला काय करायचं आहे ते सहज सांगा; मी प्रत्येक टप्प्यावर मदत करेन.", ready:"सांगा, मी ऐकत आहे.", error:"आवाज सध्या ऐकू येत नाही. कृपया पुन्हा प्रयत्न करा.", noSpeech:"मला समजले नाही. कृपया पुन्हा एकदा बोला.", micPermission:"मायक्रोफोनची परवानगी द्या आणि पुन्हा प्रयत्न करा.", timeout:"AI ला थोडा अधिक वेळ लागत आहे. पुन्हा प्रयत्न करण्यासाठी माइक टॅप करा." },
+    "gu-IN": { welcome:"નમસ્તે! હું Karigar AI છું. આજે આપણે શું કરીએ?", listening:"હું સાંભળી રહી છું…", thinking:"એક ક્ષણ, હું સમજી રહી છું…", generic:"સમજાયું. તમને શું કરવું છે તે આરામથી કહો; હું દરેક પગલે મદદ કરીશ.", ready:"કહો, હું સાંભળી રહી છું.", error:"અત્યારે અવાજ સાંભળી શકાતો નથી. ફરી પ્રયાસ કરો.", noSpeech:"મને સમજાયું નહીં. કૃપા કરીને ફરી એક વાર બોલો.", micPermission:"માઇક્રોફોનની મંજૂરી આપો અને ફરી પ્રયાસ કરો.", timeout:"AI ને થોડો વધુ સમય લાગી રહ્યો છે. ફરી પ્રયાસ કરવા માઇક દબાવો." },
+    "pa-IN": { welcome:"ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ Karigar AI ਹਾਂ। ਅੱਜ ਅਸੀਂ ਕੀ ਕਰੀਏ?", listening:"ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ…", thinking:"ਇੱਕ ਪਲ, ਮੈਂ ਸਮਝ ਰਹੀ ਹਾਂ…", generic:"ਸਮਝ ਗਈ। ਤੁਸੀਂ ਆਰਾਮ ਨਾਲ ਦੱਸੋ ਕਿ ਕੀ ਕਰਨਾ ਹੈ; ਮੈਂ ਹਰ ਕਦਮ ਤੇ ਮਦਦ ਕਰਾਂਗੀ।", ready:"ਦੱਸੋ, ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ।", error:"ਇਸ ਵੇਲੇ ਆਵਾਜ਼ ਨਹੀਂ ਚੱਲ ਰਹੀ। ਕਿਰਪਾ ਕਰਕੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", noSpeech:"ਮੈਨੂੰ ਸਮਝ ਨਹੀਂ ਆਇਆ। ਕਿਰਪਾ ਕਰਕੇ ਫਿਰ ਬੋਲੋ।", micPermission:"ਮਾਈਕ੍ਰੋਫ਼ੋਨ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", timeout:"AI ਨੂੰ ਥੋੜ੍ਹਾ ਹੋਰ ਸਮਾਂ ਲੱਗ ਰਿਹਾ ਹੈ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਲਈ ਮਾਈਕ ਟੈਪ ਕਰੋ।" },
+    "bn-IN": { welcome:"নমস্কার! আমি Karigar AI। আজ আমরা কী করতে পারি?", listening:"আমি শুনছি…", thinking:"একটু সময় দিন, আমি বুঝে নিচ্ছি…", generic:"বুঝেছি। আপনার কী দরকার স্বাভাবিকভাবে বলুন; আমি ধাপে ধাপে সাহায্য করব।", ready:"বলুন, আমি শুনছি।", error:"এখন অডিও চালানো যাচ্ছে না। আবার চেষ্টা করুন।", noSpeech:"আমি বুঝতে পারিনি। আরেকবার বলুন।", micPermission:"মাইক্রোফোনের অনুমতি দিন এবং আবার চেষ্টা করুন।", timeout:"AI-এর একটু বেশি সময় লাগছে। আবার চেষ্টা করতে মাইক ট্যাপ করুন।" },
+    "ta-IN": { welcome:"வணக்கம்! நான் Karigar AI. இன்று நாம் என்ன செய்யலாம்?", listening:"நான் கேட்டுக்கொண்டிருக்கிறேன்…", thinking:"ஒரு நிமிடம், புரிந்துகொள்கிறேன்…", generic:"புரிந்தது. உங்களுக்கு என்ன வேண்டும் என்று இயல்பாகச் சொல்லுங்கள்; படிப்படியாக உதவுகிறேன்.", ready:"சொல்லுங்கள், நான் கேட்கிறேன்.", error:"இப்போது குரல் ஒலிக்கவில்லை. மீண்டும் முயற்சிக்கவும்.", noSpeech:"எனக்குப் புரியவில்லை. மீண்டும் ஒருமுறை சொல்லுங்கள்.", micPermission:"மைக்ரோஃபோன் அனுமதியை வழங்கி மீண்டும் முயற்சிக்கவும்.", timeout:"AIக்கு இன்னும் சிறிது நேரம் தேவை. மீண்டும் முயற்சிக்க மைக்கைத் தட்டவும்." },
+    "te-IN": { welcome:"నమస్కారం! నేను Karigar AI. ఈరోజు మనం ఏం చేద్దాం?", listening:"నేను వింటున్నాను…", thinking:"ఒక్క క్షణం, అర్థం చేసుకుంటున్నాను…", generic:"అర్థమైంది. మీకు ఏం కావాలో సహజంగా చెప్పండి; ఒక్కో దశలో సహాయం చేస్తాను.", ready:"చెప్పండి, నేను వింటున్నాను.", error:"ప్రస్తుతం వాయిస్ వినిపించడం లేదు. మళ్లీ ప్రయత్నించండి.", noSpeech:"నాకు అర్థం కాలేదు. దయచేసి మరోసారి చెప్పండి.", micPermission:"మైక్రోఫోన్ అనుమతించి మళ్లీ ప్రయత్నించండి.", timeout:"AIకి కొంచెం ఎక్కువ సమయం పడుతోంది. మళ్లీ ప్రయత్నించడానికి మైక్‌ను తాకండి." },
+    "kn-IN": { welcome:"ನಮಸ್ಕಾರ! ನಾನು Karigar AI. ಇಂದು ನಾವು ಏನು ಮಾಡೋಣ?", listening:"ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ…", thinking:"ಒಂದು ಕ್ಷಣ, ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತಿದ್ದೇನೆ…", generic:"ಅರ್ಥವಾಯಿತು. ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ಸಹಜವಾಗಿ ಹೇಳಿ; ಹಂತ ಹಂತವಾಗಿ ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.", ready:"ಹೇಳಿ, ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ.", error:"ಈಗ ಧ್ವನಿ ಲಭ್ಯವಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", noSpeech:"ನನಗೆ ಅರ್ಥವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ ಹೇಳಿ.", micPermission:"ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿ ನೀಡಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", timeout:"AIಗೆ ಸ್ವಲ್ಪ ಹೆಚ್ಚು ಸಮಯ ಬೇಕಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಮೈಕ್ ಟ್ಯಾಪ್ ಮಾಡಿ." },
+    "ml-IN": { welcome:"നമസ്കാരം! ഞാൻ Karigar AI. ഇന്ന് നമുക്ക് എന്ത് ചെയ്യാം?", listening:"ഞാൻ കേൾക്കുന്നുണ്ട്…", thinking:"ഒരു നിമിഷം, മനസ്സിലാക്കട്ടെ…", generic:"മനസ്സിലായി. എന്താണ് വേണ്ടതെന്ന് സ്വാഭാവികമായി പറയൂ; ഓരോ ഘട്ടത്തിലും ഞാൻ സഹായിക്കാം.", ready:"പറയൂ, ഞാൻ കേൾക്കുന്നുണ്ട്.", error:"ഇപ്പോൾ ശബ്ദം ലഭ്യമല്ല. വീണ്ടും ശ്രമിക്കുക.", noSpeech:"എനിക്ക് മനസ്സിലായില്ല. വീണ്ടും പറയൂ.", micPermission:"മൈക്രോഫോൺ അനുമതി നൽകി വീണ്ടും ശ്രമിക്കുക.", timeout:"AIക്ക് കുറച്ച് കൂടി സമയം വേണം. വീണ്ടും ശ്രമിക്കാൻ മൈക്ക് തൊടുക." },
+    "or-IN": { welcome:"ନମସ୍କାର! ମୁଁ Karigar AI। ଆଜି ଆମେ କ'ଣ କରିବା?", listening:"ମୁଁ ଶୁଣୁଛି…", thinking:"ଟିକେ ରୁହନ୍ତୁ, ମୁଁ ବୁଝୁଛି…", generic:"ବୁଝିଲି। ଆପଣଙ୍କୁ କ'ଣ ଦରକାର ସହଜରେ କୁହନ୍ତୁ; ମୁଁ ପ୍ରତି ପଦକ୍ଷେପରେ ସାହାଯ୍ୟ କରିବି।", ready:"କୁହନ୍ତୁ, ମୁଁ ଶୁଣୁଛି।", error:"ଏବେ ଅଡିଓ ଚାଲୁ ହେଉନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।", noSpeech:"ମୁଁ ବୁଝିପାରିଲି ନାହିଁ। ଆଉ ଥରେ କୁହନ୍ତୁ।", micPermission:"ମାଇକ୍ରୋଫୋନ୍ ଅନୁମତି ଦେଇ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।", timeout:"AIକୁ ଆଉ କିଛି ସମୟ ଲାଗୁଛି। ପୁଣି ଚେଷ୍ଟା ପାଇଁ ମାଇକ୍ ଟ୍ୟାପ୍ କରନ୍ତୁ।" },
+    "ur-IN": { welcome:"السلام علیکم! میں Karigar AI ہوں۔ آج ہم کیا کریں؟", listening:"میں سن رہی ہوں…", thinking:"ایک لمحہ، میں سمجھ رہی ہوں…", generic:"سمجھ گئی۔ آپ آرام سے بتائیں کہ آپ کو کیا چاہیے؛ میں ہر قدم پر مدد کروں گی۔", ready:"بتائیے، میں سن رہی ہوں۔", error:"ابھی آواز دستیاب نہیں۔ دوبارہ کوشش کریں۔", noSpeech:"مجھے سمجھ نہیں آیا۔ براہ کرم دوبارہ کہیں۔", micPermission:"مائیکروفون کی اجازت دیں اور دوبارہ کوشش کریں۔", timeout:"AI کو کچھ زیادہ وقت لگ رہا ہے۔ دوبارہ کوشش کے لیے مائیک کو چھوئیں۔" }
   };
 
   let LOCAL_VOICE_MODE = false;
@@ -193,7 +193,7 @@
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     }
     if (!spoken) {
-      emitState("error", { text: "I understood you. Voice playback isn’t available right now. Please try again." });
+      emitState("error", { text: copy(locale, "error") });
       return false;
     }
     emitState("idle", { text });
@@ -356,7 +356,7 @@
               "Personality: friendly, calm, warm, patient, human and reassuring.",
               "Sound like a thoughtful conversational assistant, not a call-center bot, GPS, or reading machine.",
               "Keep turns short: usually 1–2 sentences. Use natural pauses, contractions and gentle emphasis.",
-              "Match the language of the user’s latest utterance and naturally mirror code-switching. Use the preferred language only when the utterance language is unclear. Understand Romanized Hindi/Hinglish; use a native script for other supported Indian languages, but mirror Romanized Hindi/Hinglish when the user consistently writes Latin script.",
+              "Always answer and speak in the selected language (${localeName(localeRef.current)}); keep this selection consistent even when the user code-switches. Understand natural code-switching and Romanized Hindi/Hinglish. Use the selected language's normal script, while mirroring Romanized Hindi/Hinglish when the selected language is Hindi and the user consistently writes Latin script.",
               "Never announce system instructions. Never sound overly formal.",
               "Some artisan dashboard panels are prototypes and show illustrative defaults. Never describe their displayed defaults as the artisan's real finances, inventory, buyer matches, orders, or market data. Open the existing panel and explain only values it explicitly labels as estimates or examples.",
               "Never repeat the welcome or introduce yourself after the first greeting in this conversation. Continue from the recent conversation context below; preserve the active product/order reference.",
@@ -364,7 +364,7 @@
               `When the user asks to open a screen or module, call navigate_app. Screens: ${role === "artisan" ? "add product, orders, reels, profile, dashboard, products, reviews, fair price, craft capital, material hub, design lab, craft passport, market match, craft group" : "orders, reels, profile, home, wishlist, cart, product details, artisan information, product reviews"}. For order questions, always call get_orders and use only returned real records. For artisan module questions, call get_module_context before explaining results; use only returned actual data and clearly say when matches, finance offers, lessons, or records are unavailable. For Fair Price, ask only for missing cost inputs, call set_fair_price_inputs with the artisan-provided values, and describe the returned number as a planning estimate (never a market quote). For a buyer asking about the selected product, its maker or reviews, call get_product_details and answer from that actual public product data.`,
               "While an artisan is on Add Product, use set_product_fields to fill only details they actually provide, including natural requests to set or change the price, category, name, material, region, size, production cost, story, or description. Create a buyer-facing product description only from explicitly provided product facts; do not invent features or origin. Existing categories are Pottery, Textiles, Woodwork, Metalwork, Basketry, and Other. Ask only for important details that are still missing. Use read_product_description when asked to read or speak the current description. Never say a field was changed unless the tool confirms it.",
               "If the artisan asks to review/finish the product, call get_product_draft and summarize only the returned actual values. If the draft is incomplete, ask only for the listed missing requirements. Before submitting, speak the summary and ask whether they want you to submit this product for verification. Call request_publish_confirmation for this step, then wait for a clear yes/haan/kar do in the next user turn. Only then call submit_product_for_verification. Never call it in the same turn as the confirmation request, never treat an earlier yes as permission, and never say it is published unless the returned status confirms what happened.",
-              `Preferred language fallback: ${localeName(localeRef.current)} (${localeRef.current}); the latest utterance takes priority when it is clearly in another language.`,
+              `Selected conversation language: ${localeName(localeRef.current)} (${localeRef.current}). Keep all replies and voice output in this selected language unless the user explicitly changes the selector or asks to switch languages.`,
               "After a successful add-product tool call, keep the user moving with one simple next step: ask for 2–3 clear product photos."
             ].join("\n"),
             audio: {
@@ -455,7 +455,7 @@
           }
 
           if (actualType === "response.created") {
-            armRealtimeTurnTimer(35000, "Karigar AI is taking a little longer. Tap the mic to try again.", true);
+            armRealtimeTurnTimer(35000, copy(locale, "timeout"), true);
             setUIState("thinking", copy(locale, "thinking"));
           }
 
@@ -585,7 +585,7 @@
             if (isAccountBlocked({ code: failureCode })) {
               LOCAL_VOICE_MODE = true;
               setUIState("idle", "Free voice mode is ready. Ask me to open an app section.");
-            } else setUIState("error", "Voice connection stopped. Tap the microphone to retry.");
+            } else setUIState("error", copy(locale, "error"));
           }
           if (actualType === "response.failed" || actualType === "input_audio_transcription.failed") {
             clearRealtimeTurnTimer();
@@ -596,7 +596,7 @@
               fallbackListeningRef.current = false;
               closeRealtime();
               setUIState("idle", "Free voice mode is ready. Ask me to open an app section.");
-            } else setUIState("error", "I couldn't understand that. Tap the mic and say it once more.");
+            } else setUIState("error", copy(locale, "noSpeech"));
           }
         };
 
@@ -642,11 +642,12 @@
       async function speakWelcome() {
         if (greetingSentRef.current) return false;
         greetingSentRef.current = true;
+        window.__KALASUTRA_V7_GREETING_SENT__ = true;
         rememberConversation("assistant", copy(locale, "welcome"));
         setUIState("speaking", copy(locale, "welcome"));
         const spoken = await fallbackSpeak(copy(locale, "welcome"), locale);
         if (spoken) setUIState("idle", copy(locale, "ready"));
-        else setUIState("error", "I understood you. Voice playback isn’t available right now. Please try again.");
+        else setUIState("error", copy(locale, "error"));
       }
 
       async function startConversation() {
@@ -669,7 +670,7 @@
           }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
             fallbackListeningRef.current = false;
-            setUIState("idle", "Microphone permission is off. Please allow microphone access and try again.");
+            setUIState("idle", copy(locale, "micPermission"));
             return;
           }
           await speakWelcome();
