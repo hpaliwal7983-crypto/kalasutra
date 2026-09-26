@@ -347,14 +347,21 @@
         if (dcRef.current?.readyState === "open") dcRef.current.send(JSON.stringify(event));
       }
 
-      function updateSession() {
+      async function updateSession(localeOverride) {
+        const selectedLocale = localeOverride || localeRef.current;
+        let sharedInstructions = "";
+        try {
+          const policy = await postJSON("/ai/instructions", { locale: selectedLocale, role });
+          sharedInstructions = String(policy?.instructions || "");
+        } catch (_) {}
+        if (!sharedInstructions) return;
         sendRealtime({
           type: "session.update",
           session: {
             type: "realtime",
             model: "gpt-realtime-2.1",
             output_modalities: ["audio"],
-
+            instructions: sharedInstructions,
             audio: {
               input: { turn_detection: { type: "server_vad", interrupt_response: true, silence_duration_ms: 550 } },
               output: { voice: "marin" }
@@ -957,7 +964,7 @@
         setLocaleState(next);
         setLocale(next);
         setShowLang(false);
-        try { updateSession(); } catch (_) {}
+        updateSession(next).catch(() => {});
         if (!greetingSentRef.current) speakWelcome().catch(() => {});
         else if (changed) {
           const notice = next.startsWith("en") ? "Language changed to English. We can continue." : next.startsWith("hi") ? "भाषा हिन्दी कर दी है। हम यहीं से आगे बात करेंगे।" : `${localeName(next)} selected. We can continue from here.`;
