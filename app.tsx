@@ -1012,28 +1012,72 @@ function ArtisanProfileScreen({ user, onLogout, go }: any) {
 // BUYER NAV
 // ---------------------------------------------------------------------------
 function BuyerNav({ screen, go }: { screen: string; go: (s: string) => void; cartCount: number }) {
- const items=[{id:"buyerHome",label:"Home",icon:"home"},{id:"buyerReels",label:"Explore",icon:"search"},{id:"buyerAI",label:"",icon:"mic"},{id:"orders",label:"Orders",icon:"orders"},{id:"buyerProfile",label:"Profile",icon:"profile"}];
- return <div className="bottom-nav buyer-bottom-nav buyer-reference-nav">{items.map(it=>it.id==="buyerAI"?<button key={it.id} className="buyer-ai-nav-button" onClick={()=>go("buyerAI")} aria-label="Open KalaSutra AI"><span><Icon name="mic"/></span></button>:<button key={it.id} className={`nav-btn ${screen===it.id?"active":""}`} onClick={()=>go(it.id)}><span className="nav-icon-wrap"><Icon name={it.icon}/></span><span>{it.label}</span></button>)}</div>;
+ const items=[{id:"buyerHome",label:"Home",icon:"home"},{id:"buyerReels",label:"Reels",icon:"reels"},{id:"orders",label:"Orders",icon:"orders"},{id:"wishlist",label:"Wishlist",icon:"heart"},{id:"buyerProfile",label:"Profile",icon:"profile"}];
+ return <div className="bottom-nav buyer-bottom-nav buyer-home-nav">{items.map(it=><button key={it.id} className={`nav-btn ${screen===it.id?"active":""}`} onClick={()=>go(it.id)}><span className="nav-icon-wrap"><Icon name={it.icon}/></span><span>{it.label}</span></button>)}</div>;
 }
 
 // ---------------------------------------------------------------------------
 // BUYER: HOME / EXPLORE
 // ---------------------------------------------------------------------------
-function BuyerHomeScreen({user,go,openProduct,wishlist,toggleWishlist,cartCount,addToCart,setToast}:any){
- const [products,setProducts]=useState<any[]>([]),[query,setQuery]=useState(""),[category,setCategory]=useState(""),[err,setErr]=useState<string|null>(null),[listening,setListening]=useState(false);
- useEffect(()=>{apiGet("/products").then(setProducts).catch((e)=>setErr(e.message));},[]);
- const cats=[{label:"Pottery",image:"/craft-pottery.jpg",terms:["pottery","ceramic"]},{label:"Textiles",image:"/craft-textiles.jpg",terms:["textile","fabric","weave"]},{label:"Jewellery",image:"/craft-jewellery.jpg",terms:["jewel","metal"]},{label:"Home Decor",image:"/craft-decor.jpg",terms:["wood","decor","home","lamp"]},{label:"Art",image:"/craft-statue-05.png",terms:["art","craft","sculpt"]}];
- const filtered=products.filter(p=>{const hay=`${p.title} ${p.category} ${p.craftInfo?.material||""} ${p.craftInfo?.region||""}`.toLowerCase();const qok=!query.trim()||query.toLowerCase().split(" ").filter(Boolean).every(w=>hay.includes(w));const c=cats.find(x=>x.label===category);return qok&&(!c||c.terms.some(t=>hay.includes(t)));});
- async function voiceSearch(){const SR=(window as any).SpeechRecognition||(window as any).webkitSpeechRecognition;if(!SR){go("buyerAI");return;}if(!await requestVoicePermission()){setErr("Please allow microphone access for voice search.");return;}const r=new SR();r.lang="hi-IN";r.interimResults=false;r.maxAlternatives=1;r.onstart=()=>setListening(true);r.onend=()=>setListening(false);r.onerror=()=>{setListening(false);setErr("Voice search could not start. Please try again.");};r.onresult=(e:any)=>setQuery(e.results[0][0].transcript);try{r.start();}catch(_){}}
- return <div className="buyer-reference-home">
- <div className="buyer-reference-topbar"><img src="/assets/logo.png" alt="KalaSutra"/><div className="buyer-reference-user-actions"><button className="buyer-notification-button" aria-label="Notifications">♧<i/></button><button className="buyer-profile-avatar" onClick={()=>go("buyerProfile")} aria-label="Open profile"><img src={user.profile?.photo||"/assets/avatar-artisan.png"} alt=""/></button></div></div>
- <div className="buyer-reference-welcome"><div><h1>Welcome to<br/>KalaSutra!</h1><p>Discover handmade.<br/>Support real artisans.<br/>Be part of a bigger story.</p></div><div className="buyer-welcome-art"><span>Good<br/>Things<br/>Are<br/>Handmade</span><i>❧</i></div></div>
- <div className="content buyer-content buyer-reference-content"><ErrorBanner message={err}/><div className="smart-search buyer-reference-search"><Icon name="search"/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search for pottery, sarees, decor…"/><button className={listening?"voice-search listening":"voice-search"} onClick={voiceSearch} aria-label="Voice search">🎙</button></div>
- <button className="buyer-ai-promo" onClick={()=>go("buyerAI")}><div className="buyer-ai-promo-avatar"><img src="/assets/ai-talker.png" alt=""/></div><div className="buyer-ai-promo-copy"><strong>I’m KalaSutra AI!</strong><span>Tell me what you’re<br/>looking for today?</span><b><Icon name="mic"/> Start Talking</b></div><span className="buyer-ai-promo-leaf">✿</span></button>
- <div className="buyer-category-row" aria-label="Browse crafts">{cats.map(x=><button key={x.label} className={category===x.label?"buyer-category active":"buyer-category"} onClick={()=>setCategory(category===x.label?"":x.label)}><span><img src={x.image} alt=""/></span><small>{x.label}</small></button>)}</div>
- <div className="section-row buyer-reference-section"><div className="section-title" style={{margin:0}}>{query||category?"Matching Crafts":"Trending Crafts"}</div><span className="view-all" onClick={()=>{setCategory("");setQuery("");}}>See All →</span></div>
- {filtered.length===0?<div className="empty-note">No pieces match your search — try another craft, material, or region.</div>:<div className="grid buyer-reference-grid">{filtered.map(p=><div key={p.id} className="card buyer-product-card" onClick={()=>openProduct(p.id)}><div className="thumb" style={{backgroundImage:`url(${p.image})`}}><BadgeLabel status={p.verificationStatus}/><button className="card-icon-btn card-heart" onClick={(e:any)=>{e.stopPropagation();toggleWishlist(p.id);}}>{wishlist.includes(p.id)?"❤️":"🤍"}</button><span className="emoji">{CATEGORY_EMOJI[p.category]||"🎨"}</span></div><div className="info"><div className="t">{p.title}</div><div className="buyer-card-bottom"><div><div className="p">₹{Number(p.price||0).toLocaleString("en-IN")}</div><small className="buyer-rating">★ {Number(p.rating||4.8).toFixed(1)} ({p.reviewCount||98})</small></div><button className="quick-cart-btn" aria-label="Add to cart" onClick={(e:any)=>{e.stopPropagation();addToCart(p.id);setToast("Added to cart 🛍️");}}>＋</button></div></div></div>)}</div>}</div>
- {cartCount>0&&<div className="floating-cart-wrap"><button className="floating-cart" onClick={()=>go("cart")}><span className="mini-cart-icon"><Icon name="cart"/></span><span><strong>View cart</strong><small>{cartCount} item{cartCount>1?"s":""}</small></span><b>›</b></button></div>}</div>;
+function BuyerHomeScreen({ user, go, openProduct, wishlist, toggleWishlist, cartCount }: any) {
+  const [products, setProducts] = useState<any[]>([]);
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("");
+  const [err, setErr] = useState<string | null>(null);
+  const [listening, setListening] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const categories = [
+    { label: "Home Decor", image: "/craft-decor.jpg", terms: ["decor", "home", "wood", "basket", "cane", "lamp"] },
+    { label: "Textiles", image: "/craft-textiles.jpg", terms: ["textile", "fabric", "weave", "stole", "dupatta", "saree", "cloth"] },
+    { label: "Jewellery", image: "/craft-jewellery.jpg", terms: ["jewel", "metal", "earring"] },
+    { label: "Pottery", image: "/craft-pottery.jpg", terms: ["pottery", "ceramic", "terracotta", "clay", "diya"] },
+    { label: "Fashion", image: "/craft-textiles.jpg", terms: ["fashion", "bag", "wear", "accessory", "textile", "fabric"] },
+    { label: "All Categories", image: null, terms: [] },
+  ];
+  useEffect(() => { apiGet("/products").then(setProducts).catch((e) => setErr(e.message)); }, []);
+  const filtered = products.filter((product) => {
+    const hay = `${product.title} ${product.category} ${product.craftInfo?.material || ""} ${product.craftInfo?.region || ""}`.toLowerCase();
+    const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    const selected = categories.find((item) => item.label === category);
+    return words.every((word) => hay.includes(word)) && (!selected || selected.label === "All Categories" || selected.terms.some((term) => hay.includes(term)));
+  });
+  async function voiceSearch() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { go("buyerAI"); return; }
+    if (!await requestVoicePermission()) { setErr("Please allow microphone access for voice search."); return; }
+    const recognition = new SR();
+    recognition.lang = "hi-IN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onstart = () => setListening(true);
+    recognition.onend = () => setListening(false);
+    recognition.onerror = () => { setListening(false); setErr("Voice search could not start. Please try again."); };
+    recognition.onresult = (event: any) => setQuery(event.results?.[0]?.[0]?.transcript || "");
+    try { recognition.start(); } catch (_) { setListening(false); }
+  }
+  const resetFilters = () => { setCategory(""); setQuery(""); };
+  const menuLinks = [{ id: "buyerReels", label: "Reels" }, { id: "orders", label: "Orders" }, { id: "wishlist", label: "Wishlist" }, { id: "buyerProfile", label: "Profile" }];
+  return (
+    <main className="buyer-home-reference">
+      <header className="buyer-home-topbar">
+        <button className="buyer-home-menu-button" onClick={() => setMenuOpen((open) => !open)} aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen}><i/><i/><i/></button>
+        <div className="buyer-home-brand" aria-label="KalaSutra — Crafts Connect Hearts"><span className="buyer-home-brand-leaf" aria-hidden="true">❧</span><span><strong>KalaSutra</strong><small>— Crafts Connect Hearts —</small></span></div>
+        <div className="buyer-home-actions">
+          <button onClick={() => go("wishlist")} aria-label={`Wishlist${wishlist.length ? `, ${wishlist.length} saved` : ""}`}><Icon name="heart"/>{wishlist.length > 0 && <b className="buyer-home-count">{wishlist.length > 9 ? "9+" : wishlist.length}</b>}</button>
+          <button onClick={() => go("cart")} aria-label={`Cart${cartCount ? `, ${cartCount} items` : ""}`}><Icon name="orders"/>{cartCount > 0 && <b className="buyer-home-count">{cartCount > 9 ? "9+" : cartCount}</b>}</button>
+          <button className="buyer-home-profile" onClick={() => go("buyerProfile")} aria-label="Open profile"><img src={user.profile?.photo || "/assets/avatar-artisan.png"} alt=""/></button>
+        </div>
+        {menuOpen && <nav className="buyer-home-menu" aria-label="Buyer menu">{menuLinks.map((item) => <button key={item.id} onClick={() => { setMenuOpen(false); go(item.id); }}>{item.label}</button>)}</nav>}
+      </header>
+      <div className="buyer-home-search"><Icon name="search"/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search for handcrafted treasures…" aria-label="Search handmade products"/><button className={listening ? "listening" : ""} onClick={voiceSearch} aria-label={listening ? "Listening" : "Voice search"}>🎙</button></div>
+      <section className="buyer-home-hero"><div className="buyer-home-hero-copy"><span>DISCOVER</span><h1>Handmade with Heart</h1><p>Support real artisans. Bring home unique stories.</p><button onClick={() => document.getElementById("buyer-featured-picks")?.scrollIntoView({ behavior: "smooth", block: "start" })}>Explore Now <b>→</b></button></div><img className="buyer-home-hero-image" src="/buyer-story.jpg" alt="An artisan handweaving a handmade craft"/></section>
+      <nav className="buyer-home-categories" aria-label="Browse craft categories">{categories.map((item) => <button key={item.label} className={`buyer-home-category ${category === item.label ? "active" : ""}`} onClick={() => item.label === "All Categories" ? resetFilters() : setCategory(category === item.label ? "" : item.label)} aria-pressed={category === item.label}><span>{item.image ? <img src={item.image} alt="" loading="lazy"/> : <b className="buyer-all-categories-icon" aria-hidden="true">▦</b>}</span><small>{item.label}</small></button>)}</nav>
+      <section id="buyer-featured-picks" className="buyer-home-featured"><div className="buyer-home-section-heading"><h2>{query || category ? "Matching Crafts" : "Featured Picks"}</h2><button onClick={resetFilters}>View All <span>→</span></button></div>
+        <ErrorBanner message={err}/>{filtered.length === 0 ? <div className="empty-note">{products.length ? "No pieces match your search — try another craft or material." : "No handmade pieces are available right now."}</div> : <div className="buyer-home-product-grid">{filtered.map((product) => <article key={product.id} className="buyer-home-product-card" onClick={() => openProduct(product.id)}><div className="buyer-home-product-image" style={{ backgroundImage: `url(${product.image || ""})` }}><BadgeLabel status={product.verificationStatus}/><button className="buyer-home-heart" onClick={(event: any) => { event.stopPropagation(); toggleWishlist(product.id); }} aria-label={wishlist.includes(product.id) ? "Remove from wishlist" : "Add to wishlist"} aria-pressed={wishlist.includes(product.id)}>{wishlist.includes(product.id) ? "♥" : "♡"}</button></div><div className="buyer-home-product-info"><div className="buyer-home-product-title">{product.title}</div><small className="buyer-home-rating">★ {Number(product.rating || 4.8).toFixed(1)} ({product.reviewCount || 98})</small><strong className="buyer-home-price">₹{Number(product.price || 0).toLocaleString("en-IN")}</strong></div></article>)}</div>}
+      </section>
+      <section className="buyer-home-trust" aria-label="Shopping benefits"><div><span>❧</span><p><strong>100% Authentic</strong><small>Real Artisans</small></p></div><div><span>♢</span><p><strong>Secure Payments</strong><small>Shop with Confidence</small></p></div><div><span>♧</span><p><strong>Fast Delivery</strong><small>Across India</small></p></div><div><span>♡</span><p><strong>Support Crafts</strong><small>Make a Difference</small></p></div></section>
+    </main>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -1614,7 +1658,7 @@ function App() {
   const isArtisan = user.role === "artisan";
   const navBar = isArtisan
     ? ["dashboard", "addProduct", "myReels", "orders", "profile"].includes(screen) && <ArtisanNav screen={screen} go={setScreen} />
-    : ["buyerHome", "buyerReels", "cart", "orders", "buyerProfile"].includes(screen) && <BuyerNav screen={screen} go={setScreen} cartCount={cartCount} />;
+    : ["buyerHome", "buyerReels", "cart", "orders", "wishlist", "buyerProfile"].includes(screen) && <BuyerNav screen={screen} go={setScreen} cartCount={cartCount} />;
 
   return (
     <div className="app-shell">
@@ -1635,7 +1679,7 @@ function App() {
       {isArtisan && screen === "profile" && <ArtisanProfileScreen user={user} onLogout={logout} go={setScreen} />}
 
       {!isArtisan && screen === "buyerHome" && <BuyerHomeScreen user={user} go={setScreen} openProduct={openProduct} wishlist={wishlist} toggleWishlist={toggleWishlist} cartCount={cartCount} addToCart={addToCart} setToast={setToast} />}
-       {!isArtisan && screen === "buyerAI" && <BuyerAIPage user={user} go={setScreen} />
+       {!isArtisan && screen === "buyerAI" && <BuyerAIPage user={user} go={setScreen} />}
       {!isArtisan && screen === "buyerReels" && <ReelsFeedScreen openProduct={openProduct} setToast={setToast} />}
       {!isArtisan && screen === "wishlist" && <WishlistScreen user={user} openProduct={openProduct} toggleWishlist={toggleWishlist} />}
       {!isArtisan && screen === "cart" && <CartScreen user={user} go={setScreen} setToast={setToast} refreshCartCount={() => refreshCartCount(user.id)} />}
