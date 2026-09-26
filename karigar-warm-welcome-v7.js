@@ -742,10 +742,8 @@
           let actionModule = moduleForAction[data?.action];
           if (artisan && actionModule && data?.moduleContextRequired === true) {
             const liveContext = await getArtisanModuleContext(actionModule);
-            if (liveContext?.available !== false) {
-              data = await fallbackChat(transcript, locale, { activeModule: actionModule, moduleContext: liveContext });
-              actionModule = moduleForAction[data?.action] || actionModule;
-            }
+            data = await fallbackChat(transcript, locale, { activeModule: actionModule, moduleContext: liveContext || { available: false } });
+            actionModule = moduleForAction[data?.action] || actionModule;
           }
           const replyLocale = data?.locale || locale;
           if (data?.action === "ADD_PRODUCT" && artisan) {
@@ -811,9 +809,8 @@
             setUIState("idle", "Microphone permission is off. Please allow microphone access and try again.");
             return;
           }
-          const reply = locale.slice(0, 2) === "en"
-            ? "I heard you. My AI connection is unavailable right now, but I can still open Home, Orders, Reels, Profile, or Add Product."
-            : "Aapki baat samajh aayi. AI connection abhi available nahi hai, par main Home, Orders, Reels, Profile ya Add Product khol sakta hoon.";
+          const reply = aiUnavailableCopy(locale);
+          setUIState("error", reply);
           await fallbackSpeak(reply, locale);
         } finally {
           fallbackBusyRef.current = false;
