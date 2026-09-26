@@ -2519,3 +2519,27 @@ button, input, select, textarea { max-width:100%; }
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
+
+/* Laptop and tablet login layout: keep the form readable and centered. */
+@media (min-width: 701px) {
+  .ks-login-video-flow .ks-login-content {
+    box-sizing: border-box !important;
+    width: min(calc(100% - 48px), 430px) !important;
+    max-width: 430px !important;
+    flex: 0 1 430px !important;
+    margin: auto !important;
+    align-self: center !important;
+  }
+
+  .ks-login-video-flow .ks-login-card,
+  .ks-login-video-flow .ks-login-card .captcha-card {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .ks-login-video-flow .ks-login-card > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
