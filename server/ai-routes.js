@@ -90,6 +90,10 @@ async function openai(path, payload, contentType = "application/json") {
 }
 module.exports = async function aiRoute(req, res, url, b, context = {}) {
   try {
+    if (url.pathname === "/api/ai/instructions") {
+      const [language, locale] = localeInfo(b.locale || b.language);
+      return json(res, 200, { instructions: instructions(b.role, language), locale });
+    }
     if (url.pathname === "/api/ai/realtime-token" || url.pathname === "/api/ai/realtime") {
       const [language] = localeInfo(b.locale || b.language);
       const r = await openai("realtime/client_secrets", { session: { type: "realtime", model: process.env.KALASUTRA_REALTIME_MODEL || "gpt-realtime-2.1", instructions: instructions(b.role, language), audio: { output: { voice: process.env.KALASUTRA_TTS_VOICE || "marin" } }, tools: [
