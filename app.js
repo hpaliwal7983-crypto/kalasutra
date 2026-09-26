@@ -731,7 +731,9 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
     const [designCraft, setDesignCraft] = useState("Pottery");
     const [passportMade, setPassportMade] = useState(false);
     const [lessonSaved, setLessonSaved] = useState({});
-    const [productionCost, setProductionCost] = useState(() => window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__?.productionCost || featured?.craftInfo?.productionCost || "");
+    const initialProductionCost = window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__?.productionCost || featured?.craftInfo?.productionCost || "";
+    const [productionCost, setProductionCost] = useState(initialProductionCost);
+    const [productionCostSeeded, setProductionCostSeeded] = useState(Boolean(initialProductionCost));
     const [artisanOrders, setArtisanOrders] = useState([]);
     const [capitalNeed, setCapitalNeedState] = useState(() => window.__KALASUTRA_CAPITAL_PLANNING_NEED__ || "");
     function setCapitalNeed(value) {
@@ -764,6 +766,15 @@ function ArtisanGrowthHub({ user, featured, products, setToast }) {
         apiGet(`/orders?userId=${encodeURIComponent(user.id)}`).then(rows => { if (active) setArtisanOrders(Array.isArray(rows) ? rows : []); }).catch(() => { if (active) setArtisanOrders([]); });
         return () => { active = false; };
     }, [user.id]);
+    useEffect(() => {
+        if (productionCostSeeded) return;
+        const draftCost = window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__?.productionCost;
+        const actualCost = draftCost || featured?.craftInfo?.productionCost;
+        if (actualCost !== undefined && actualCost !== null && String(actualCost).trim()) {
+            setProductionCost(String(actualCost));
+            setProductionCostSeeded(true);
+        }
+    }, [featured, productionCostSeeded]);
     function moduleContext(moduleName) {
         const sourceProduct = workingProduct;
         const product = sourceProduct ? { id: sourceProduct.id || null, uniqueProductId: sourceProduct.uniqueProductId || null, title: sourceProduct.title, category: sourceProduct.category, price: sourceProduct.price, description: sourceProduct.description, verificationStatus: sourceProduct.verificationStatus, craftInfo: { material: sourceProduct.craftInfo?.material || "", size: sourceProduct.craftInfo?.size || "", productionCost: sourceProduct.craftInfo?.productionCost || null, region: sourceProduct.craftInfo?.region || "", originalStory: sourceProduct.craftInfo?.originalStory || "" } } : null;
