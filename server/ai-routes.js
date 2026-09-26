@@ -82,6 +82,8 @@ async function openai(path, payload, contentType = "application/json") {
         messages: Array.isArray(payload.input) ? payload.input : [],
         ...(format?.type === "json_schema" ? { response_format: { type: "json_schema", json_schema: { name: format.name || "kalasutra_response", strict: format.strict !== false, schema: format.schema } } } : {}),
         ...(payload.max_output_tokens ? { max_tokens: payload.max_output_tokens } : {}),
+        // Prioritize faster token generation while preserving the free router compatibility filtering.
+        provider: { sort: "throughput" },
         temperature: 0.2
       };
       headers["HTTP-Referer"] = process.env.KALASUTRA_SITE_URL || "https://kalasutra.onrender.com";
@@ -154,7 +156,7 @@ module.exports = async function aiRoute(req, res, url, b, context = {}) {
       const moduleName = String(b.activeModule || "").slice(0, 24);
       const moduleContext = b.moduleContext && typeof b.moduleContext === "object" ? JSON.stringify(b.moduleContext).slice(0, 6000) : "";
       const appFacts = { user: { id: String(b.userId || ""), role: b.role || "buyer" }, currentScreen: String(b.screen || ""), activeModule: moduleName, currentProductDraft: productDraft, moduleContext: moduleContext || null, orders: facts, selectedProduct: productContext(context.db, b.productId) };
-      const r = await openai("responses", { model: process.env.KALASUTRA_AI_MODEL || "gpt-5.6-luna", input: [{ role: "system", content: instructions(b.role, language) }, { role: "system", content: `Verified KalaSutra data for this turn (never infer missing records): ${JSON.stringify(appFacts)}` }, ...history, { role: "user", content: message }], text: { format: { type: "json_schema", name: "kalasutra_copilot_reply", strict: true, schema } } });
+      const r = await openai("responses", { model: process.env.KALASUTRA_AI_MODEL || "gpt-5.6-luna", input: [{ role: "system", content: instructions(b.role, language) }, { role: "system", content: `Verified KalaSutra data for this turn (never infer missing records): ${JSON.stringify(appFacts)}` }, ...history, { role: "user", content: message }], text: { format: { type: "json_schema", name: "kalasutra_copilot_reply", strict: true, schema } }, max_output_tokens: 500 });
       const out = await r.json(); let data = {};
       try { data = JSON.parse(out.output_text || "{}"); } catch (_) {}
       const replyLocale = locale;
