@@ -58,16 +58,38 @@ function responseLocale(value, fallback) {
   return entry ? entry[1] : fallback;
 }
 async function openai(path, payload, contentType = "application/json") {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw Object.assign(new Error("The KalaSutra server cannot see OPENAI_API_KEY. Check the Render Web Service environment and redeploy."), { status: 503, code: "missing_api_key" });
+  // Text generation can run through OpenRouter's free-model router. Keep OpenAI
+  // for Realtime, transcription and speech endpoints, which OpenRouter does not
+  // provide through this chat-completions path.
+  const useOpenRouter = path === "responses" && Boolean(process.env.OPENROUTER_API_KEY);
+  const provider = useOpenRouter ? "OpenRouter" : "OpenAI";
+  const key = useOpenRouter ? process.env.OPENROUTER_API_KEY : process.env.OPENAI_API_KEY;
+  if (!key) {
+    const variable = useOpenRouter ? "OPENROUTER_API_KEY" : "OPENAI_API_KEY";
+    throw Object.assign(new Error(`The KalaSutra server cannot see ${variable}. Add it to the Render Web Service environment and redeploy.`), { status: 503, code: "missing_api_key" });
+  }
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 35000);
   let r;
   try {
-    const headers = { Authorization: `Bearer ${key}` };
-    if (contentType !== "multipart/form-data") headers["Content-Type"] = contentType;
-    const body = contentType === "application/sdp" || contentType === "multipart/form-data" ? payload : JSON.stringify(payload);
-    r = await fetch(`https://api.openai.com/v1/${path}`, { method: "POST", headers, body, signal: controller.signal });
+    const headers = { Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
+    let endpoint = `https://api.openai.com/v1/${path}`;
+    let body = contentType === "application/sdp" || contentType === "multipart/form-data" ? payload : JSON.stringify(payload);
+    if (useOpenRouter) {
+      const format = payload.text?.format;
+      const request = {
+        model: process.env.KALASUTRA_OPENROUTER_MODEL || "openrouter/free",
+        messages: Array.isArray(payload.input) ? payload.input : [],
+        ...(format?.type === "json_schema" ? { response_format: { type: "json_schema", json_schema: { name: format.name || "kalasutra_response", strict: format.strict !== false, schema: format.schema } } } : {}),
+        ...(payload.max_output_tokens ? { max_tokens: payload.max_output_tokens } : {}),
+        temperature: 0.2
+      };
+      headers["HTTP-Referer"] = process.env.KALASUTRA_SITE_URL || "https://kalasutra.onrender.com";
+      headers["X-Title"] = "KalaSutra";
+      endpoint = "https://openrouter.ai/api/v1/chat/completions";
+      body = JSON.stringify(request);
+    }
+    r = await fetch(endpoint, { method: "POST", headers, body, signal: controller.signal });
   } catch (error) {
     if (error?.name === "AbortError") throw Object.assign(new Error("AI took too long to respond. Please try again."), { status: 504 });
     throw error;
@@ -76,15 +98,29 @@ async function openai(path, payload, contentType = "application/json") {
     const raw = await r.text();
     let details = {};
     try { details = JSON.parse(raw).error || {}; } catch (_) {}
-    const code = String(details.code || details.type || "openai_request_failed");
-    const message = code === "credit_balance_exhausted" || code === "insufficient_quota"
-      ? "OpenAI API billing has no credits remaining. Add API credits in the OpenAI Platform billing settings, then try again."
-      : r.status === 401
-        ? "The OpenAI API key on the Render service is invalid or inactive. Check the key in the service environment."
+    const code = String(details.code || details.type || (r.status === 429 ? "rate_limited" : "ai_request_failed"));
+    const message = useOpenRouter
+      ? r.status === 401
+        ? "The OpenRouter API key on the Render service is invalid or inactive. Check OPENROUTER_API_KEY in the service environment."
         : r.status === 429
-          ? "The OpenAI API is temporarily rate-limited. Please wait a moment and try again."
-          : "The OpenAI voice service is temporarily unavailable. Please try again shortly.";
+          ? "OpenRouter's free AI limit is temporarily reached. Please wait and try again."
+          : r.status === 402
+            ? "OpenRouter has no free model available for this request right now. Please try again shortly."
+            : "OpenRouter could not complete this AI request. Please try again shortly."
+      : code === "credit_balance_exhausted" || code === "insufficient_quota"
+        ? "OpenAI API billing has no credits remaining. Add API credits in the OpenAI Platform billing settings, then try again."
+        : r.status === 401
+          ? "The OpenAI API key on the Render service is invalid or inactive. Check the key in the service environment."
+          : r.status === 429
+            ? "The OpenAI API is temporarily rate-limited. Please wait a moment and try again."
+            : "The OpenAI voice service is temporarily unavailable. Please try again shortly.";
     throw Object.assign(new Error(message), { status: r.status, code });
+  }
+  if (useOpenRouter) {
+    const result = await r.json();
+    const content = result.choices?.[0]?.message?.content;
+    const outputText = typeof content === "string" ? content : Array.isArray(content) ? content.map(part => part.text || "").join("") : "";
+    return { json: async () => ({ output_text: outputText }) };
   }
   return r;
 }
