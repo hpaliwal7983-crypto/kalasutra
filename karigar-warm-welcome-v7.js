@@ -37,7 +37,9 @@
     "ur-IN": { welcome:"السلام علیکم! میں Karigar AI ہوں۔ آج ہم کیا کریں؟", listening:"میں سن رہی ہوں…", thinking:"ایک لمحہ، میں سمجھ رہی ہوں…", generic:"سمجھ گئی۔ آپ آرام سے بتائیں کہ آپ کو کیا چاہیے؛ میں ہر قدم پر مدد کروں گی۔", ready:"بتائیے، میں سن رہی ہوں۔", error:"ابھی آواز دستیاب نہیں۔ دوبارہ کوشش کریں۔", noSpeech:"مجھے سمجھ نہیں آیا۔ براہ کرم دوبارہ کہیں۔", micPermission:"مائیکروفون کی اجازت دیں اور دوبارہ کوشش کریں۔", timeout:"AI کو کچھ زیادہ وقت لگ رہا ہے۔ دوبارہ کوشش کے لیے مائیک کو چھوئیں۔" }
   };
 
-  let LOCAL_VOICE_MODE = false;
+  // Default to card-free browser voice; send speech text through the configured copilot.
+  // OpenAI Realtime remains available only when someone explicitly opts back in.
+  let LOCAL_VOICE_MODE = true;
 
   function getLocale() {
     try {
