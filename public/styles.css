@@ -581,3 +581,88 @@ body { min-height:100dvh; width:100vw; max-width:100vw; display:block; overflow-
 @media(max-width:420px){.permission-sheet{padding-left:14px;padding-right:14px;border-radius:27px 27px 0 0}.permission-sheet h2{font-size:21px}.permission-row{padding:10px}.permission-row .permission-icon{width:36px;height:36px}}
 \n\n/* KalaSutra next-round business + trust features */\n.artisan-growth-card,.certificate-card,.customize-card{border:1px solid var(--line);background:linear-gradient(135deg,#fffaf5,#fff);border-radius:16px;padding:14px;margin:12px 0;box-shadow:0 8px 22px rgba(73,48,27,.06)}\n.artisan-growth-card{display:flex;justify-content:space-between;align-items:center;cursor:pointer}.artisan-growth-card strong,.certificate-card strong,.customize-card strong{display:block;font-size:14px;margin:3px 0}.artisan-growth-card small,.certificate-card small,.customize-card small{display:block;color:#75695d;font-size:10.5px;line-height:1.4}.growth-arrow{font-size:24px;color:var(--madder)}\n.certificate-card{display:flex;justify-content:space-between;align-items:center;gap:12px}.certificate-qr{width:86px;height:86px;border:1px solid var(--line);border-radius:10px;display:flex;align-items:center;justify-content:center;background:#fff;overflow:hidden}.certificate-qr img{width:82px;height:82px}.customize-card{display:block}.customize-card>.btn{margin-top:10px}.customize-form{margin-top:10px}.customize-form textarea{width:100%;min-height:78px;resize:vertical}.customize-form .btn{margin-top:8px;width:100%}.product-id-mini{font-size:9.5px;color:var(--green);font-weight:700;margin-top:4px;letter-spacing:.3px}\n.artisan-order-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.artisan-order-summary>div{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 8px}.artisan-order-summary small{display:block;font-size:8.5px;color:#76695e;font-weight:800}.artisan-order-summary strong{display:block;font-family:Fraunces,serif;font-size:18px;margin-top:4px}.order-filter-row{display:flex;gap:6px;overflow:auto;padding-bottom:10px}.order-filter-row button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:9.5px;white-space:nowrap}.order-filter-row button.active{background:var(--madder);color:#fff;border-color:var(--madder)}\n
 .certificate-public{min-height:100vh;background:radial-gradient(circle at top,#fff7ee 0,#f7efe6 46%,#eee4d8 100%);padding:28px 18px 50px;font-family:Archivo,Arial,sans-serif}.certificate-public-logo{display:block;width:145px;max-width:55%;margin:0 auto 18px}.certificate-public-card{max-width:620px;margin:0 auto;background:#fffdf9;border:1px solid #ded2c5;border-radius:24px;padding:22px;box-shadow:0 18px 50px rgba(73,48,27,.12)}.certificate-public-kicker{font-size:9px;font-weight:800;letter-spacing:1.4px;color:#8c7765}.certificate-public-id{font:700 25px Fraunces,serif;margin:5px 0 12px;color:#3d2e24}.certificate-public-status{display:inline-block;border-radius:999px;padding:7px 10px;font-size:9px;font-weight:800;margin-bottom:16px}.certificate-public-status.verified{background:#e5f2e6;color:#356b3d}.certificate-public-status.review{background:#fff0d8;color:#8b5d1f}.certificate-public-image{width:100%;max-height:330px;object-fit:cover;border-radius:16px;margin-bottom:14px}.certificate-public-card h1{font:600 26px Fraunces,serif;margin:0 0 8px}.certificate-public-card p{font-size:12px;line-height:1.6;color:#65584d}.certificate-public-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:16px 0}.certificate-public-grid>div{background:#faf5ef;border-radius:12px;padding:10px}.certificate-public-grid small{display:block;font-size:8px;font-weight:800;color:#8b7a6a}.certificate-public-grid strong{display:block;font-size:11px;margin-top:3px}.certificate-public-proof{display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);padding-top:14px;margin-top:14px;font-size:10.5px;color:#62564b}.certificate-public-proof strong{font-size:12px;color:#332820}.certificate-public-note{font-size:9px!important;color:#8a7d6e!important;margin-top:18px!important}
+
+
+/* iPad/tablet layout: prevent desktop-width content and fixed controls from colliding. */
+@media (min-width: 701px) and (max-width: 1180px) {
+  .app-shell {
+    width: 100%;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .app-shell > .app-header,
+  .app-shell > .content,
+  .app-shell > .buyer-hero-header {
+    width: min(960px, calc(100vw - 48px));
+    max-width: 960px;
+  }
+
+  .app-shell > .buyer-hero-header {
+    padding: 24px 28px 18px;
+    align-items: center;
+    gap: 18px;
+  }
+
+  .buyer-hero-header > div:first-child {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .buyer-hero-header h2 {
+    overflow-wrap: anywhere;
+  }
+
+  .app-shell > .content {
+    padding-left: 28px;
+    padding-right: 28px;
+    padding-bottom: 132px;
+  }
+
+  .buyer-content .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+  }
+
+  .buyer-product-card,
+  .buyer-product-card .info,
+  .buyer-card-bottom {
+    min-width: 0;
+  }
+
+  .buyer-card-bottom {
+    flex-wrap: wrap;
+  }
+
+  .buyer-bottom-nav,
+  .bottom-nav {
+    width: min(900px, calc(100vw - 48px));
+    max-width: 900px;
+    bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .floating-cart-wrap {
+    width: min(900px, calc(100vw - 48px));
+    bottom: 96px;
+  }
+
+  .mode-switch-wrap {
+    right: max(24px, calc((100vw - 960px) / 2));
+  }
+
+  .reel {
+    width: min(900px, calc(100vw - 48px));
+    margin-inline: auto;
+    height: calc(100dvh - 96px);
+  }
+
+  .detail-photo {
+    max-height: 62dvh;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1180px) {
+  .buyer-content .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
