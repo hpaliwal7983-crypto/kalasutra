@@ -112,7 +112,10 @@ module.exports = async function aiRoute(req, res, url, b, context = {}) {
       const form = new FormData();
       form.append("file", new Blob([bytes], { type: mime }), `karigar-voice.${extensions[mime]}`);
       form.append("model", process.env.KALASUTRA_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe");
-      // Let transcription identify the spoken language so a stale selector cannot mis-transcribe the user.
+      // Respect the language selected in the app so speech recognition follows the active conversation.
+      const selectedLocale = String(b.locale || b.language || "hi-IN").slice(0, 5);
+      const transcriptionLanguage = selectedLocale.slice(0, 2);
+      form.append("language", transcriptionLanguage);
       form.append("response_format", "json");
       const r = await openai("audio/transcriptions", form, "multipart/form-data");
       const result = await r.json();
