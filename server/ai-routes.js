@@ -83,7 +83,7 @@ async function openai(path, payload, contentType = "application/json") {
         ...(format?.type === "json_schema" ? { response_format: { type: "json_schema", json_schema: { name: format.name || "kalasutra_response", strict: format.strict !== false, schema: format.schema } } } : {}),
         ...(payload.max_output_tokens ? { max_tokens: payload.max_output_tokens } : {}),
         // Prioritize faster token generation while preserving the free router compatibility filtering.
-        provider: { sort: "throughput" },
+        provider: { sort: "throughput", require_parameters: true },
         temperature: 0.2
       };
       headers["HTTP-Referer"] = process.env.KALASUTRA_SITE_URL || "https://kalasutra.onrender.com";
