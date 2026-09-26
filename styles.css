@@ -2520,26 +2520,68 @@ button, input, select, textarea { max-width:100%; }
   }
 }
 
-/* Laptop and tablet login layout: keep the form readable and centered. */
-@media (min-width: 701px) {
-  .ks-login-video-flow .ks-login-content {
+/* Tablet and laptop: keep back buttons in the header layout, beside their titles. */
+@media (min-width: 561px) {
+  .screen-orders .app-header,
+  .screen-myReels .app-header {
     box-sizing: border-box !important;
-    width: min(calc(100% - 48px), 430px) !important;
-    max-width: 430px !important;
-    flex: 0 1 430px !important;
-    margin: auto !important;
-    align-self: center !important;
+    position: relative !important;
+    display: grid !important;
+    grid-template-columns: 36px minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    column-gap: 10px !important;
+    min-height: 72px !important;
+    height: auto !important;
+    padding: 12px 170px 12px 24px !important;
+    overflow: visible !important;
   }
 
-  .ks-login-video-flow .ks-login-card,
-  .ks-login-video-flow .ks-login-card .captcha-card {
-    box-sizing: border-box !important;
-    width: 100% !important;
+  .screen-orders .app-header .header-back,
+  .screen-myReels .app-header .header-back {
+    position: static !important;
+    inset: auto !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    flex: none !important;
+    width: 36px !important;
+    height: 36px !important;
+    margin: 0 !important;
+  }
+
+  .screen-orders .app-header > div:not(.fab),
+  .screen-myReels .app-header > div:not(.fab) {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
     min-width: 0 !important;
+    width: auto !important;
+    margin: 0 !important;
   }
 
-  .ks-login-video-flow .ks-login-card > * {
-    min-width: 0;
-    max-width: 100%;
+  .screen-orders .app-header h2,
+  .screen-myReels .app-header h2 {
+    margin: 0 !important;
+    font-size: clamp(18px, 2vw, 24px) !important;
+    line-height: 1.15 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .screen-orders .app-header .sub,
+  .screen-myReels .app-header .sub {
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+
+  .screen-myReels .app-header > .fab {
+    position: static !important;
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    flex: none !important;
+    margin: 0 !important;
+  }
+
+  .screen-orders .mode-switch-wrap,
+  .screen-myReels .mode-switch-wrap {
+    top: 10px !important;
+    right: 14px !important;
   }
 }
