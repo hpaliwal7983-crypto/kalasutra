@@ -149,6 +149,20 @@
       productId: window.__KALASUTRA_ACTIVE_PRODUCT_ID__ || "",
       role: window.__KALASUTRA_ROLE__ || "artisan",
       userId: window.__KALASUTRA_USER_ID__ || "",
+      productDraft: (() => {
+        try {
+          const draft = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {};
+          return Object.fromEntries(["title", "story", "description", "price", "category", "material", "region", "size", "productionCost"].map(key => [key, typeof draft[key] === "string" ? draft[key].slice(0, key === "story" || key === "description" ? 1200 : 180) : ""]));
+        } catch (_) { return {}; }
+      })(),
+      activeModule: window.__KALASUTRA_CURRENT_ARTISAN_MODULE__ || "",
+      moduleContext: (() => {
+        try {
+          const module = window.__KALASUTRA_CURRENT_ARTISAN_MODULE__;
+          const context = module && window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__?.getContext?.(module);
+          return context && JSON.stringify(context).length <= 6000 ? context : null;
+        } catch (_) { return null; }
+      })(),
       history
     });
     return data;
@@ -763,19 +777,58 @@
           }
           rememberConversation("user", transcript);
           const data = await fallbackChat(transcript, locale);
-          const reply = data?.reply || copy(locale, "generic");
-          await fallbackSpeak(reply, data?.locale || locale);
-          rememberConversation("assistant", reply);
-          const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
-          history.push({ role: "assistant", content: reply });
-          window.__KALASUTRA_V7_HISTORY__ = history.slice(-16);
-          if (data?.action && data.action !== "NONE") {
-            const opened = runAction(data.action);
-            if (opened) {
-              if (data.action === "ADD_PRODUCT") emitFlow({ step: "photos" });
-              setOpen(false);
+          const replyLocale = data?.locale || locale;
+          const artisan = role === "artisan";
+          const moduleForAction = { FAIR_PRICE: "price", CRAFT_CAPITAL: "capital", MATERIAL_HUB: "material", DESIGN_LAB: "design", CRAFT_PASSPORT: "passport", MARKET_MATCH: "market", CRAFT_GURUKUL: "gurukul" };
+          const actionModule = moduleForAction[data?.action];
+          if (data?.action === "ADD_PRODUCT" && artisan) {
+            runAction("ADD_PRODUCT");
+            emitFlow({ step: "photos" });
+            setOpen(false);
+          } else if (actionModule && artisan) {
+            await getArtisanModuleContext(actionModule);
+            setOpen(false);
+          } else if (data?.action && data.action !== "NONE") {
+            if (runAction(data.action)) setOpen(false);
+          }
+
+          let spokenReply = data?.reply || copy(locale, "generic");
+          const hasProductFields = data?.productFields && Object.values(data.productFields).some(value => typeof value === "string" && value.trim());
+          if (artisan && hasProductFields) {
+            const productApi = await ensureProductActions();
+            if (productApi?.applyFields?.(data.productFields)) {
+              const acknowledgement = { "hi": "आपकी दी हुई जानकारी Add Product में भर दी है।", "en": "I filled the details you gave into Add Product.", "mr": "तुम्ही दिलेली माहिती Add Product मध्ये भरली आहे.", "gu": "તમે આપેલી વિગતો Add Product માં ભરી છે.", "pa": "ਤੁਹਾਡੇ ਦਿੱਤੇ ਵੇਰਵੇ Add Product ਵਿੱਚ ਭਰ ਦਿੱਤੇ ਹਨ।", "bn": "আপনার দেওয়া তথ্য Add Product-এ পূরণ করেছি।", "ta": "நீங்கள் கொடுத்த விவரங்களை Add Product-ல் நிரப்பியுள்ளேன்.", "te": "మీరు ఇచ్చిన వివరాలను Add Product‌లో నింపాను.", "kn": "ನೀವು ನೀಡಿದ ವಿವರಗಳನ್ನು Add Product‌ನಲ್ಲಿ ತುಂಬಿದ್ದೇನೆ.", "ml": "നിങ്ങൾ നൽകിയ വിവരങ്ങൾ Add Product-ൽ ചേർത്തു.", "or": "ଆପଣ ଦେଇଥିବା ବିବରଣୀ Add Product ରେ ଭରିଛି।", "ur": "آپ کی دی ہوئی تفصیلات Add Product میں بھر دی ہیں۔" };
+              spokenReply = [spokenReply, acknowledgement[String(replyLocale).slice(0, 2)] || acknowledgement.hi].filter(Boolean).join(" ");
             }
           }
+
+          const fair = data?.fairPriceInputs || {};
+          const hasFairInputs = artisan && Object.values(fair).some(value => typeof value === "string" && value.trim());
+          if (hasFairInputs) {
+            await getArtisanModuleContext("price");
+            const api = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+            const result = api?.setFairPriceInputs?.(fair);
+            if (result?.estimate != null) {
+              const labels = { "hi": "योजना का अनुमानित उचित मूल्य", "en": "Planning fair-price estimate", "mr": "नियोजनासाठी अंदाजित योग्य किंमत", "gu": "આયોજન માટે અંદાજિત યોગ્ય કિંમત", "pa": "ਯੋਜਨਾ ਲਈ ਅੰਦਾਜ਼ਨ ਉਚਿਤ ਕੀਮਤ", "bn": "পরিকল্পনার জন্য আনুমানিক ন্যায্য মূল্য", "ta": "திட்டமிடலுக்கான நியாயமான விலை மதிப்பீடு", "te": "ప్రణాళిక కోసం అంచనా సరైన ధర", "kn": "ಯೋಜನೆಗಾಗಿ ಅಂದಾಜು ನ್ಯಾಯಯುತ ಬೆಲೆ", "ml": "ആസൂത്രണത്തിനുള്ള കണക്കാക്കിയ ന്യായവില", "or": "ଯୋଜନା ପାଇଁ ଆନୁମାନିକ ଉଚିତ ମୂଲ୍ୟ", "ur": "منصوبہ بندی کے لیے منصفانہ قیمت کا تخمینہ" };
+              const amount = new Intl.NumberFormat(replyLocale || "hi-IN", { maximumFractionDigits: 0 }).format(result.estimate);
+              spokenReply = [spokenReply, labels[String(replyLocale).slice(0, 2)] || labels.hi, "₹" + amount].filter(Boolean).join(" ");
+            }
+          }
+
+          if (artisan && typeof data?.capitalNeed === "string" && data.capitalNeed) {
+            await getArtisanModuleContext("capital");
+            const result = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__?.setCapitalNeed?.(data.capitalNeed);
+            if (result?.status === "updated") {
+              const ack = { "hi": "आपकी बताई राशि Craft Capital में भर दी है।", "en": "I filled that amount into Craft Capital.", "mr": "तुम्ही सांगितलेली रक्कम Craft Capital मध्ये भरली आहे.", "gu": "તમે જણાવેલી રકમ Craft Capital માં ભરી છે.", "pa": "ਤੁਹਾਡੀ ਦੱਸੀ ਰਕਮ Craft Capital ਵਿੱਚ ਭਰ ਦਿੱਤੀ ਹੈ।", "bn": "আপনার বলা পরিমাণ Craft Capital-এ পূরণ করেছি।", "ta": "நீங்கள் கூறிய தொகையை Craft Capital-ல் நிரப்பியுள்ளேன்.", "te": "మీరు చెప్పిన మొత్తాన్ని Craft Capital‌లో నింపాను.", "kn": "ನೀವು ಹೇಳಿದ ಮೊತ್ತವನ್ನು Craft Capital‌ನಲ್ಲಿ ತುಂಬಿದ್ದೇನೆ.", "ml": "നിങ്ങൾ പറഞ്ഞ തുക Craft Capital-ൽ ചേർത്തു.", "or": "ଆପଣ କହିଥିବା ରାଶି Craft Capital ରେ ଭରିଛି।", "ur": "آپ کی بتائی ہوئی رقم Craft Capital میں بھر دی ہے۔" };
+              spokenReply = [spokenReply, ack[String(replyLocale).slice(0, 2)] || ack.hi].filter(Boolean).join(" ");
+            }
+          }
+
+          await fallbackSpeak(spokenReply, replyLocale);
+          rememberConversation("assistant", spokenReply);
+          const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
+          history.push({ role: "assistant", content: spokenReply });
+          window.__KALASUTRA_V7_HISTORY__ = history.slice(-16);
         } catch (error) {
           if (isAccountBlocked(error)) {
             LOCAL_VOICE_MODE = true;
