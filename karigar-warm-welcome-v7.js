@@ -675,7 +675,7 @@
             LOCAL_VOICE_MODE = true;
             fallbackListeningRef.current = false;
             setRealtimeUnavailable(true);
-            const message = aiUnavailableCopy(locale);
+            const message = error?.message || aiUnavailableCopy(locale);
             setUIState("error", message);
             await fallbackSpeak(message, locale);
             return;
@@ -808,7 +808,7 @@
             LOCAL_VOICE_MODE = true;
             fallbackListeningRef.current = false;
             setRealtimeUnavailable(true);
-            const message = aiUnavailableCopy(locale);
+            const message = error?.message || aiUnavailableCopy(locale);
             setUIState("error", message);
             await fallbackSpeak(message, locale);
             return;
@@ -818,7 +818,7 @@
             setUIState("idle", "Microphone permission is off. Please allow microphone access and try again.");
             return;
           }
-          const reply = aiUnavailableCopy(locale);
+          const reply = error?.message || aiUnavailableCopy(locale);
           setUIState("error", reply);
           await fallbackSpeak(reply, locale);
         } finally {
