@@ -1893,3 +1893,180 @@ button, input, select, textarea { max-width:100%; }
   .artisan-home .artisan-content{padding:0 18px 108px!important}
   .artisan-home .home-stats{margin-top:0!important}
 }
+
+
+/* Mobile overlap corrections for Orders, Reels, and the Reel camera. */
+@media (max-width: 560px) {
+  /* Keep inner-page titles beside their back buttons, below the role switch. */
+  .screen-orders .app-header,
+  .screen-myReels .app-header {
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 58px 12px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    flex-wrap: nowrap !important;
+  }
+  .screen-orders .app-header .header-back,
+  .screen-myReels .app-header .header-back {
+    position: relative !important;
+    inset: auto !important;
+    flex: 0 0 34px !important;
+    width: 34px !important;
+    height: 34px !important;
+    margin: 0 !important;
+  }
+  .screen-orders .app-header > div:not(.fab),
+  .screen-myReels .app-header > div:not(.fab) {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+  .screen-orders .app-header h2,
+  .screen-myReels .app-header h2 {
+    font-size: clamp(16px, 4.7vw, 20px) !important;
+    line-height: 1.15 !important;
+    overflow-wrap: anywhere;
+  }
+  .screen-orders .app-header .sub,
+  .screen-myReels .app-header .sub {
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+  .screen-myReels .app-header > .fab {
+    flex: 0 0 38px !important;
+    margin: 0 !important;
+  }
+
+  /* Reserve a clean row for the buyer/artisan switch on the camera screen. */
+  .screen-createReel .mode-switch-wrap {
+    top: calc(98px + env(safe-area-inset-top)) !important;
+    right: 12px !important;
+    z-index: 90 !important;
+  }
+  .screen-createReel .reel-create-identity-wrap {
+    padding-top: 42px !important;
+  }
+
+  /* Use a two-row toolbar so the logo, camera tools, and Save Draft never collide. */
+  .screen-createReel .reel-create-topbar {
+    height: auto !important;
+    min-height: 0 !important;
+    display: grid !important;
+    grid-template-columns: 34px minmax(0, 1fr) 34px 34px !important;
+    grid-template-rows: 42px 34px !important;
+    gap: 6px 8px !important;
+    align-items: center !important;
+    padding: max(8px, env(safe-area-inset-top)) 10px 8px !important;
+  }
+  .screen-createReel .reel-create-topbar > button:first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 34px !important;
+    height: 38px !important;
+    padding: 0 !important;
+  }
+  .screen-createReel .reel-create-topbar > img {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-self: start !important;
+    width: min(88px, 100%) !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+  .screen-createReel .reel-create-topbar > div {
+    display: none !important;
+  }
+  .screen-createReel .reel-create-topbar > button[title="Camera settings"] {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    width: 34px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    font-size: 20px !important;
+  }
+  .screen-createReel .reel-create-topbar > button[title="Flip camera"] {
+    grid-column: 4 !important;
+    grid-row: 1 !important;
+    width: 34px !important;
+    height: 38px !important;
+    padding: 0 !important;
+    font-size: 20px !important;
+  }
+  .screen-createReel .reel-create-topbar > button:last-child {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    justify-self: end !important;
+    width: auto !important;
+    min-height: 32px !important;
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Put camera actions in distinct touch targets around the centered shutter. */
+  .screen-createReel .reel-viewfinder .gallery-upload,
+  .screen-createReel .reel-viewfinder .photo-gallery-upload {
+    bottom: 22px !important;
+    width: 50px !important;
+    height: 50px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 1px !important;
+    border-radius: 14px !important;
+    background: rgba(255,255,255,.14) !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,.65) !important;
+    font-size: 18px !important;
+    line-height: 1 !important;
+    z-index: 18 !important;
+  }
+  .screen-createReel .reel-viewfinder .gallery-upload {
+    left: 8px !important;
+  }
+  .screen-createReel .reel-viewfinder .photo-gallery-upload {
+    left: 62px !important;
+  }
+  .screen-createReel .reel-viewfinder .gallery-upload small,
+  .screen-createReel .reel-viewfinder .photo-gallery-upload small {
+    font-size: 7px !important;
+    line-height: 1 !important;
+  }
+  .screen-createReel .reel-viewfinder .record-button {
+    width: 68px !important;
+    height: 68px !important;
+    bottom: 18px !important;
+    z-index: 18 !important;
+  }
+  .screen-createReel .reel-viewfinder .record-hint {
+    bottom: 2px !important;
+    z-index: 18 !important;
+  }
+  .screen-createReel .reel-viewfinder .reel-mode-toggle {
+    bottom: 112px !important;
+    z-index: 18 !important;
+  }
+  .screen-createReel .reel-viewfinder .reel-mode-toggle button {
+    padding: 9px 22px !important;
+  }
+  .screen-createReel .reel-viewfinder .effects-btn {
+    right: 8px !important;
+    bottom: 22px !important;
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 14px !important;
+    z-index: 18 !important;
+  }
+
+  /* Keep the fixed bottom bar clear of reel captions and action buttons. */
+  .screen-buyerReels .reel-overlay {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Floating triggers otherwise cover the camera tools and full-screen reel controls. */
+  .screen-createReel .karigar-copilot-fab,
+  .screen-buyerReels .karigar-copilot-fab {
+    display: none !important;
+  }
+}
