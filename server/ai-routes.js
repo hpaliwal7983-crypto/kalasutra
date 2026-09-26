@@ -34,10 +34,28 @@ function productContext(db, productId) {
   const product = db?.products?.find(item => String(item.id) === String(productId));
   if (!product) return { available: false };
   const artisan = db.users?.find(user => String(user.id) === String(product.artisanId));
-  return { available: true, product: { id: product.id, title: product.title, description: product.description, price: product.price, category: product.category, craftInfo: { material: product.craftInfo?.material, region: product.craftInfo?.region, originalStory: product.craftInfo?.originalStory }, verificationStatus: product.verificationStatus }, artisan: artisan ? { name: artisan.name, profile: { craft: artisan.profile?.craft, location: artisan.profile?.location, bio: artisan.profile?.bio, trustScore: artisan.profile?.trustScore } } : null, reviews: (db.reviews || []).filter(review => String(review.productId) === String(product.id)).map(review => ({ rating: review.stars, text: review.text, date: review.createdAt })).slice(0, 20) };
+  return { available: true, product: { id: product.id, title: product.title, description: product.description, price: product.price, category: product.category, craftInfo: { material: product.craftInfo?.material, region: product.craftInfo?.region, size: product.craftInfo?.size, productionCost: product.craftInfo?.productionCost, originalStory: product.craftInfo?.originalStory }, verificationStatus: product.verificationStatus }, artisan: artisan ? { name: artisan.name, profile: { craft: artisan.profile?.craft, location: artisan.profile?.location, bio: artisan.profile?.bio, trustScore: artisan.profile?.trustScore } } : null, reviews: (db.reviews || []).filter(review => String(review.productId) === String(product.id)).map(review => ({ rating: review.stars, text: review.text, date: review.createdAt })).slice(0, 20) };
 }
 function instructions(role, language) {
-  return `You are Karigar AI inside KalaSutra, a warm, human, voice-first companion. Speak naturally and briefly in ${language}; understand mixed Hindi-English and the user's chosen language. Current role: ${role === "artisan" ? "artisan" : "buyer"}. For artisan, help with products, orders, reels, profile and the seven existing dashboard panels. For buyer, help with product details, artisan information, reviews, orders, profile, wishlist and cart. Continue the current conversation without reintroducing yourself or repeating a welcome. Use recent conversation and provided app data as the source of truth. Never invent order counts, order details, prices, balances, market matches, inventory, artisan history, product details or module results. When asked about data that is unavailable, say so clearly. When the user asks to open a screen or an existing dashboard panel, return its action. Actions: ${actions.join(", ")}. Never claim you opened something unless action is set. Keep the answer warm and conversational. When helping create a product, use only facts the artisan stated; never invent its material, region, making process, price or origin.`;
+  return `You are Karigar AI, the single voice-first artisan copilot inside the existing KalaSutra V6 app. The selected conversation language is ${language}. Keep every reply, follow-up, confirmation, and error in that language. Understand natural Indian-language speech, code-switching, and Romanized Hindi. Do not greet again after the session has begun.
+
+Your job is to understand intent and entities, use conversation history and supplied current app context, remember details already given, ask only for missing information, analyze with existing application data and logic, fill existing workflows, explain the result, and leave final publishing/verification under the artisan's control. Do not create duplicate workflows or invent facts.
+
+For artisans:
+- Add Product: extract only stated product facts. Fill existing product fields from those facts. Generate a concise buyer-facing English description only from verified draft/conversation facts; write the Tell Your Story field only when the artisan actually shares a personal/craft story. Ask one focused question at a time for the next important missing field. Guide the artisan to use existing photo and making-proof controls. Never submit or bypass the existing verification/final confirmation.
+- Fair Price: use the current product and module context. Ask only for missing actual inputs (production cost, material cost, hours, hourly rate, overhead). Return only values the artisan stated. The existing app calculates the planning estimate; never invent a market price.
+- Craft Capital, Material Hub, Design Lab, Craft Passport, Direct Market Match, and Craft Gurukul: consult the supplied live module context or use the matching existing module action. Explain only actual available records and clearly say when records/data are unavailable. Do not make up matches, buyers, trends, financing, materials, credentials, designs, lessons, members, or activities. Offer the next action supported by the existing UI.
+- Orders: use only the supplied real order data; answer counts/lists and follow-up references from it. Never guess an order or count.
+
+Voice function-call mode must use the existing tools as the action bridge: call get_orders for order questions; call get_module_context before explaining artisan modules; call set_fair_price_inputs only with artisan-provided cost values and rely on its returned estimate; call set_capital_planning_need only for an explicitly stated planning amount; call set_product_fields for stated product facts, then get_product_draft to inspect missing required fields. Call read_product_description only to read the saved/current description. For submission, summarize the complete real draft, call request_publish_confirmation, wait for a clear confirmation in the next user turn, then call submit_product_for_verification. Never skip this confirmation. In structured chat mode, return the equivalent action and productFields/fairPriceInputs/capitalNeed values for the existing client workflow to apply; do not claim a field changed until the client reports success.
+
+For buyers, answer product, artisan, review, order, profile, wishlist, and cart questions only from supplied app data.
+
+For structured chat responses, set moduleContextRequired=true when the user wants an answer or analysis about an artisan module and the supplied context is absent or is for a different module. Set it false for a request that only asks to open a screen. The client may open/read the existing module and make one follow-up call with that actual context before speaking. Use a navigation action only when the user wants to open/navigate to a screen. A question or work request about a module means help with the task and relevant data, not merely open its screen. If you cannot confidently identify intent or a reference, ask a short clarification instead of guessing. Never claim a change succeeded unless the app action/result confirms it. Keep spoken replies concise. Current role: ${role === "artisan" ? "artisan" : "buyer"}. Available actions: ${actions.join(", ")}.`;
+}
+function responseLocale(value, fallback) {
+  const entry = LANGS[String(value || "")];
+  return entry ? entry[1] : fallback;
 }
 async function openai(path, payload, contentType = "application/json") {
   const key = process.env.OPENAI_API_KEY;
@@ -72,6 +90,10 @@ async function openai(path, payload, contentType = "application/json") {
 }
 module.exports = async function aiRoute(req, res, url, b, context = {}) {
   try {
+    if (url.pathname === "/api/ai/instructions") {
+      const [language, locale] = localeInfo(b.locale || b.language);
+      return json(res, 200, { instructions: instructions(b.role, language), locale });
+    }
     if (url.pathname === "/api/ai/realtime-token" || url.pathname === "/api/ai/realtime") {
       const [language] = localeInfo(b.locale || b.language);
       const r = await openai("realtime/client_secrets", { session: { type: "realtime", model: process.env.KALASUTRA_REALTIME_MODEL || "gpt-realtime-2.1", instructions: instructions(b.role, language), audio: { output: { voice: process.env.KALASUTRA_TTS_VOICE || "marin" } }, tools: [
@@ -84,18 +106,26 @@ module.exports = async function aiRoute(req, res, url, b, context = {}) {
       const [language, locale] = localeInfo(b.locale || b.language);
       const message = String(b.message || b.messages?.at?.(-1)?.content || "").slice(0, 4000);
       if (!message) return json(res, 400, { error: "message is required" });
-      const schema = { type: "object", properties: { reply: { type: "string" }, action: { type: "string", enum: actions }, locale: { type: "string", enum: Object.keys(LANGS) } }, required: ["reply", "action", "locale"], additionalProperties: false };
+      const productFieldsSchema = { type: "object", properties: { title: { type: ["string", "null"] }, story: { type: ["string", "null"] }, description: { type: ["string", "null"] }, price: { type: ["string", "null"] }, category: { type: ["string", "null"] }, material: { type: ["string", "null"] }, region: { type: ["string", "null"] }, size: { type: ["string", "null"] }, productionCost: { type: ["string", "null"] } }, required: ["title","story","description","price","category","material","region","size","productionCost"], additionalProperties: false };
+      const fairPriceInputsSchema = { type: "object", properties: { productionCost: { type: ["string", "null"] }, materialCost: { type: ["string", "null"] }, hours: { type: ["string", "null"] }, hourlyRate: { type: ["string", "null"] }, overhead: { type: ["string", "null"] } }, required: ["productionCost","materialCost","hours","hourlyRate","overhead"], additionalProperties: false };
+      const schema = { type: "object", properties: { reply: { type: "string" }, action: { type: "string", enum: actions }, locale: { type: "string", enum: Object.keys(LANGS) }, productFields: productFieldsSchema, fairPriceInputs: fairPriceInputsSchema, capitalNeed: { type: ["string", "null"] }, moduleContextRequired: { type: "boolean" } }, required: ["reply", "action", "locale", "productFields", "fairPriceInputs", "capitalNeed", "moduleContextRequired"], additionalProperties: false };
       const sourceHistory = b.history || b.messages || [];
       const historyItems = b.message && b.messages ? sourceHistory.slice(0, -1) : sourceHistory;
       const history = historyItems.slice(-8).map(x => ({ role: x.role === "assistant" ? "assistant" : "user", content: String(x.content || "").slice(0, 1200) }));
       const facts = orderContext(context.db, b.userId, b.role === "artisan" ? "artisan" : "buyer");
-      const appFacts = { user: { id: String(b.userId || ""), role: b.role || "buyer" }, currentScreen: String(b.screen || ""), orders: facts, selectedProduct: productContext(context.db, b.productId) };
+      const draftSource = b.productDraft && typeof b.productDraft === "object" ? b.productDraft : {};
+      const productDraft = Object.fromEntries(["title","story","description","price","category","material","region","size","productionCost"].map(key => [key, String(draftSource[key] || "").slice(0, key === "story" || key === "description" ? 1200 : 180)]));
+      const moduleName = String(b.activeModule || "").slice(0, 24);
+      const moduleContext = b.moduleContext && typeof b.moduleContext === "object" ? JSON.stringify(b.moduleContext).slice(0, 6000) : "";
+      const appFacts = { user: { id: String(b.userId || ""), role: b.role || "buyer" }, currentScreen: String(b.screen || ""), activeModule: moduleName, currentProductDraft: productDraft, moduleContext: moduleContext || null, orders: facts, selectedProduct: productContext(context.db, b.productId) };
       const r = await openai("responses", { model: process.env.KALASUTRA_AI_MODEL || "gpt-5.6-luna", input: [{ role: "system", content: instructions(b.role, language) }, { role: "system", content: `Verified KalaSutra data for this turn (never infer missing records): ${JSON.stringify(appFacts)}` }, ...history, { role: "user", content: message }], text: { format: { type: "json_schema", name: "kalasutra_copilot_reply", strict: true, schema } } });
       const out = await r.json(); let data = {};
       try { data = JSON.parse(out.output_text || "{}"); } catch (_) {}
-      if (!LANGS[data.locale]) data.locale = locale;
+      const replyLocale = locale;
       if (!actions.includes(data.action)) data.action = "NONE";
-      return json(res, 200, { reply: String(data.reply || "I’m here with you. Tell me what you’d like to do."), action: data.action, locale });
+      const cleanFields = source => Object.fromEntries(["title","story","description","price","category","material","region","size","productionCost"].map(key => [key, typeof source?.[key] === "string" ? source[key].trim().slice(0, key === "story" || key === "description" ? 1800 : 180) : null]));
+      const cleanCosts = source => Object.fromEntries(["productionCost","materialCost","hours","hourlyRate","overhead"].map(key => [key, typeof source?.[key] === "string" ? source[key].replace(/[^0-9.]/g, "").slice(0, 24) || null : null]));
+      return json(res, 200, { reply: String(data.reply || "I’m here with you. Tell me what you’d like to do.").slice(0, 3000), action: data.action, locale: replyLocale, productFields: cleanFields(data.productFields), fairPriceInputs: cleanCosts(data.fairPriceInputs), capitalNeed: typeof data.capitalNeed === "string" ? data.capitalNeed.replace(/[^0-9]/g, "").slice(0, 18) || null : null, moduleContextRequired: data.moduleContextRequired === true });
     }
     if (url.pathname === "/api/ai/transcribe") {
       const encoded = String(b.audioBase64 || "");
@@ -108,7 +138,10 @@ module.exports = async function aiRoute(req, res, url, b, context = {}) {
       const form = new FormData();
       form.append("file", new Blob([bytes], { type: mime }), `karigar-voice.${extensions[mime]}`);
       form.append("model", process.env.KALASUTRA_TRANSCRIBE_MODEL || "gpt-4o-mini-transcribe");
-      form.append("language", String(b.locale || "hi-IN").slice(0, 2));
+      // Respect the language selected in the app so speech recognition follows the active conversation.
+      const selectedLocale = String(b.locale || b.language || "hi-IN").slice(0, 5);
+      const transcriptionLanguage = selectedLocale.slice(0, 2);
+      form.append("language", transcriptionLanguage);
       form.append("response_format", "json");
       const r = await openai("audio/transcriptions", form, "multipart/form-data");
       const result = await r.json();
@@ -120,21 +153,21 @@ module.exports = async function aiRoute(req, res, url, b, context = {}) {
       if (!message) return json(res, 400, { error: "message is required" });
       if (b.role && b.role !== "artisan") return json(res, 403, { error: "Product assistance is for artisan accounts." });
       const draft = b.draft && typeof b.draft === "object" ? b.draft : {};
-      const fieldsSchema = Object.fromEntries(["title", "story", "description", "price", "category", "material", "region"].map(key => [key, { type: ["string", "null"] }]));
+      const fieldsSchema = Object.fromEntries(["title", "story", "description", "price", "category", "material", "region", "size", "productionCost"].map(key => [key, { type: ["string", "null"] }]));
       const schema = { type: "object", properties: { reply: { type: "string" }, action: { type: "string", enum: ["NONE", "READ_DESCRIPTION", "REVIEW_PRODUCT", "REQUEST_SUBMIT_CONFIRMATION", "SUBMIT_PRODUCT"] }, locale: { type: "string", enum: Object.keys(LANGS) }, fields: { type: "object", properties: fieldsSchema, required: Object.keys(fieldsSchema), additionalProperties: false } }, required: ["reply", "action", "locale", "fields"], additionalProperties: false };
       const prompt = [
-        { role: "system", content: `${instructions("artisan", language)}\nYou are helping fill the artisan's existing Add Product draft. Use READ_DESCRIPTION when asked to read or speak the current description. Use REVIEW_PRODUCT when asked to review an incomplete draft, and name only the actual missing requirements. Use REQUEST_SUBMIT_CONFIRMATION only when the provided draft says complete=true; reply with a concise exact summary of its real values and ask whether the artisan wants to submit it for verification. Use SUBMIT_PRODUCT only if conversation history shows the immediately previous assistant turn clearly asked for submission confirmation and the current user turn is an unambiguous yes/haan/okay-do-it confirmation. An unrelated yes is never sufficient. Otherwise use NONE. Extract only details explicitly stated in this turn; preserve current values for unstated fields. For each returned field, use its current draft value if present, otherwise null. Never infer a price, material, region, craft process, or product fact. If the artisan asks to revise the description, rewrite it using only known facts. Write description in concise, natural English for buyers; keep reply short in ${language}.` },
+        { role: "system", content: `${instructions("artisan", language)}\nYou are helping fill the artisan's existing Add Product draft. Use READ_DESCRIPTION when asked to read or speak the current description. Use REVIEW_PRODUCT when asked to review an incomplete draft, and name only the actual missing requirements. Use REQUEST_SUBMIT_CONFIRMATION only when the provided draft says complete=true; reply with a concise exact summary of its real values and ask whether the artisan wants to submit it for verification. Use SUBMIT_PRODUCT only if conversation history shows the immediately previous assistant turn clearly asked for submission confirmation and the current user turn is an unambiguous yes/haan/okay-do-it confirmation. An unrelated yes is never sufficient. Otherwise use NONE. Extract details stated in this turn or prior conversation; preserve current values for unstated fields. Extract size and productionCost only when the artisan provides them; never infer these values. For each returned field, use its current draft value if present, otherwise null. Never infer a price, material, region, craft process, or product fact. If the artisan asks to revise the description, rewrite it using only known facts. Write the buyer-facing description in concise, natural English using only known product facts; keep the spoken assistant reply in the selected language ${language}, including during code-switching, and return that selected locale.` },
         ...((Array.isArray(b.history) ? b.history : []).slice(-6).map(x => ({ role: x.role === "assistant" ? "assistant" : "user", content: String(x.content || "").slice(0, 800) }))),
-        { role: "user", content: JSON.stringify({ current_draft: Object.fromEntries(["title", "story", "description", "price", "category", "material", "region"].map(k => [k, String(draft[k] || "").slice(0, 1200)])), complete: draft.complete === true, missing: Array.isArray(draft.missing) ? draft.missing.slice(0, 6) : [], photoCount: Math.max(0, Number(draft.photoCount) || 0), hasMakingProof: draft.hasMakingProof === true, artisan_utterance: message }) }
+        { role: "user", content: JSON.stringify({ current_draft: Object.fromEntries(["title", "story", "description", "price", "category", "material", "region", "size", "productionCost"].map(k => [k, String(draft[k] || "").slice(0, 1200)])), complete: draft.complete === true, missing: Array.isArray(draft.missing) ? draft.missing.slice(0, 6) : [], photoCount: Math.max(0, Number(draft.photoCount) || 0), hasMakingProof: draft.hasMakingProof === true, artisan_utterance: message }) }
       ];
       const r = await openai("responses", { model: process.env.KALASUTRA_AI_MODEL || "gpt-5.6-luna", input: prompt, text: { format: { type: "json_schema", name: "kalasutra_product_assist", strict: true, schema } }, max_output_tokens: 700 }, "application/json");
       let data = {}; try { data = JSON.parse((await r.json()).output_text || "{}"); } catch (_) {}
-      if (!LANGS[data.locale]) data.locale = locale;
+      const replyLocale = responseLocale(data.locale, locale);
       const fields = Object.fromEntries(Object.keys(fieldsSchema).map(k => [k, typeof data.fields?.[k] === "string" ? data.fields[k].slice(0, k === "story" ? 3000 : 1200) : null]));
       if (fields.category && !["Pottery", "Textiles", "Woodwork", "Metalwork", "Basketry", "Other"].includes(fields.category)) fields.category = null;
-      if (fields.price && !/^\d+(\.\d{1,2})?$/.test(fields.price.replace(/[^0-9.]/g, ""))) fields.price = null;
+      for (const key of ["price", "productionCost"]) if (fields[key] && !/^\d+(\.\d{1,2})?$/.test(fields[key].replace(/[^0-9.]/g, ""))) fields[key] = null;
       const productActions = ["NONE", "READ_DESCRIPTION", "REVIEW_PRODUCT", "REQUEST_SUBMIT_CONFIRMATION", "SUBMIT_PRODUCT"];
-      return json(res, 200, { reply: String(data.reply || "Theek hai. Batao, main kaunsi detail update karoon?"), action: productActions.includes(data.action) ? data.action : "NONE", locale, fields });
+      return json(res, 200, { reply: String(data.reply || "Theek hai. Batao, main kaunsi detail update karoon?"), action: productActions.includes(data.action) ? data.action : "NONE", locale: replyLocale, fields });
     }
     if (url.pathname === "/api/ai/translate") {
       const [language] = localeInfo(b.locale || b.language);

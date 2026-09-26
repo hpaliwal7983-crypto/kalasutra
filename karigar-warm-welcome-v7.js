@@ -23,60 +23,21 @@
   ];
 
   const COPY = {
-    "hi-IN": {
-      welcome: "नमस्ते! मैं Karigar AI हूँ। आज आपके साथ क्या करते हैं?",
-      listening: "मैं सुन रहा हूँ…",
-      thinking: "एक पल, मैं समझ रहा हूँ…",
-      addProduct: "बिल्कुल। चलिए आपका product add करते हैं। पहले उसकी 2–3 साफ़ photos ले लेते हैं।",
-      generic: "समझ गया। आप बस आराम से बताइए, मैं आपके साथ-साथ करूँगा।",
-      ready: "बोलकर बताइए, मैं सुन रहा हूँ।",
-    },
-    "en-IN": {
-      welcome: "Namaste! I’m Karigar AI. What shall we work on today?",
-      listening: "I’m listening…",
-      thinking: "One moment, I’m with you…",
-      addProduct: "Absolutely. Let’s add your product. We’ll start with two or three clear photos, and I’ll guide you through the rest.",
-      generic: "Got it. Just tell me naturally what you’d like to do. I’ll stay with you and guide you step by step.",
-      ready: "Go ahead. I’m listening.",
-    },
+    "hi-IN": { welcome:"नमस्ते! मैं Karigar AI हूँ। आज हम क्या करें?", listening:"मैं सुन रही हूँ…", thinking:"एक पल, मैं समझ रही हूँ…", generic:"समझ गई। आप आराम से बताइए, मैं एक-एक कदम पर मदद करूँगी।", ready:"बताइए, मैं सुन रही हूँ।", error:"आवाज़ अभी नहीं चल पा रही। कृपया फिर कोशिश करें।", noSpeech:"मैं ठीक से सुन नहीं पाई। कृपया एक बार फिर बोलें।", micPermission:"माइक्रोफ़ोन की अनुमति दें और फिर कोशिश करें।", timeout:"AI को थोड़ा समय लग रहा है। माइक्रोफ़ोन टैप करके फिर कोशिश करें।" },
+    "en-IN": { welcome:"Namaste! I’m Karigar AI. What shall we work on today?", listening:"I’m listening…", thinking:"One moment, I’m understanding…", generic:"Got it. Tell me naturally what you need, and I’ll guide you step by step.", ready:"Go ahead. I’m listening.", error:"Voice playback isn’t available right now. Please try again.", noSpeech:"I couldn’t understand that. Please say it once more.", micPermission:"Please allow microphone access and try again.", timeout:"Karigar AI is taking a little longer. Tap the mic to try again." },
+    "mr-IN": { welcome:"नमस्कार! मी Karigar AI आहे. आज आपण काय करूया?", listening:"मी ऐकत आहे…", thinking:"एक क्षण, मी समजून घेत आहे…", generic:"समजलं. तुम्हाला काय करायचं आहे ते सहज सांगा; मी प्रत्येक टप्प्यावर मदत करेन.", ready:"सांगा, मी ऐकत आहे.", error:"आवाज सध्या ऐकू येत नाही. कृपया पुन्हा प्रयत्न करा.", noSpeech:"मला समजले नाही. कृपया पुन्हा एकदा बोला.", micPermission:"मायक्रोफोनची परवानगी द्या आणि पुन्हा प्रयत्न करा.", timeout:"AI ला थोडा अधिक वेळ लागत आहे. पुन्हा प्रयत्न करण्यासाठी माइक टॅप करा." },
+    "gu-IN": { welcome:"નમસ્તે! હું Karigar AI છું. આજે આપણે શું કરીએ?", listening:"હું સાંભળી રહી છું…", thinking:"એક ક્ષણ, હું સમજી રહી છું…", generic:"સમજાયું. તમને શું કરવું છે તે આરામથી કહો; હું દરેક પગલે મદદ કરીશ.", ready:"કહો, હું સાંભળી રહી છું.", error:"અત્યારે અવાજ સાંભળી શકાતો નથી. ફરી પ્રયાસ કરો.", noSpeech:"મને સમજાયું નહીં. કૃપા કરીને ફરી એક વાર બોલો.", micPermission:"માઇક્રોફોનની મંજૂરી આપો અને ફરી પ્રયાસ કરો.", timeout:"AI ને થોડો વધુ સમય લાગી રહ્યો છે. ફરી પ્રયાસ કરવા માઇક દબાવો." },
+    "pa-IN": { welcome:"ਸਤ ਸ੍ਰੀ ਅਕਾਲ! ਮੈਂ Karigar AI ਹਾਂ। ਅੱਜ ਅਸੀਂ ਕੀ ਕਰੀਏ?", listening:"ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ…", thinking:"ਇੱਕ ਪਲ, ਮੈਂ ਸਮਝ ਰਹੀ ਹਾਂ…", generic:"ਸਮਝ ਗਈ। ਤੁਸੀਂ ਆਰਾਮ ਨਾਲ ਦੱਸੋ ਕਿ ਕੀ ਕਰਨਾ ਹੈ; ਮੈਂ ਹਰ ਕਦਮ ਤੇ ਮਦਦ ਕਰਾਂਗੀ।", ready:"ਦੱਸੋ, ਮੈਂ ਸੁਣ ਰਹੀ ਹਾਂ।", error:"ਇਸ ਵੇਲੇ ਆਵਾਜ਼ ਨਹੀਂ ਚੱਲ ਰਹੀ। ਕਿਰਪਾ ਕਰਕੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", noSpeech:"ਮੈਨੂੰ ਸਮਝ ਨਹੀਂ ਆਇਆ। ਕਿਰਪਾ ਕਰਕੇ ਫਿਰ ਬੋਲੋ।", micPermission:"ਮਾਈਕ੍ਰੋਫ਼ੋਨ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।", timeout:"AI ਨੂੰ ਥੋੜ੍ਹਾ ਹੋਰ ਸਮਾਂ ਲੱਗ ਰਿਹਾ ਹੈ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਲਈ ਮਾਈਕ ਟੈਪ ਕਰੋ।" },
+    "bn-IN": { welcome:"নমস্কার! আমি Karigar AI। আজ আমরা কী করতে পারি?", listening:"আমি শুনছি…", thinking:"একটু সময় দিন, আমি বুঝে নিচ্ছি…", generic:"বুঝেছি। আপনার কী দরকার স্বাভাবিকভাবে বলুন; আমি ধাপে ধাপে সাহায্য করব।", ready:"বলুন, আমি শুনছি।", error:"এখন অডিও চালানো যাচ্ছে না। আবার চেষ্টা করুন।", noSpeech:"আমি বুঝতে পারিনি। আরেকবার বলুন।", micPermission:"মাইক্রোফোনের অনুমতি দিন এবং আবার চেষ্টা করুন।", timeout:"AI-এর একটু বেশি সময় লাগছে। আবার চেষ্টা করতে মাইক ট্যাপ করুন।" },
+    "ta-IN": { welcome:"வணக்கம்! நான் Karigar AI. இன்று நாம் என்ன செய்யலாம்?", listening:"நான் கேட்டுக்கொண்டிருக்கிறேன்…", thinking:"ஒரு நிமிடம், புரிந்துகொள்கிறேன்…", generic:"புரிந்தது. உங்களுக்கு என்ன வேண்டும் என்று இயல்பாகச் சொல்லுங்கள்; படிப்படியாக உதவுகிறேன்.", ready:"சொல்லுங்கள், நான் கேட்கிறேன்.", error:"இப்போது குரல் ஒலிக்கவில்லை. மீண்டும் முயற்சிக்கவும்.", noSpeech:"எனக்குப் புரியவில்லை. மீண்டும் ஒருமுறை சொல்லுங்கள்.", micPermission:"மைக்ரோஃபோன் அனுமதியை வழங்கி மீண்டும் முயற்சிக்கவும்.", timeout:"AIக்கு இன்னும் சிறிது நேரம் தேவை. மீண்டும் முயற்சிக்க மைக்கைத் தட்டவும்." },
+    "te-IN": { welcome:"నమస్కారం! నేను Karigar AI. ఈరోజు మనం ఏం చేద్దాం?", listening:"నేను వింటున్నాను…", thinking:"ఒక్క క్షణం, అర్థం చేసుకుంటున్నాను…", generic:"అర్థమైంది. మీకు ఏం కావాలో సహజంగా చెప్పండి; ఒక్కో దశలో సహాయం చేస్తాను.", ready:"చెప్పండి, నేను వింటున్నాను.", error:"ప్రస్తుతం వాయిస్ వినిపించడం లేదు. మళ్లీ ప్రయత్నించండి.", noSpeech:"నాకు అర్థం కాలేదు. దయచేసి మరోసారి చెప్పండి.", micPermission:"మైక్రోఫోన్ అనుమతించి మళ్లీ ప్రయత్నించండి.", timeout:"AIకి కొంచెం ఎక్కువ సమయం పడుతోంది. మళ్లీ ప్రయత్నించడానికి మైక్‌ను తాకండి." },
+    "kn-IN": { welcome:"ನಮಸ್ಕಾರ! ನಾನು Karigar AI. ಇಂದು ನಾವು ಏನು ಮಾಡೋಣ?", listening:"ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ…", thinking:"ಒಂದು ಕ್ಷಣ, ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತಿದ್ದೇನೆ…", generic:"ಅರ್ಥವಾಯಿತು. ನಿಮಗೆ ಏನು ಬೇಕು ಎಂದು ಸಹಜವಾಗಿ ಹೇಳಿ; ಹಂತ ಹಂತವಾಗಿ ಸಹಾಯ ಮಾಡುತ್ತೇನೆ.", ready:"ಹೇಳಿ, ನಾನು ಕೇಳುತ್ತಿದ್ದೇನೆ.", error:"ಈಗ ಧ್ವನಿ ಲಭ್ಯವಿಲ್ಲ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", noSpeech:"ನನಗೆ ಅರ್ಥವಾಗಲಿಲ್ಲ. ದಯವಿಟ್ಟು ಮತ್ತೊಮ್ಮೆ ಹೇಳಿ.", micPermission:"ಮೈಕ್ರೊಫೋನ್ ಅನುಮತಿ ನೀಡಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", timeout:"AIಗೆ ಸ್ವಲ್ಪ ಹೆಚ್ಚು ಸಮಯ ಬೇಕಾಗಿದೆ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಲು ಮೈಕ್ ಟ್ಯಾಪ್ ಮಾಡಿ." },
+    "ml-IN": { welcome:"നമസ്കാരം! ഞാൻ Karigar AI. ഇന്ന് നമുക്ക് എന്ത് ചെയ്യാം?", listening:"ഞാൻ കേൾക്കുന്നുണ്ട്…", thinking:"ഒരു നിമിഷം, മനസ്സിലാക്കട്ടെ…", generic:"മനസ്സിലായി. എന്താണ് വേണ്ടതെന്ന് സ്വാഭാവികമായി പറയൂ; ഓരോ ഘട്ടത്തിലും ഞാൻ സഹായിക്കാം.", ready:"പറയൂ, ഞാൻ കേൾക്കുന്നുണ്ട്.", error:"ഇപ്പോൾ ശബ്ദം ലഭ്യമല്ല. വീണ്ടും ശ്രമിക്കുക.", noSpeech:"എനിക്ക് മനസ്സിലായില്ല. വീണ്ടും പറയൂ.", micPermission:"മൈക്രോഫോൺ അനുമതി നൽകി വീണ്ടും ശ്രമിക്കുക.", timeout:"AIക്ക് കുറച്ച് കൂടി സമയം വേണം. വീണ്ടും ശ്രമിക്കാൻ മൈക്ക് തൊടുക." },
+    "or-IN": { welcome:"ନମସ୍କାର! ମୁଁ Karigar AI। ଆଜି ଆମେ କ'ଣ କରିବା?", listening:"ମୁଁ ଶୁଣୁଛି…", thinking:"ଟିକେ ରୁହନ୍ତୁ, ମୁଁ ବୁଝୁଛି…", generic:"ବୁଝିଲି। ଆପଣଙ୍କୁ କ'ଣ ଦରକାର ସହଜରେ କୁହନ୍ତୁ; ମୁଁ ପ୍ରତି ପଦକ୍ଷେପରେ ସାହାଯ୍ୟ କରିବି।", ready:"କୁହନ୍ତୁ, ମୁଁ ଶୁଣୁଛି।", error:"ଏବେ ଅଡିଓ ଚାଲୁ ହେଉନାହିଁ। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।", noSpeech:"ମୁଁ ବୁଝିପାରିଲି ନାହିଁ। ଆଉ ଥରେ କୁହନ୍ତୁ।", micPermission:"ମାଇକ୍ରୋଫୋନ୍ ଅନୁମତି ଦେଇ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।", timeout:"AIକୁ ଆଉ କିଛି ସମୟ ଲାଗୁଛି। ପୁଣି ଚେଷ୍ଟା ପାଇଁ ମାଇକ୍ ଟ୍ୟାପ୍ କରନ୍ତୁ।" },
+    "ur-IN": { welcome:"السلام علیکم! میں Karigar AI ہوں۔ آج ہم کیا کریں؟", listening:"میں سن رہی ہوں…", thinking:"ایک لمحہ، میں سمجھ رہی ہوں…", generic:"سمجھ گئی۔ آپ آرام سے بتائیں کہ آپ کو کیا چاہیے؛ میں ہر قدم پر مدد کروں گی۔", ready:"بتائیے، میں سن رہی ہوں۔", error:"ابھی آواز دستیاب نہیں۔ دوبارہ کوشش کریں۔", noSpeech:"مجھے سمجھ نہیں آیا۔ براہ کرم دوبارہ کہیں۔", micPermission:"مائیکروفون کی اجازت دیں اور دوبارہ کوشش کریں۔", timeout:"AI کو کچھ زیادہ وقت لگ رہا ہے۔ دوبارہ کوشش کے لیے مائیک کو چھوئیں۔" }
   };
 
   let LOCAL_VOICE_MODE = false;
-
-  function localIntent(transcript, role, locale) {
-    const text = String(transcript || "").trim().toLocaleLowerCase().replace(/[.,!?।]/g, " ");
-    const artisan = role === "artisan";
-    const routes = [
-      { action: "ADD_PRODUCT", route: artisan ? "addProduct" : null, words: ["add product", "new product", "product add", "प्रोडक्ट जोड़", "प्रोडक्ट जोड़", "नया प्रोडक्ट", "सामान जोड़", "सामान जोड़", "नया सामान"] },
-      { action: "ORDERS", route: "orders", words: ["orders", "order", "ऑर्डर", "आर्डर"] },
-      { action: "REELS", route: artisan ? "myReels" : "buyerReels", words: ["reels", "reel", "रील"] },
-      { action: "PROFILE", route: artisan ? "profile" : "buyerProfile", words: ["profile", "प्रोफाइल", "मेरी जानकारी"] },
-      { action: "HOME", route: artisan ? "dashboard" : "buyerHome", words: ["home", "होम", "डैशबोर्ड", "dashboard"] },
-      { action: "MY_PRODUCTS", route: artisan ? "myProducts" : null, words: ["my products", "मेरे प्रोडक्ट", "मेरे उत्पाद", "उत्पाद"] },
-      { action: "REVIEWS", route: artisan ? "reviews" : null, words: ["reviews", "review", "रेटिंग", "समीक्षा"] },
-      { action: "WISHLIST", route: artisan ? null : "wishlist", words: ["wishlist", "wish list", "पसंदीदा"] },
-      { action: "CART", route: artisan ? null : "cart", words: ["cart", "कार्ट", "टोकरी"] },
-      { action: "FAIR_PRICE", route: artisan ? "dashboard" : null, words: ["fair price", "fair pricing", "उचित कीमत", "सही कीमत", "दाम बताओ"] },
-      { action: "CRAFT_CAPITAL", route: artisan ? "dashboard" : null, words: ["craft capital", "क्राफ्ट कैपिटल"] },
-      { action: "MATERIAL_HUB", route: artisan ? "dashboard" : null, words: ["material hub", "मटेरियल हब"] },
-      { action: "DESIGN_LAB", route: artisan ? "dashboard" : null, words: ["design lab", "डिजाइन लैब"] },
-      { action: "CRAFT_PASSPORT", route: artisan ? "dashboard" : null, words: ["craft passport", "क्राफ्ट पासपोर्ट"] },
-      { action: "MARKET_MATCH", route: artisan ? "dashboard" : null, words: ["market match", "मार्केट मैच"] },
-      { action: "CRAFT_GURUKUL", route: artisan ? "dashboard" : null, words: ["craft group", "craft gurukul", "क्राफ्ट ग्रुप", "क्राफ्ट गुरुकुल"] },
-      { action: "PRODUCT_DETAILS", route: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, words: ["product details", "product info", "is product ke baare", "इस प्रोडक्ट की जानकारी", "उत्पाद की जानकारी"] },
-      { action: "ARTISAN_INFO", route: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, words: ["artisan information", "about artisan", "maker info", "कारीगर के बारे", "कारीगर की जानकारी"] },
-      { action: "PRODUCT_REVIEWS", route: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, words: ["product reviews", "reviews for this product", "इस प्रोडक्ट के रिव्यू", "इसकी समीक्षा"] },
-    ];
-    const match = routes.find(item => item.route && item.words.some(word => text.includes(word)) &&
-      (item.action !== "ORDERS" || /open|kholo|खोल/.test(text) || (LOCAL_VOICE_MODE && /orders|order|ऑर्डर|आर्डर/.test(text))));
-    const english = String(locale || "").startsWith("en");
-    if (match) {
-      const name = { ADD_PRODUCT: english ? "Add Product" : "प्रोडक्ट जोड़ने का पेज", ORDERS: english ? "Orders" : "ऑर्डर्स", REELS: "Reels", PROFILE: english ? "Profile" : "प्रोफाइल", HOME: "Home", MY_PRODUCTS: english ? "My Products" : "मेरे प्रोडक्ट", REVIEWS: english ? "Reviews" : "रिव्यू", WISHLIST: "Wishlist", CART: "Cart", FAIR_PRICE: "Fair Price AI", CRAFT_CAPITAL: "Craft Capital", MATERIAL_HUB: "Material Hub", DESIGN_LAB: "Design Lab", CRAFT_PASSPORT: "Craft Passport", MARKET_MATCH: "Market Match", CRAFT_GURUKUL: "Craft Group", PRODUCT_DETAILS: "product details", ARTISAN_INFO: "artisan information", PRODUCT_REVIEWS: "product reviews" }[match.action];
-      return { action: match.action, route: match.route, reply: english ? `Sure, opening ${name}.` : `जी, ${name} खोल रही हूँ।` };
-    }
-    if (/(help|मदद|क्या कर|kya kar|क्या खोल|kya khol)/.test(text)) return { action: "NONE", reply: english ? "I can open Add Product, Orders, Reels, Profile, or Home by voice. For other tasks, use the app buttons." : "मैं बोलकर Add Product, Orders, Reels, Profile या Home खोल सकती हूँ। बाकी कामों के लिए ऐप के बटन इस्तेमाल करें।" };
-    return { action: "NONE", reply: english ? "I heard you, but free voice mode can only open app sections right now. Try saying ‘Open Orders’ or tap a screen button." : "मैंने आपकी बात सुनी, लेकिन अभी बिना paid AI के voice से app sections खोल सकती हूँ। ‘Orders खोलो’ बोलें या स्क्रीन का बटन दबाएँ।" };
-  }
 
   function getLocale() {
     try {
@@ -100,6 +61,24 @@
   function copy(locale, key) {
     const base = COPY[locale] || COPY["en-IN"];
     return base[key] || COPY["en-IN"][key];
+  }
+
+  function aiUnavailableCopy(locale) {
+    const messages = {
+      "hi-IN": "Karigar AI सेवा अभी उपलब्ध नहीं है। कृपया थोड़ी देर बाद फिर कोशिश करें।",
+      "en-IN": "Karigar AI is unavailable right now. Please try again after the AI service is configured.",
+      "mr-IN": "Karigar AI सेवा सध्या उपलब्ध नाही. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा.",
+      "gu-IN": "Karigar AI સેવા અત્યારે ઉપલબ્ધ નથી. કૃપા કરીને થોડી વાર પછી ફરી પ્રયાસ કરો.",
+      "pa-IN": "Karigar AI ਸੇਵਾ ਇਸ ਵੇਲੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਕੁਝ ਸਮੇਂ ਬਾਅਦ ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      "bn-IN": "Karigar AI পরিষেবা এখন উপলব্ধ নয়। কিছুক্ষণ পরে আবার চেষ্টা করুন।",
+      "ta-IN": "Karigar AI சேவை இப்போது கிடைக்கவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.",
+      "te-IN": "Karigar AI సేవ ప్రస్తుతం అందుబాటులో లేదు. కొంతసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.",
+      "kn-IN": "Karigar AI ಸೇವೆ ಈಗ ಲಭ್ಯವಿಲ್ಲ. ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      "ml-IN": "Karigar AI സേവനം ഇപ്പോൾ ലഭ്യമല്ല. കുറച്ച് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക.",
+      "or-IN": "Karigar AI ସେବା ବର୍ତ୍ତମାନ ଉପଲବ୍ଧ ନାହିଁ। କିଛି ସମୟ ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+      "ur-IN": "Karigar AI سروس ابھی دستیاب نہیں ہے۔ براہ کرم کچھ دیر بعد دوبارہ کوشش کریں۔"
+    };
+    return messages[locale] || copy(locale, "error");
   }
 
   function emitState(state, extra) {
@@ -141,7 +120,7 @@
     return ["credit_balance_exhausted", "insufficient_quota", "missing_api_key"].includes(error?.code);
   }
 
-  async function fallbackChat(transcript, locale) {
+  async function fallbackChat(transcript, locale, contextOverride = {}) {
     const history = (window.__KALASUTRA_V7_HISTORY__ || []).slice();
     const last = history[history.length - 1];
     if (last?.role === "user" && last?.content === transcript) history.pop();
@@ -153,6 +132,20 @@
       productId: window.__KALASUTRA_ACTIVE_PRODUCT_ID__ || "",
       role: window.__KALASUTRA_ROLE__ || "artisan",
       userId: window.__KALASUTRA_USER_ID__ || "",
+      productDraft: (() => {
+        try {
+          const draft = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ || {};
+          return Object.fromEntries(["title", "story", "description", "price", "category", "material", "region", "size", "productionCost"].map(key => [key, typeof draft[key] === "string" ? draft[key].slice(0, key === "story" || key === "description" ? 1200 : 180) : ""]));
+        } catch (_) { return {}; }
+      })(),
+      activeModule: contextOverride.activeModule || window.__KALASUTRA_CURRENT_ARTISAN_MODULE__ || "",
+      moduleContext: (() => {
+        try {
+          const module = contextOverride.activeModule || window.__KALASUTRA_CURRENT_ARTISAN_MODULE__;
+          const context = contextOverride.moduleContext || (module && window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__?.getContext?.(module));
+          return context && JSON.stringify(context).length <= 6000 ? context : null;
+        } catch (_) { return null; }
+      })(),
       history
     });
     return data;
@@ -197,7 +190,7 @@
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     }
     if (!spoken) {
-      emitState("error", { text: "I understood you. Voice playback isn’t available right now. Please try again." });
+      emitState("error", { text: copy(locale, "error") });
       return false;
     }
     emitState("idle", { text });
@@ -248,7 +241,13 @@
       const realtimeTurnTimerRef = useRef(null);
       const role = options.role || window.__KALASUTRA_ROLE__ || "artisan";
       const userId = options.userId || window.__KALASUTRA_USER_ID__ || "";
-      const greetingSentRef = useRef(false);
+      const sessionKey = `${userId}:${role}`;
+      if (window.__KALASUTRA_V7_SESSION_KEY__ !== sessionKey) {
+        window.__KALASUTRA_V7_SESSION_KEY__ = sessionKey;
+        window.__KALASUTRA_V7_HISTORY__ = [];
+        window.__KALASUTRA_V7_GREETING_SENT__ = false;
+      }
+      const greetingSentRef = useRef(Boolean(window.__KALASUTRA_V7_GREETING_SENT__));
 
       function rememberConversation(role, content) {
         const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
@@ -271,6 +270,37 @@
         const target = routes[action];
         if (!target) return false;
         try { go(target); return true; } catch (_) { return false; }
+      }
+
+      async function ensureProductActions() {
+        const current = window.__KALASUTRA_PRODUCT_ACTIONS__;
+        if (current?.applyFields) return current;
+        if (role !== "artisan") return null;
+        runAction("ADD_PRODUCT");
+        for (let attempt = 0; attempt < 25; attempt++) {
+          const api = window.__KALASUTRA_PRODUCT_ACTIONS__;
+          if (api?.applyFields) return api;
+          await new Promise(resolve => window.setTimeout(resolve, 100));
+        }
+        return null;
+      }
+
+      async function getArtisanModuleContext(module) {
+        if (role !== "artisan") return { available: false, reason: "artisan_only" };
+        const actions = { price: "FAIR_PRICE", capital: "CRAFT_CAPITAL", material: "MATERIAL_HUB", design: "DESIGN_LAB", passport: "CRAFT_PASSPORT", market: "MARKET_MATCH", gurukul: "CRAFT_GURUKUL" };
+        if (!actions[module]) return { available: false, reason: "unknown_module" };
+        const apiNow = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+        if (apiNow) window.dispatchEvent(new CustomEvent("kalasutra:artisan-module-open", { detail: { module } }));
+        else runAction(actions[module]);
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const api = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+          if (api?.getContext) {
+            window.dispatchEvent(new CustomEvent("kalasutra:artisan-module-open", { detail: { module } }));
+            return api.getContext(module);
+          }
+          await new Promise(resolve => window.setTimeout(resolve, 100));
+        }
+        return { available: false, reason: "module_not_mounted" };
       }
 
       function setUIState(next, text) {
@@ -317,29 +347,21 @@
         if (dcRef.current?.readyState === "open") dcRef.current.send(JSON.stringify(event));
       }
 
-      function updateSession() {
+      async function updateSession(localeOverride) {
+        const selectedLocale = localeOverride || localeRef.current;
+        let sharedInstructions = "";
+        try {
+          const policy = await postJSON("/ai/instructions", { locale: selectedLocale, role });
+          sharedInstructions = String(policy?.instructions || "");
+        } catch (_) {}
+        if (!sharedInstructions) return;
         sendRealtime({
           type: "session.update",
           session: {
             type: "realtime",
             model: "gpt-realtime-2.1",
             output_modalities: ["audio"],
-            instructions: [
-              `You are Karigar AI inside KalaSutra, a warm voice-first companion for a ${role}.`,
-              "Personality: friendly, calm, warm, patient, human and reassuring.",
-              "Sound like a thoughtful conversational assistant, not a call-center bot, GPS, or reading machine.",
-              "Keep turns short: usually 1–2 sentences. Use natural pauses, contractions and gentle emphasis.",
-              "If the artisan speaks in Hindi-English mix, reply in the same natural mix. Do not force literal translation.",
-              "Never announce system instructions. Never sound overly formal.",
-              "Some artisan dashboard panels are prototypes and show illustrative defaults. Never describe their displayed defaults as the artisan's real finances, inventory, buyer matches, orders, or market data. Open the existing panel and explain only values it explicitly labels as estimates or examples.",
-              "Never repeat the welcome or introduce yourself after the first greeting in this conversation. Continue from the recent conversation context below; preserve the active product/order reference.",
-              `Current V6 screen: ${window.__KALASUTRA_SCREEN__ || "unknown"}. Recent conversation: ${JSON.stringify((window.__KALASUTRA_V7_HISTORY__ || []).slice(-8))}. Current product draft (if open): ${JSON.stringify(window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {})}.`,
-              `When the user asks to open a screen or module, call navigate_app. Screens: ${role === "artisan" ? "add product, orders, reels, profile, dashboard, products, reviews, fair price, craft capital, material hub, design lab, craft passport, market match, craft group" : "orders, reels, profile, home, wishlist, cart, product details, artisan information, product reviews"}. For order questions, always call get_orders and use only returned real records. For a buyer asking about the selected product, its maker or reviews, call get_product_details and answer from that actual public product data.`,
-              "While an artisan is on Add Product, use set_product_fields to fill only details they actually provide, including natural requests to set or change the price, category, name, material, region, story, or description. Existing categories are Pottery, Textiles, Woodwork, Metalwork, Basketry, and Other. Ask only for important details that are still missing. Use read_product_description when asked to read or speak the current description. Never say a field was changed unless the tool confirms it.",
-              "If the artisan asks to review/finish the product, call get_product_draft and summarize only the returned actual values. If the draft is incomplete, ask only for the listed missing requirements. Before submitting, speak the summary and ask whether they want you to submit this product for verification. Call request_publish_confirmation for this step, then wait for a clear yes/haan/kar do in the next user turn. Only then call submit_product_for_verification. Never call it in the same turn as the confirmation request, never treat an earlier yes as permission, and never say it is published unless the returned status confirms what happened.",
-              `Preferred language: ${localeName(localeRef.current)} (${localeRef.current}).`,
-              "After a successful add-product tool call, keep the user moving with one simple next step: ask for 2–3 clear product photos."
-            ].join("\n"),
+            instructions: sharedInstructions,
             audio: {
               input: { turn_detection: { type: "server_vad", interrupt_response: true, silence_duration_ms: 550 } },
               output: { voice: "marin" }
@@ -350,6 +372,9 @@
                 description: "Navigate to a screen already present in KalaSutra. Use ADD_PRODUCT only for artisan role.",
                 parameters: { type: "object", properties: { screen: { type: "string", enum: ["ADD_PRODUCT", "ORDERS", "REELS", "PROFILE", "HOME", "WISHLIST", "CART", "MY_PRODUCTS", "REVIEWS", "PRODUCT_DETAILS", "ARTISAN_INFO", "PRODUCT_REVIEWS", "FAIR_PRICE", "CRAFT_CAPITAL", "MATERIAL_HUB", "DESIGN_LAB", "CRAFT_PASSPORT", "MARKET_MATCH", "CRAFT_GURUKUL"] } }, required: ["screen"], additionalProperties: false }
               },
+              { type: "function", name: "get_module_context", strict: true, description: "Open/read the existing artisan dashboard module and return only its actual connected data and availability. Call for Fair Price, Capital, Material Hub, Design Lab, Craft Passport, Market Match, or Craft Gurukul questions.", parameters: { type: "object", properties: { module: { type: "string", enum: ["price", "capital", "material", "design", "passport", "market", "gurukul"] } }, required: ["module"], additionalProperties: false } },
+              { type: "function", name: "set_capital_planning_need", strict: true, description: "Fill the existing Craft Capital planning amount from a value the artisan explicitly gives. This is an unsaved planning input, not a finance application.", parameters: { type: "object", properties: { amount: { type: "string" } }, required: ["amount"], additionalProperties: false } },
+              { type: "function", name: "set_fair_price_inputs", strict: true, description: "Put artisan-provided costs into the existing Fair Price panel and return its calculated estimate. Never infer missing costs.", parameters: { type: "object", properties: { productionCost: { type: ["string", "null"] }, materialCost: { type: ["string", "null"] }, hours: { type: ["string", "null"] }, hourlyRate: { type: ["string", "null"] }, overhead: { type: ["string", "null"] } }, required: ["productionCost", "materialCost", "hours", "hourlyRate", "overhead"], additionalProperties: false } },
               { type: "function", name: "get_orders", strict: true, description: "Fetch real orders for the signed-in user. Call for order questions; never invent counts or records.", parameters: { type: "object", properties: { period: { type: "string", enum: ["today", "recent"] } }, required: ["period"], additionalProperties: false } },
               { type: "function", name: "get_product_details", strict: true, description: "Get the selected buyer product's actual details, artisan profile and visible reviews. Do not reveal phone numbers or private data.", parameters: { type: "object", properties: {}, required: [], additionalProperties: false } },
               {
@@ -357,9 +382,9 @@
                 description: "Fill or revise only product details the artisan actually said. Call after hearing product information. Do not invent missing values. Use null for fields not stated. Description should be a concise buyer-facing draft grounded only in the artisan's story.",
                 parameters: { type: "object", properties: {
                   title: { type: ["string", "null"] }, story: { type: ["string", "null"] }, description: { type: ["string", "null"] },
-                  price: { type: ["string", "null"] }, category: { type: ["string", "null"], enum: ["Pottery", "Textiles", "Woodwork", "Metalwork", "Basketry", "Other", null] }, material: { type: ["string", "null"] }, region: { type: ["string", "null"] },
+                  price: { type: ["string", "null"] }, category: { type: ["string", "null"], enum: ["Pottery", "Textiles", "Woodwork", "Metalwork", "Basketry", "Other", null] }, material: { type: ["string", "null"] }, region: { type: ["string", "null"] }, size: { type: ["string", "null"] }, productionCost: { type: ["string", "null"] },
                   reply: { type: "string" }
-                }, required: ["title", "story", "description", "price", "category", "material", "region", "reply"], additionalProperties: false }
+                }, required: ["title", "story", "description", "price", "category", "material", "region", "size", "productionCost", "reply"], additionalProperties: false }
               },
               { type: "function", name: "read_product_description", strict: true, description: "Speak the current product description aloud using Karigar AI's voice.", parameters: { type: "object", properties: {}, required: [], additionalProperties: false } },
               { type: "function", name: "get_product_draft", strict: true, description: "Read the current values and required missing steps from the existing Add Product form. Use this before giving a product summary.", parameters: { type: "object", properties: {}, required: [], additionalProperties: false } },
@@ -426,7 +451,7 @@
           }
 
           if (actualType === "response.created") {
-            armRealtimeTurnTimer(35000, "Karigar AI is taking a little longer. Tap the mic to try again.", true);
+            armRealtimeTurnTimer(35000, copy(locale, "timeout"), true);
             setUIState("thinking", copy(locale, "thinking"));
           }
 
@@ -478,14 +503,34 @@
                   const opened = runAction(args.screen);
                   result = { status: opened ? "opened" : "not_available_for_role", screen: args.screen };
                   if (opened) { setOpen(false); if (args.screen !== "ADD_PRODUCT") { publishConfirmationPendingRef.current = false; publishConfirmationAtRef.current = 0; } }
+                } else if (call.name === "get_module_context") {
+                  result = await getArtisanModuleContext(args.module);
+                } else if (call.name === "set_capital_planning_need") {
+                  try {
+                    const context = await getArtisanModuleContext("capital");
+                    const api = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+                    const updated = role === "artisan" && api?.setCapitalNeed ? api.setCapitalNeed(args.amount) : null;
+                    result = updated ? { ...updated, context: api.getContext("capital") } : { status: "unavailable", context };
+                  } catch (_) { result = { status: "unavailable" }; }
+                } else if (call.name === "set_fair_price_inputs") {
+                  try {
+                    const context = await getArtisanModuleContext("price");
+                    const api = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+                    if (role !== "artisan" || !api?.setFairPriceInputs) result = { status: "unavailable", context };
+                    else {
+                      const update = api.setFairPriceInputs(args);
+                      result = { ...(update || { status: "updated" }), context: api.getContext("price") };
+                    }
+                  } catch (_) { result = { status: "unavailable" }; }
                 } else if (call.name === "get_orders") {
                   try {
                     if (!userId) throw new Error("User session is unavailable");
                     const response = await fetchWithTimeout(`${API}/orders?userId=${encodeURIComponent(userId)}`, {}, 12000);
-                    const data = await response.json();
-                    if (!response.ok || !Array.isArray(data.orders)) throw new Error("Orders unavailable");
+                    const payload = await response.json();
+                    const rows = Array.isArray(payload) ? payload : payload?.orders;
+                    if (!response.ok || !Array.isArray(rows)) throw new Error("Orders unavailable");
                     const todayDate = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-                    const orders = data.orders.filter(order => args.period !== "today" || (order.date && new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(order.date)) === todayDate));
+                    const orders = rows.filter(order => args.period !== "today" || (order.date && new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(order.date)) === todayDate));
                     result = { status: "ready", period: args.period, todayDate, orders: orders.map(order => ({ id: order.id, status: order.status, date: order.date, products: (order.artisanItems || order.products || []).map(item => ({ title: item.title, qty: item.qty, price: item.price })) })) };
                   } catch (_) { result = { status: "unavailable", message: "I can't access your order data right now." }; }
                 } else if (call.name === "get_product_details") {
@@ -498,20 +543,21 @@
                     result = { status: "ready", product: { id: data.id, title: data.title, description: data.description, price: data.price, category: data.category, craftInfo: { material: data.craftInfo?.material, region: data.craftInfo?.region, originalStory: data.craftInfo?.originalStory }, verificationStatus: data.verificationStatus }, artisan: data.artisan ? { name: data.artisan.name, profile: { craft: data.artisan.profile?.craft, location: data.artisan.profile?.location, bio: data.artisan.profile?.bio, trustScore: data.artisan.profile?.trustScore } } : null, reviews: (data.reviews || []).map(review => ({ stars: review.stars, text: review.text, createdAt: review.createdAt })).slice(0, 20) };
                   } catch (_) { result = { status: "unavailable", message: "Open a product first, then I can look up its details." }; }
                 } else if (call.name === "set_product_fields") {
-                  const apply = window.__KALASUTRA_PRODUCT_ACTIONS__?.applyFields;
-                  const fields = { title: args.title, story: args.story, description: args.description, price: args.price, category: args.category, material: args.material, region: args.region };
-                  const applied = role === "artisan" && typeof apply === "function" && apply(fields);
-                  result = { status: applied ? "updated" : "add_product_screen_not_open" };
+                  const productApi = role === "artisan" ? await ensureProductActions() : null;
+                  const fields = { title: args.title, story: args.story, description: args.description, price: args.price, category: args.category, material: args.material, region: args.region, size: args.size, productionCost: args.productionCost };
+                  const applied = Boolean(productApi?.applyFields?.(fields));
+                  result = { status: applied ? "updated" : "add_product_screen_unavailable" };
                   if (applied && args.reply) setMessage(args.reply);
                 } else if (call.name === "read_product_description") {
                   const read = window.__KALASUTRA_PRODUCT_ACTIONS__?.readDescription;
                   const description = role === "artisan" && typeof read === "function" ? read() : "";
                   result = description ? { status: "ready", description } : { status: "description_unavailable" };
                 } else if (call.name === "get_product_draft") {
-                  const getDraft = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft;
-                  result = role === "artisan" && typeof getDraft === "function" ? { status: "ready", draft: getDraft() } : { status: "add_product_screen_not_open" };
+                  const productApi = role === "artisan" ? await ensureProductActions() : null;
+                  result = productApi?.getDraft ? { status: "ready", draft: productApi.getDraft() } : { status: "add_product_screen_unavailable" };
                 } else if (call.name === "request_publish_confirmation") {
-                  const draft = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.();
+                  const productApi = role === "artisan" ? await ensureProductActions() : null;
+                  const draft = productApi?.getDraft?.();
                   if (role === "artisan" && draft?.complete) {
                     publishConfirmationPendingRef.current = false;
                     publishConfirmationAtRef.current = 0;
@@ -519,7 +565,8 @@
                     result = { status: "waiting_for_explicit_confirmation" };
                   } else result = { status: "draft_incomplete", missing: draft?.missing || ["Open Add Product"] };
                 } else if (call.name === "submit_product_for_verification") {
-                  const submit = window.__KALASUTRA_PRODUCT_ACTIONS__?.submitProduct;
+                  const productApi = role === "artisan" ? await ensureProductActions() : null;
+                  const submit = productApi?.submitProduct;
                   if (role === "artisan" && confirmationWasAlreadyPending && publishConfirmationPendingRef.current && Date.now() - publishConfirmationAtRef.current < 120000 && typeof submit === "function") {
                     publishConfirmationPendingRef.current = false;
                     publishConfirmationAtRef.current = 0;
@@ -542,8 +589,10 @@
             fallbackListeningRef.current = false;
             if (isAccountBlocked({ code: failureCode })) {
               LOCAL_VOICE_MODE = true;
-              setUIState("idle", "Free voice mode is ready. Ask me to open an app section.");
-            } else setUIState("error", "Voice connection stopped. Tap the microphone to retry.");
+              setRealtimeUnavailable(true);
+              const message = aiUnavailableCopy(localeRef.current);
+              setUIState("error", message);
+            } else setUIState("error", copy(locale, "error"));
           }
           if (actualType === "response.failed" || actualType === "input_audio_transcription.failed") {
             clearRealtimeTurnTimer();
@@ -553,8 +602,9 @@
               setRealtimeUnavailable(true);
               fallbackListeningRef.current = false;
               closeRealtime();
-              setUIState("idle", "Free voice mode is ready. Ask me to open an app section.");
-            } else setUIState("error", "I couldn't understand that. Tap the mic and say it once more.");
+              const message = aiUnavailableCopy(localeRef.current);
+              setUIState("error", message);
+            } else setUIState("error", copy(locale, "noSpeech"));
           }
         };
 
@@ -587,6 +637,7 @@
         updateSession();
         if (!greetingSentRef.current) {
           greetingSentRef.current = true;
+        window.__KALASUTRA_V7_GREETING_SENT__ = true;
           rememberConversation("assistant", copy(locale, "welcome"));
           sendRealtime({
             type: "response.create",
@@ -599,11 +650,12 @@
       async function speakWelcome() {
         if (greetingSentRef.current) return false;
         greetingSentRef.current = true;
+        window.__KALASUTRA_V7_GREETING_SENT__ = true;
         rememberConversation("assistant", copy(locale, "welcome"));
         setUIState("speaking", copy(locale, "welcome"));
         const spoken = await fallbackSpeak(copy(locale, "welcome"), locale);
         if (spoken) setUIState("idle", copy(locale, "ready"));
-        else setUIState("error", "I understood you. Voice playback isn’t available right now. Please try again.");
+        else setUIState("error", copy(locale, "error"));
       }
 
       async function startConversation() {
@@ -619,14 +671,16 @@
           closeRealtime(true);
           if (isAccountBlocked(error)) {
             LOCAL_VOICE_MODE = true;
-            await speakWelcome();
             fallbackListeningRef.current = false;
-            setUIState("idle", copy(locale, "ready"));
+            setRealtimeUnavailable(true);
+            const message = aiUnavailableCopy(locale);
+            setUIState("error", message);
+            await fallbackSpeak(message, locale);
             return;
           }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
             fallbackListeningRef.current = false;
-            setUIState("idle", "Microphone permission is off. Please allow microphone access and try again.");
+            setUIState("idle", copy(locale, "micPermission"));
             return;
           }
           await speakWelcome();
@@ -641,19 +695,6 @@
         try {
           rememberConversation("user", transcript);
           setUIState("thinking", copy(locale, "thinking"));
-          const local = localIntent(transcript, role, locale);
-          if (local.action !== "NONE") {
-            await fallbackSpeak(local.reply, locale);
-            rememberConversation("assistant", local.reply);
-            const opened = runAction(local.action);
-            if (opened) {
-              if (local.action === "ADD_PRODUCT") emitFlow({ step: "photos" });
-              fallbackListeningRef.current = false;
-              setOpen(false);
-            }
-            return;
-          }
-          if (LOCAL_VOICE_MODE) { await fallbackSpeak(local.reply, locale); return; }
           if (role === "artisan" && window.__KALASUTRA_SCREEN__ === ADD_PRODUCT_ROUTE) {
             const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
             const lastHistoryItem = history[history.length - 1];
@@ -702,26 +743,72 @@
             return;
           }
           rememberConversation("user", transcript);
-          const data = await fallbackChat(transcript, locale);
-          const reply = data?.reply || copy(locale, "generic");
-          await fallbackSpeak(reply, data?.locale || locale);
-          rememberConversation("assistant", reply);
-          const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
-          history.push({ role: "assistant", content: reply });
-          window.__KALASUTRA_V7_HISTORY__ = history.slice(-16);
-          if (data?.action && data.action !== "NONE") {
-            const opened = runAction(data.action);
-            if (opened) {
-              if (data.action === "ADD_PRODUCT") emitFlow({ step: "photos" });
-              setOpen(false);
+          let data = await fallbackChat(transcript, locale);
+          const artisan = role === "artisan";
+          const moduleForAction = { FAIR_PRICE: "price", CRAFT_CAPITAL: "capital", MATERIAL_HUB: "material", DESIGN_LAB: "design", CRAFT_PASSPORT: "passport", MARKET_MATCH: "market", CRAFT_GURUKUL: "gurukul" };
+          let actionModule = moduleForAction[data?.action];
+          if (artisan && actionModule && data?.moduleContextRequired === true) {
+            const liveContext = await getArtisanModuleContext(actionModule);
+            data = await fallbackChat(transcript, locale, { activeModule: actionModule, moduleContext: liveContext || { available: false } });
+            actionModule = moduleForAction[data?.action] || actionModule;
+          }
+          const replyLocale = data?.locale || locale;
+          if (data?.action === "ADD_PRODUCT" && artisan) {
+            runAction("ADD_PRODUCT");
+            emitFlow({ step: "photos" });
+            setOpen(false);
+          } else if (actionModule && artisan) {
+            await getArtisanModuleContext(actionModule);
+            setOpen(false);
+          } else if (data?.action && data.action !== "NONE") {
+            if (runAction(data.action)) setOpen(false);
+          }
+
+          let spokenReply = data?.reply || copy(locale, "generic");
+          const hasProductFields = data?.productFields && Object.values(data.productFields).some(value => typeof value === "string" && value.trim());
+          if (artisan && hasProductFields) {
+            const productApi = await ensureProductActions();
+            if (productApi?.applyFields?.(data.productFields)) {
+              const acknowledgement = { "hi": "आपकी दी हुई जानकारी Add Product में भर दी है।", "en": "I filled the details you gave into Add Product.", "mr": "तुम्ही दिलेली माहिती Add Product मध्ये भरली आहे.", "gu": "તમે આપેલી વિગતો Add Product માં ભરી છે.", "pa": "ਤੁਹਾਡੇ ਦਿੱਤੇ ਵੇਰਵੇ Add Product ਵਿੱਚ ਭਰ ਦਿੱਤੇ ਹਨ।", "bn": "আপনার দেওয়া তথ্য Add Product-এ পূরণ করেছি।", "ta": "நீங்கள் கொடுத்த விவரங்களை Add Product-ல் நிரப்பியுள்ளேன்.", "te": "మీరు ఇచ్చిన వివరాలను Add Product‌లో నింపాను.", "kn": "ನೀವು ನೀಡಿದ ವಿವರಗಳನ್ನು Add Product‌ನಲ್ಲಿ ತುಂಬಿದ್ದೇನೆ.", "ml": "നിങ്ങൾ നൽകിയ വിവരങ്ങൾ Add Product-ൽ ചേർത്തു.", "or": "ଆପଣ ଦେଇଥିବା ବିବରଣୀ Add Product ରେ ଭରିଛି।", "ur": "آپ کی دی ہوئی تفصیلات Add Product میں بھر دی ہیں۔" };
+              spokenReply = [spokenReply, acknowledgement[String(replyLocale).slice(0, 2)] || acknowledgement.hi].filter(Boolean).join(" ");
             }
           }
+
+          const fair = data?.fairPriceInputs || {};
+          const hasFairInputs = artisan && Object.values(fair).some(value => typeof value === "string" && value.trim());
+          if (hasFairInputs) {
+            await getArtisanModuleContext("price");
+            const api = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
+            const result = api?.setFairPriceInputs?.(fair);
+            if (result?.estimate != null) {
+              const labels = { "hi": "योजना का अनुमानित उचित मूल्य", "en": "Planning fair-price estimate", "mr": "नियोजनासाठी अंदाजित योग्य किंमत", "gu": "આયોજન માટે અંદાજિત યોગ્ય કિંમત", "pa": "ਯੋਜਨਾ ਲਈ ਅੰਦਾਜ਼ਨ ਉਚਿਤ ਕੀਮਤ", "bn": "পরিকল্পনার জন্য আনুমানিক ন্যায্য মূল্য", "ta": "திட்டமிடலுக்கான நியாயமான விலை மதிப்பீடு", "te": "ప్రణాళిక కోసం అంచనా సరైన ధర", "kn": "ಯೋಜನೆಗಾಗಿ ಅಂದಾಜು ನ್ಯಾಯಯುತ ಬೆಲೆ", "ml": "ആസൂത്രണത്തിനുള്ള കണക്കാക്കിയ ന്യായവില", "or": "ଯୋଜନା ପାଇଁ ଆନୁମାନିକ ଉଚିତ ମୂଲ୍ୟ", "ur": "منصوبہ بندی کے لیے منصفانہ قیمت کا تخمینہ" };
+              const amount = new Intl.NumberFormat(replyLocale || "hi-IN", { maximumFractionDigits: 0 }).format(result.estimate);
+              spokenReply = [spokenReply, labels[String(replyLocale).slice(0, 2)] || labels.hi, "₹" + amount].filter(Boolean).join(" ");
+            }
+          }
+
+          if (artisan && typeof data?.capitalNeed === "string" && data.capitalNeed) {
+            await getArtisanModuleContext("capital");
+            const result = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__?.setCapitalNeed?.(data.capitalNeed);
+            if (result?.status === "updated") {
+              const ack = { "hi": "आपकी बताई राशि Craft Capital में भर दी है।", "en": "I filled that amount into Craft Capital.", "mr": "तुम्ही सांगितलेली रक्कम Craft Capital मध्ये भरली आहे.", "gu": "તમે જણાવેલી રકમ Craft Capital માં ભરી છે.", "pa": "ਤੁਹਾਡੀ ਦੱਸੀ ਰਕਮ Craft Capital ਵਿੱਚ ਭਰ ਦਿੱਤੀ ਹੈ।", "bn": "আপনার বলা পরিমাণ Craft Capital-এ পূরণ করেছি।", "ta": "நீங்கள் கூறிய தொகையை Craft Capital-ல் நிரப்பியுள்ளேன்.", "te": "మీరు చెప్పిన మొత్తాన్ని Craft Capital‌లో నింపాను.", "kn": "ನೀವು ಹೇಳಿದ ಮೊತ್ತವನ್ನು Craft Capital‌ನಲ್ಲಿ ತುಂಬಿದ್ದೇನೆ.", "ml": "നിങ്ങൾ പറഞ്ഞ തുക Craft Capital-ൽ ചേർത്തു.", "or": "ଆପଣ କହିଥିବା ରାଶି Craft Capital ରେ ଭରିଛି।", "ur": "آپ کی بتائی ہوئی رقم Craft Capital میں بھر دی ہے۔" };
+              spokenReply = [spokenReply, ack[String(replyLocale).slice(0, 2)] || ack.hi].filter(Boolean).join(" ");
+            }
+          }
+
+          await fallbackSpeak(spokenReply, replyLocale);
+          rememberConversation("assistant", spokenReply);
+          const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
+          history.push({ role: "assistant", content: spokenReply });
+          window.__KALASUTRA_V7_HISTORY__ = history.slice(-16);
         } catch (error) {
           if (isAccountBlocked(error)) {
             LOCAL_VOICE_MODE = true;
             fallbackListeningRef.current = false;
             setRealtimeUnavailable(true);
-            setUIState("idle", "Free voice mode is ready. Try saying ‘Open Orders’ or ‘Add Product’.");
+            const message = aiUnavailableCopy(locale);
+            setUIState("error", message);
+            await fallbackSpeak(message, locale);
             return;
           }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
@@ -729,9 +816,8 @@
             setUIState("idle", "Microphone permission is off. Please allow microphone access and try again.");
             return;
           }
-          const reply = locale.slice(0, 2) === "en"
-            ? "I heard you. My AI connection is unavailable right now, but I can still open Home, Orders, Reels, Profile, or Add Product."
-            : "Aapki baat samajh aayi. AI connection abhi available nahi hai, par main Home, Orders, Reels, Profile ya Add Product khol sakta hoon.";
+          const reply = aiUnavailableCopy(locale);
+          setUIState("error", reply);
           await fallbackSpeak(reply, locale);
         } finally {
           fallbackBusyRef.current = false;
@@ -878,7 +964,7 @@
         setLocaleState(next);
         setLocale(next);
         setShowLang(false);
-        try { updateSession(); } catch (_) {}
+        updateSession(next).catch(() => {});
         if (!greetingSentRef.current) speakWelcome().catch(() => {});
         else if (changed) {
           const notice = next.startsWith("en") ? "Language changed to English. We can continue." : next.startsWith("hi") ? "भाषा हिन्दी कर दी है। हम यहीं से आगे बात करेंगे।" : `${localeName(next)} selected. We can continue from here.`;
@@ -1002,7 +1088,7 @@
             React.createElement("div", { className: "ks-v72-helper" },
               realtimeUnavailable
                 ? (LOCAL_VOICE_MODE
-                  ? "Free voice mode: ask to open Orders, Reels, Profile, Home, or Add Product."
+                  ? aiUnavailableCopy(localeRef.current)
                   : navigator.mediaDevices?.getUserMedia && window.MediaRecorder
                   ? "Realtime is unavailable. Tap the mic for the audio fallback."
                   : (window.SpeechRecognition || window.webkitSpeechRecognition)

@@ -1,11 +1,23 @@
-KALASUTRA — KARIGAR AI V3
+KALASUTRA — KARIGAR AI CONFIGURATION
 
-1) Do NOT paste your OpenAI key into app.js, kalasutra-ai-welcome.js, or any HTML file.
-2) In Render, open your service → Environment → add: OPENAI_API_KEY = your_key_here
-3) Optional model vars are already defaulted:
-   OPENAI_MODEL=gpt-5.6-luna
-   OPENAI_TTS_MODEL=gpt-4o-mini-tts
-   OPENAI_TTS_VOICE=alloy
-4) Redeploy.
-5) The app uses /api/ai/chat for conversation and /api/ai/tts for natural voice. The browser never receives OPENAI_API_KEY.
-6) Without a key, the app still opens and uses local fallback replies + browser speech, so the UI can be tested first.
+Karigar AI uses one server-side OpenAI brain for Realtime voice and the chat fallback. Add Product, Fair Price, Orders, and artisan modules call the existing KalaSutra screens and data/actions.
+
+REQUIRED FOR AI
+1. In Render, open the KalaSutra service → Environment.
+2. Add OPENAI_API_KEY using a valid OpenAI API key with API access and available quota.
+3. Save the environment change and deploy/redeploy the branch containing the copilot changes.
+4. If voice still reports that Karigar AI is unavailable, check Render logs and confirm the key has not expired and the OpenAI project has available quota/model access.
+
+OPTIONAL SERVER VARIABLES
+- KALASUTRA_AI_MODEL (default: gpt-5.6-luna)
+- KALASUTRA_REALTIME_MODEL (default: gpt-realtime-2.1)
+- KALASUTRA_TRANSCRIBE_MODEL (default: gpt-4o-mini-transcribe)
+- KALASUTRA_TTS_MODEL (default: gpt-4o-mini-tts)
+- KALASUTRA_TTS_VOICE (default: marin)
+
+SECURITY
+- Keep OPENAI_API_KEY only in Render's server-side Environment settings or a local untracked .env file.
+- Never paste the key into chat, app.js, HTML, or browser localStorage.
+- Never commit a real API key.
+
+When the server key or provider quota is unavailable, Karigar AI reports that it is unavailable. Voice may still use browser speech recognition/synthesis as a transport fallback, but it cannot perform AI understanding without the server AI service.
