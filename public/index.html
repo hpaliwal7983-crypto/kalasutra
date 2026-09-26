@@ -20,13 +20,13 @@
       var box=document.getElementById('boot-error');
       if(!box)return;
       box.style.display='block';
-      box.textContent='KALASUTRA START ERROR\\n\\n'+(e.message||'Unknown error')+'\\n\\nFile: '+(e.filename||'')+'\\nLine: '+(e.lineno||'')+'\\nColumn: '+(e.colno||'');
+      box.textContent='KALASUTRA START ERROR\n\n'+(e.message||'Unknown error')+'\n\nFile: '+(e.filename||'')+'\nLine: '+(e.lineno||'')+'\nColumn: '+(e.colno||'');
     });
     window.addEventListener('unhandledrejection', function(e){
       var box=document.getElementById('boot-error');
       if(!box)return;
       box.style.display='block';
-      box.textContent='KALASUTRA PROMISE ERROR\\n\\n'+String(e.reason||'Unknown error');
+      box.textContent='KALASUTRA PROMISE ERROR\n\n'+String(e.reason||'Unknown error');
     });
   </script>
 
@@ -42,7 +42,7 @@
       var box=document.getElementById('boot-error');
       if(root && root.children.length===0 && box && box.style.display!=='block'){
         box.style.display='block';
-        box.textContent='KALASUTRA BOOT ERROR\\n\\nThe React app did not mount. Please refresh once.';
+        box.textContent='KALASUTRA BOOT ERROR\n\nThe React app did not mount. Please refresh once.';
       }
     },5000);
   </script>
