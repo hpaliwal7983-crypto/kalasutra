@@ -1,23 +1,28 @@
 KALASUTRA — KARIGAR AI CONFIGURATION
 
-Karigar AI uses one server-side OpenAI brain for Realtime voice and the chat fallback. Add Product, Fair Price, Orders, and artisan modules call the existing KalaSutra screens and data/actions.
+NO-CARD TEXT COPILOT (RECOMMENDED)
+1. Create an OpenRouter API key in your OpenRouter account.
+2. In Render, open the KalaSutra Web Service → Environment.
+3. Add OPENROUTER_API_KEY with the secret value. Do not put it in GitHub, frontend code, or this chat.
+4. Save the environment change. Once the code with OpenRouter support is deployed, chat, product assistance, and translations use OpenRouter's free-model router by default.
+5. Optional: set KALASUTRA_OPENROUTER_MODEL to openrouter/free (the default) or another model available to your account.
 
-REQUIRED FOR AI
-1. In Render, open the KalaSutra service → Environment.
-2. Add OPENAI_API_KEY using a valid OpenAI API key with API access and available quota.
-3. Save the environment change and deploy/redeploy the branch containing the copilot changes.
-4. If voice still reports that Karigar AI is unavailable, check Render logs and confirm the key has not expired and the OpenAI project has available quota/model access.
+The OpenRouter free tier has request/model limits and availability can vary. It is not unlimited or guaranteed production capacity. If a free model is temporarily unavailable or the daily limit is reached, wait and retry.
+
+VOICE
+- The app's browser speech recognition and browser speech synthesis are the no-card voice fallback. Use a browser that supports microphone recognition and allow microphone permission.
+- OpenAI Realtime, cloud transcription, and cloud text-to-speech still need OPENAI_API_KEY with available OpenAI API quota. OpenRouter does not replace those OpenAI audio endpoints.
+- If OpenAI has no credits, the copilot can still answer through the browser voice fallback plus OpenRouter text AI, but Realtime/cloud audio features are unavailable.
 
 OPTIONAL SERVER VARIABLES
-- KALASUTRA_AI_MODEL (default: gpt-5.6-luna)
+- KALASUTRA_OPENROUTER_MODEL (default: openrouter/free)
+- KALASUTRA_AI_MODEL (used when OpenAI text generation is selected)
 - KALASUTRA_REALTIME_MODEL (default: gpt-realtime-2.1)
 - KALASUTRA_TRANSCRIBE_MODEL (default: gpt-4o-mini-transcribe)
 - KALASUTRA_TTS_MODEL (default: gpt-4o-mini-tts)
 - KALASUTRA_TTS_VOICE (default: marin)
 
 SECURITY
-- Keep OPENAI_API_KEY only in Render's server-side Environment settings or a local untracked .env file.
-- Never paste the key into chat, app.js, HTML, or browser localStorage.
+- Keep OPENROUTER_API_KEY and OPENAI_API_KEY only in Render's server-side Environment settings or a local untracked .env file.
+- Never paste a key into chat, app.js, HTML, or browser localStorage.
 - Never commit a real API key.
-
-When the server key or provider quota is unavailable, Karigar AI reports that it is unavailable. Voice may still use browser speech recognition/synthesis as a transport fallback, but it cannot perform AI understanding without the server AI service.
