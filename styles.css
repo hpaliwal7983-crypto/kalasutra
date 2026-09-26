@@ -2262,3 +2262,230 @@ button, input, select, textarea { max-width:100%; }
   .screen-buyerHome .buyer-home-nav .nav-btn { font-size:10px !important; }
   .screen-buyerHome .buyer-home-nav .nav-btn svg { width:22px !important; height:22px !important; }
 }
+
+
+/* iPad portrait: scale the Buyer storefront before it reaches the phone breakpoint. */
+@media (min-width: 701px) and (max-width: 900px) {
+  .app-shell.screen-buyerHome {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+  }
+
+  .screen-buyerHome .buyer-home-reference {
+    width: 100%;
+    min-width: 0;
+    padding: 8px 24px calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .screen-buyerHome .buyer-home-topbar {
+    grid-template-columns: 36px minmax(0, 1fr) auto;
+    gap: 8px;
+    min-height: 88px;
+  }
+
+  .screen-buyerHome .buyer-home-brand {
+    gap: 7px;
+  }
+
+  .screen-buyerHome .buyer-home-brand-leaf {
+    font-size: 32px;
+  }
+
+  .screen-buyerHome .buyer-home-brand strong {
+    font-size: clamp(29px, 4.2vw, 36px);
+    letter-spacing: -1px;
+  }
+
+  .screen-buyerHome .buyer-home-brand small {
+    margin-top: 5px;
+    font-size: 10px;
+  }
+
+  .screen-buyerHome .buyer-home-actions {
+    gap: 5px;
+  }
+
+  .screen-buyerHome .buyer-home-actions > button {
+    width: 34px;
+    height: 38px;
+  }
+
+  .screen-buyerHome .buyer-home-actions svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .screen-buyerHome .buyer-home-actions .buyer-home-profile {
+    width: 38px;
+    height: 38px;
+  }
+
+  .screen-buyerHome .buyer-home-search {
+    height: 54px;
+    margin: 4px 0 18px;
+    padding: 0 15px;
+    gap: 10px;
+  }
+
+  .screen-buyerHome .buyer-home-search input {
+    font-size: 15px;
+  }
+
+  .screen-buyerHome .buyer-home-search > button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .screen-buyerHome .buyer-home-hero {
+    min-height: 250px;
+  }
+
+  .screen-buyerHome .buyer-home-hero-image {
+    width: 57%;
+  }
+
+  .screen-buyerHome .buyer-home-hero-copy {
+    width: 69%;
+    padding: 23px 14px 23px 28px;
+    background: linear-gradient(90deg, #eee3d2 0%, #eee3d2 61%, rgba(238,227,210,.94) 82%, rgba(238,227,210,0) 100%);
+  }
+
+  .screen-buyerHome .buyer-home-hero-copy > span {
+    font-size: 12px;
+    letter-spacing: 1.8px;
+  }
+
+  .screen-buyerHome .buyer-home-hero h1 {
+    max-width: 100%;
+    margin: 7px 0 9px;
+    font-size: clamp(28px, 4vw, 34px);
+    line-height: 1.08;
+    overflow-wrap: anywhere;
+  }
+
+  .screen-buyerHome .buyer-home-hero p {
+    max-width: 290px;
+    font-size: 16px;
+    line-height: 1.35;
+  }
+
+  .screen-buyerHome .buyer-home-hero-copy > button {
+    min-width: 0;
+    margin-top: 16px;
+    padding: 11px 18px;
+    gap: 12px;
+    font-size: 14px;
+  }
+
+  .screen-buyerHome .buyer-home-categories {
+    justify-content: flex-start;
+    gap: 8px;
+    margin: 22px 0 18px;
+    padding: 4px 2px 7px;
+  }
+
+  .screen-buyerHome .buyer-home-category {
+    flex: 1 0 78px;
+    min-width: 78px;
+    gap: 6px;
+  }
+
+  .screen-buyerHome .buyer-home-category > span {
+    width: 76px;
+    height: 76px;
+  }
+
+  .screen-buyerHome .buyer-home-category small {
+    font-size: 11px;
+  }
+
+  .screen-buyerHome .buyer-all-categories-icon {
+    font-size: 32px;
+  }
+
+  .screen-buyerHome .buyer-home-section-heading {
+    margin: 8px 0 11px;
+  }
+
+  .screen-buyerHome .buyer-home-section-heading h2 {
+    font-size: 24px;
+  }
+
+  .screen-buyerHome .buyer-home-section-heading button {
+    font-size: 14px;
+  }
+
+  .screen-buyerHome .buyer-home-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .screen-buyerHome .buyer-home-product-image {
+    height: clamp(150px, 24vw, 195px);
+  }
+
+  .screen-buyerHome .buyer-home-product-info {
+    min-height: 96px;
+    padding: 12px 44px 12px 12px;
+  }
+
+  .screen-buyerHome .buyer-home-product-title {
+    font-size: 13px;
+  }
+
+  .screen-buyerHome .buyer-home-price {
+    font-size: 18px;
+  }
+
+  .screen-buyerHome .buyer-home-trust {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 22px;
+    padding: 9px 5px;
+  }
+
+  .screen-buyerHome .buyer-home-trust > div {
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .screen-buyerHome .buyer-home-trust > div + div {
+    border-left: 0;
+  }
+
+  .screen-buyerHome .buyer-home-trust > div:nth-child(even) {
+    border-left: 1px solid #c9b9a8;
+  }
+
+  .screen-buyerHome .buyer-home-trust > div:nth-child(n+3) {
+    border-top: 1px solid #c9b9a8;
+  }
+
+  .screen-buyerHome .buyer-home-trust > div > span {
+    font-size: 25px;
+  }
+
+  .screen-buyerHome .buyer-home-trust strong {
+    font-size: 12px;
+  }
+
+  .screen-buyerHome .buyer-home-trust small {
+    font-size: 10px;
+  }
+
+  .screen-buyerHome .buyer-home-nav {
+    width: min(720px, calc(100vw - 32px)) !important;
+    height: 72px !important;
+  }
+
+  .screen-buyerHome .buyer-home-nav .nav-btn {
+    font-size: 12px !important;
+  }
+
+  .screen-buyerHome .buyer-home-nav .nav-btn svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
