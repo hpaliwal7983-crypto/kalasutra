@@ -39,110 +39,7 @@
 
   let LOCAL_VOICE_MODE = false;
 
-  function localIntent(transcript, role, locale) {
-    const text = String(transcript || "").trim().toLocaleLowerCase().replace(/[.,!?।]/g, " ");
-    const artisan = role === "artisan";
-    const screen = String(window.__KALASUTRA_SCREEN__ || "");
-    const activeModule = window.__KALASUTRA_CURRENT_ARTISAN_MODULE__ || "";
-    const costPhrase = /cost|खर्च|लागत|लगे|लगा|बनाने में|production|make|बनाने का खर्च/.test(text);
-    const moneyMatch = text.match(/(?:₹|rs\.?\s*|inr\s*|rupees?\s*|रु\.?\s*|रुपये?\s*)([0-9][0-9,]*(?:\.[0-9]+)?)/i);
-    const statedCost = costPhrase ? text.match(/(?:cost|खर्च|लागत|लगे|लगा|बनाने में|production|make|बनाने का खर्च)[^0-9]{0,24}([0-9][0-9,]*(?:\.[0-9]+)?)/i) : null;
-    const amountMatch = text.match(/[0-9][0-9,]*(?:\.[0-9]+)?/);
-    const amount = (moneyMatch?.[1] || statedCost?.[1] || amountMatch?.[0] || "").replace(/,/g, "");
-    const explicitSellPrice = /sell(?:ing)? price|list price|बेचने की कीमत|बिक्री मूल्य/.test(text);
-    const sizeMatch = text.match(/([0-9]+(?:\\.[0-9]+)?)\\s*(feet|foot|ft|inches|inch|cm|mm|meters?|metres?|फीट|फुट|इंच|सेमी|मीटर)/i);
-    const titleMatch = text.match(/(?:handmade\\s+|product(?:\\s+(?:is|name))?\\s+|प्रोडक्ट(?: का नाम)?\\s+|उत्पाद(?: का नाम)?\\s+)([\\p{L}][\\p{L}0-9 -]{1,32}?)(?=\\s+(?:made|from|with|is|का बना|से बना|बना है|rope|cotton|clay|wood|जो|aur|और|जिसकी|है|हैं)|[,।]|$)/iu);
-    const materials = ["rope", "cotton", "fabric", "clay", "wood", "silk", "wool", "brass", "cane", "bamboo", "मिट्टी", "लकड़ी", "सूती", "कपास", "रेशम", "ऊन", "पीतल", "बांस", "कपड़ा"];
-    let material = "";
-    const materialMatch = text.match(/(?:made\\s+from|made\\s+of|material(?:s)?(?:\\s+is)?|से बना|से बनी|से बनाए|का बना|की बनी|में इस्तेमाल|material hai)\\s+(.+?)(?=\\s+(?:and|aur|और)?\\s*(?:is )?(?:[0-9]+(?:\\.[0-9]+)?\\s*(?:feet|foot|ft|inches|inch|cm|फीट|फुट|इंच|सेमी)|cost|costs|लागत|खर्च|कीमत|price|की है|है जिसकी)|[,।]|$)/iu);
-    if (materialMatch) material = materialMatch[1].trim().replace(/\\s+(?:aur|और)\\s+/gi, " and ").slice(0, 120);
-    else {
-      const found = materials.filter(word => text.includes(word));
-      if (found.length) material = found.join(", ");
-    }
-    const regionMatch = text.match(/(?:from|made in|से|का कारीगर|from city)\\s+(jaipur|rajasthan|kashmir|gujarat|जयपुर|राजस्थान|कश्मीर|गुजरात)(?=\\s|[,।]|$)/i);
-    const productFields = {};
-    if (titleMatch) productFields.title = titleMatch[1].trim().replace(/\\s+/g, " ").slice(0, 90);
-    if (material) productFields.material = material;
-    if (sizeMatch) productFields.size = sizeMatch[1] + " " + sizeMatch[2];
-    if (regionMatch) productFields.region = regionMatch[1];
-    if (/pottery|pot|मिट्टी|घड़ा|घड़ा|कुल्हड़|कुल्हड़/.test(text)) productFields.category = "Pottery";
-    else if (/textile|saree|fabric|weav|कपड़ा|साड़ी|साड़ी|बुनाई/.test(text)) productFields.category = "Textiles";
-    else if (/wood|carv|लकड़ी|नक्काशी/.test(text)) productFields.category = "Woodwork";
-    else if (/metal|brass|पीतल|धातु/.test(text)) productFields.category = "Metalwork";
-    else if (/basket|cane|bamboo|टोकरी|बांस/.test(text)) productFields.category = "Basketry";
-    else if (/home decor|home decoration|artwork|decorative|सजावट|गृह सज्जा|कला/.test(text)) productFields.category = "Other";
-    if (productFields.title || productFields.material || productFields.size || productFields.region || productFields.category) productFields.story = transcript.slice(0, 3000);
-
-    const routes = [
-      { action: "ADD_PRODUCT", route: artisan ? "addProduct" : null, words: ["add product", "new product", "product add", "प्रोडक्ट जोड़", "प्रोडक्ट जोड़", "नया प्रोडक्ट", "सामान जोड़", "सामान जोड़", "नया सामान"] },
-      { action: "ORDERS", route: "orders", words: ["orders", "order", "ऑर्डर", "आर्डर"] },
-      { action: "REELS", route: artisan ? "myReels" : "buyerReels", words: ["reels", "reel", "रील"] },
-      { action: "PROFILE", route: artisan ? "profile" : "buyerProfile", words: ["profile", "प्रोफाइल", "मेरी जानकारी"] },
-      { action: "HOME", route: artisan ? "dashboard" : "buyerHome", words: ["home", "होम", "डैशबोर्ड", "dashboard"] },
-      { action: "MY_PRODUCTS", route: artisan ? "myProducts" : null, words: ["my products", "मेरे प्रोडक्ट", "मेरे उत्पाद", "उत्पाद"] },
-      { action: "REVIEWS", route: artisan ? "reviews" : null, words: ["reviews", "review", "रेटिंग", "समीक्षा"] },
-      { action: "WISHLIST", route: artisan ? null : "wishlist", words: ["wishlist", "wish list", "पसंदीदा"] },
-      { action: "CART", route: artisan ? null : "cart", words: ["cart", "कार्ट", "टोकरी"] },
-      { action: "FAIR_PRICE", route: artisan ? "dashboard" : null, words: ["fair price", "fair pricing", "उचित कीमत", "सही कीमत", "दाम बताओ", "न्यायसंगत कीमत"] },
-      { action: "CRAFT_CAPITAL", route: artisan ? "dashboard" : null, words: ["craft capital", "क्राफ्ट कैपिटल", "पूंजी योजना", "पूँजी योजना"] },
-      { action: "MATERIAL_HUB", route: artisan ? "dashboard" : null, words: ["material hub", "मटेरियल हब", "सामग्री केंद्र"] },
-      { action: "DESIGN_LAB", route: artisan ? "dashboard" : null, words: ["design lab", "डिजाइन लैब", "डिज़ाइन लैब"] },
-      { action: "CRAFT_PASSPORT", route: artisan ? "dashboard" : null, words: ["craft passport", "क्राफ्ट पासपोर्ट"] },
-      { action: "MARKET_MATCH", route: artisan ? "dashboard" : null, words: ["market match", "मार्केट मैच"] },
-      { action: "CRAFT_GURUKUL", route: artisan ? "dashboard" : null, words: ["craft group", "craft gurukul", "क्राफ्ट ग्रुप", "क्राफ्ट गुरुकुल"] },
-      { action: "PRODUCT_DETAILS", route: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, words: ["product details", "product info", "is product ke baare", "इस प्रोडक्ट की जानकारी", "उत्पाद की जानकारी"] },
-      { action: "ARTISAN_INFO", route: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, words: ["artisan information", "about artisan", "maker info", "कारीगर के बारे", "कारीगर की जानकारी"] },
-      { action: "PRODUCT_REVIEWS", route: !artisan && window.__KALASUTRA_ACTIVE_PRODUCT_ID__ ? "productDetail" : null, words: ["product reviews", "reviews for this product", "इस प्रोडक्ट के रिव्यू", "इसकी समीक्षा"] },
-    ];
-    const matched = routes.find(item => item.route && item.words.some(word => text.includes(word)) &&
-      (item.action !== "ORDERS" || /open|kholo|खोल/.test(text) || (LOCAL_VOICE_MODE && /orders|order|ऑर्डर|आर्डर/.test(text))));
-    const english = String(locale || "").startsWith("en");
-    const action = matched?.action || (artisan && (activeModule === "price" || /fair price|fair pricing|उचित कीमत|सही कीमत|दाम बताओ/.test(text)) ? "FAIR_PRICE" : "NONE");
-    const isFairPrice = artisan && (action === "FAIR_PRICE" || activeModule === "price");
-    const isCapital = artisan && (action === "CRAFT_CAPITAL" || activeModule === "capital");
-    const isProductFlow = artisan && (action === "ADD_PRODUCT" || screen === ADD_PRODUCT_ROUTE || (productFields.title && /product|प्रोडक्ट|उत्पाद/.test(text)));
-    if (isProductFlow && amount && costPhrase) productFields.productionCost = amount;
-    if (isProductFlow && amount && (explicitSellPrice || /price|कीमत|मूल्य/.test(text)) && !costPhrase) productFields.price = amount;
-    const fairPriceInputs = {};
-    let capitalNeed = "";
-    if (isFairPrice) {
-      if (amount && costPhrase) fairPriceInputs.productionCost = amount;
-      else if (amount && /material|सामग्री|मटेरियल/.test(text)) fairPriceInputs.materialCost = amount;
-      else if (amount && /hour|घंट|गھن|وقت/.test(text)) fairPriceInputs.hourlyRate = amount;
-      else if (amount && !/feet|foot|ft|inch|cm|फीट|फुट|इंच/.test(text)) fairPriceInputs.productionCost = amount;
-      else {
-        const draft = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {};
-        const context = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__?.getContext?.("price") || {};
-        const existing = draft.productionCost || context.inputs?.productionCost || context.product?.craftInfo?.productionCost;
-        if (existing) fairPriceInputs.productionCost = String(existing);
-      }
-    }
-    if (isCapital && amount && !sizeMatch) capitalNeed = amount;
-
-    if (isProductFlow) {
-      const existing = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {};
-      if (!productFields.title && titleMatch) productFields.title = titleMatch[1].trim();
-      if (!productFields.category && existing.category) productFields.category = existing.category;
-    }
-
-    const moduleActions = ["FAIR_PRICE", "CRAFT_CAPITAL", "MATERIAL_HUB", "DESIGN_LAB", "CRAFT_PASSPORT", "MARKET_MATCH", "CRAFT_GURUKUL"];
-    let reply = "";
-    if (isProductFlow && !Object.keys(productFields).length && !matched) reply = english ? "Tell me the product name, material, size, and making cost; I’ll add the details you share to the form." : "प्रोडक्ट का नाम, सामग्री, आकार और बनाने की लागत बताइए। आप जो बताएँगे वही मैं फॉर्म में भरूँगी।";
-    else if (isProductFlow && Object.keys(productFields).length) reply = english ? "I’ve added the details you gave. I’ll ask only for the next missing product detail." : "आपकी बताई जानकारी फॉर्म में भर दी है। अब मैं सिर्फ अगली ज़रूरी जानकारी पूछूँगी।";
-    else if (isFairPrice && Object.keys(fairPriceInputs).length) reply = english ? "I’ve used the production cost you gave. The screen will show a planning estimate." : "आपकी बताई बनाने की लागत इस्तेमाल की है। स्क्रीन पर योजना का अनुमान दिखेगा।";
-    else if (isFairPrice) reply = english ? "Tell me the actual production cost, or the material cost, hours, hourly rate, and overhead. I won’t guess missing costs." : "बनाने की असली लागत बताइए, या सामग्री लागत, घंटे, प्रति घंटे की दर और बाकी खर्च बताइए। मैं लागत का अनुमान खुद से नहीं लगाऊँगी।";
-    else if (isCapital && capitalNeed) reply = english ? "I’ve filled that planning amount into Craft Capital." : "आपकी बताई राशि Craft Capital में भर दी है।";
-    else if (isCapital) reply = english ? "How much working capital do you need? I’ll put the amount into the Craft Capital plan." : "आपको कितनी कार्यशील पूँजी चाहिए? राशि बताइए, मैं Craft Capital योजना में भरूँगी।";
-    else if (matched) {
-      const names = { ADD_PRODUCT: "Add Product", ORDERS: "Orders", REELS: "Reels", PROFILE: "Profile", HOME: "Home", MY_PRODUCTS: "My Products", REVIEWS: "Reviews", WISHLIST: "Wishlist", CART: "Cart", FAIR_PRICE: "Fair Price AI", CRAFT_CAPITAL: "Craft Capital", MATERIAL_HUB: "Material Hub", DESIGN_LAB: "Design Lab", CRAFT_PASSPORT: "Craft Passport", MARKET_MATCH: "Market Match", CRAFT_GURUKUL: "Craft Gurukul" };
-      reply = english ? `Sure, opening ${names[matched.action] || "that section"}.` : `जी, ${names[matched.action] || "वह सेक्शन"} खोल रही हूँ।`;
-    } else if (/help|मदद|क्या कर|kya kar|क्या खोल|kya khol/.test(text)) reply = english ? "I can guide Add Product, Fair Price, and Craft Capital using the details you provide. Orders and other sections can still be opened by voice." : "मैं आपकी बताई जानकारी से Add Product, Fair Price और Craft Capital में मदद कर सकती हूँ। Orders और दूसरे सेक्शन भी आवाज़ से खोल सकती हूँ।";
-    else reply = english ? "I heard you. I can fill details you say in Add Product, Fair Price, and Craft Capital. I can’t invent missing facts or market data." : "मैंने आपकी बात सुनी। आप Add Product, Fair Price और Craft Capital की जानकारी बोलकर भरवा सकते हैं। मैं जानकारी या बाज़ार के आँकड़े खुद से नहीं बनाऊँगी।";
-    return { action, route: matched?.route || (moduleActions.includes(action) ? "dashboard" : null), reply, productFields: isProductFlow ? productFields : {}, fairPriceInputs, capitalNeed, isProductFlow };
-  }
-
-    function getLocale() {
+  function getLocale() {
     try {
       const voice = localStorage.getItem("kalasutra_voice_lang");
       if (voice && LANGS.some(x => x[0] === voice)) return voice;
@@ -164,6 +61,24 @@
   function copy(locale, key) {
     const base = COPY[locale] || COPY["en-IN"];
     return base[key] || COPY["en-IN"][key];
+  }
+
+  function aiUnavailableCopy(locale) {
+    const messages = {
+      "hi-IN": "Karigar AI सेवा अभी उपलब्ध नहीं है। कृपया थोड़ी देर बाद फिर कोशिश करें।",
+      "en-IN": "Karigar AI is unavailable right now. Please try again after the AI service is configured.",
+      "mr-IN": "Karigar AI सेवा सध्या उपलब्ध नाही. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा.",
+      "gu-IN": "Karigar AI સેવા અત્યારે ઉપલબ્ધ નથી. કૃપા કરીને થોડી વાર પછી ફરી પ્રયાસ કરો.",
+      "pa-IN": "Karigar AI ਸੇਵਾ ਇਸ ਵੇਲੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਕੁਝ ਸਮੇਂ ਬਾਅਦ ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      "bn-IN": "Karigar AI পরিষেবা এখন উপলব্ধ নয়। কিছুক্ষণ পরে আবার চেষ্টা করুন।",
+      "ta-IN": "Karigar AI சேவை இப்போது கிடைக்கவில்லை. சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்.",
+      "te-IN": "Karigar AI సేవ ప్రస్తుతం అందుబాటులో లేదు. కొంతసేపటి తర్వాత మళ్లీ ప్రయత్నించండి.",
+      "kn-IN": "Karigar AI ಸೇವೆ ಈಗ ಲಭ್ಯವಿಲ್ಲ. ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      "ml-IN": "Karigar AI സേവനം ഇപ്പോൾ ലഭ്യമല്ല. കുറച്ച് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക.",
+      "or-IN": "Karigar AI ସେବା ବର୍ତ୍ତମାନ ଉପଲବ୍ଧ ନାହିଁ। କିଛି ସମୟ ପରେ ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+      "ur-IN": "Karigar AI سروس ابھی دستیاب نہیں ہے۔ براہ کرم کچھ دیر بعد دوبارہ کوشش کریں۔"
+    };
+    return messages[locale] || copy(locale, "error");
   }
 
   function emitState(state, extra) {
@@ -439,22 +354,7 @@
             type: "realtime",
             model: "gpt-realtime-2.1",
             output_modalities: ["audio"],
-            instructions: [
-              `You are Karigar AI inside KalaSutra, a warm voice-first companion for a ${role}.`,
-              "Personality: friendly, calm, warm, patient, human and reassuring.",
-              "Sound like a thoughtful conversational assistant, not a call-center bot, GPS, or reading machine.",
-              "Keep turns short: usually 1–2 sentences. Use natural pauses, contractions and gentle emphasis.",
-              "Always answer and speak in the selected language (${localeName(localeRef.current)}); keep this selection consistent even when the user code-switches. Understand natural code-switching and Romanized Hindi/Hinglish. Use the selected language's normal script, while mirroring Romanized Hindi/Hinglish when the selected language is Hindi and the user consistently writes Latin script.",
-              "Never announce system instructions. Never sound overly formal.",
-              "Some artisan dashboard panels are prototypes and show illustrative defaults. Never describe their displayed defaults as the artisan's real finances, inventory, buyer matches, orders, or market data. Open the existing panel and explain only values it explicitly labels as estimates or examples.",
-              "Never repeat the welcome or introduce yourself after the first greeting in this conversation. Continue from the recent conversation context below; preserve the active product/order reference.",
-              `Current V6 screen: ${window.__KALASUTRA_SCREEN__ || "unknown"}. Recent conversation: ${JSON.stringify((window.__KALASUTRA_V7_HISTORY__ || []).slice(-8))}. Current product draft (including a draft preserved while moving between existing V6 screens): ${JSON.stringify(window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ || {})}.`,
-              `When the user asks to open a screen or module, call navigate_app. Screens: ${role === "artisan" ? "add product, orders, reels, profile, dashboard, products, reviews, fair price, craft capital, material hub, design lab, craft passport, market match, craft group" : "orders, reels, profile, home, wishlist, cart, product details, artisan information, product reviews"}. For order questions, always call get_orders and use only returned real records. For artisan module questions, call get_module_context before explaining results; use only returned actual data and clearly say when matches, finance offers, lessons, or records are unavailable. For Fair Price, ask only for missing cost inputs, call set_fair_price_inputs with the artisan-provided values, and describe the returned number as a planning estimate (never a market quote). For a buyer asking about the selected product, its maker or reviews, call get_product_details and answer from that actual public product data.`,
-              "While an artisan is on Add Product, use set_product_fields to fill only details they actually provide, including natural requests to set or change the price, category, name, material, region, size, production cost, story, or description. Create a buyer-facing product description only from explicitly provided product facts; do not invent features or origin. Existing categories are Pottery, Textiles, Woodwork, Metalwork, Basketry, and Other. Ask only for important details that are still missing. Use read_product_description when asked to read or speak the current description. Never say a field was changed unless the tool confirms it.",
-              "If the artisan asks to review/finish the product, call get_product_draft and summarize only the returned actual values. If the draft is incomplete, ask only for the listed missing requirements. Before submitting, speak the summary and ask whether they want you to submit this product for verification. Call request_publish_confirmation for this step, then wait for a clear yes/haan/kar do in the next user turn. Only then call submit_product_for_verification. Never call it in the same turn as the confirmation request, never treat an earlier yes as permission, and never say it is published unless the returned status confirms what happened.",
-              `Selected conversation language: ${localeName(localeRef.current)} (${localeRef.current}). Keep all replies and voice output in this selected language unless the user explicitly changes the selector or asks to switch languages.`,
-              "After set_product_fields, call get_product_draft and ask only for the next missing required item. Continue the workflow across screen changes using the preserved draft. For Design Lab, use actual product facts to offer a few clearly labeled design ideas, never claim they are saved. For Craft Passport, explain current profile/product/verification records and use the existing certificate route only when a saved product exists. For Craft Capital, summarize only the returned real order value/count; never present planning amounts as loan offers. For Material Hub, help plan from the recorded materials but never claim stock or supplier availability. For Direct Market Match, explain actual prior sales as order history, not as buyer leads or market trends. After a successful add-product submit, explain the existing verification result and ask for the next available step only if the result supports it."
-            ].join("\n"),
+
             audio: {
               input: { turn_detection: { type: "server_vad", interrupt_response: true, silence_duration_ms: 550 } },
               output: { voice: "marin" }
@@ -682,7 +582,9 @@
             fallbackListeningRef.current = false;
             if (isAccountBlocked({ code: failureCode })) {
               LOCAL_VOICE_MODE = true;
-              setUIState("idle", "Free voice mode is ready. Ask me to open an app section.");
+              setRealtimeUnavailable(true);
+              const message = aiUnavailableCopy(localeRef.current);
+              setUIState("error", message);
             } else setUIState("error", copy(locale, "error"));
           }
           if (actualType === "response.failed" || actualType === "input_audio_transcription.failed") {
@@ -693,7 +595,8 @@
               setRealtimeUnavailable(true);
               fallbackListeningRef.current = false;
               closeRealtime();
-              setUIState("idle", "Free voice mode is ready. Ask me to open an app section.");
+              const message = aiUnavailableCopy(localeRef.current);
+              setUIState("error", message);
             } else setUIState("error", copy(locale, "noSpeech"));
           }
         };
@@ -761,9 +664,11 @@
           closeRealtime(true);
           if (isAccountBlocked(error)) {
             LOCAL_VOICE_MODE = true;
-            await speakWelcome();
             fallbackListeningRef.current = false;
-            setUIState("idle", copy(locale, "ready"));
+            setRealtimeUnavailable(true);
+            const message = aiUnavailableCopy(locale);
+            setUIState("error", message);
+            await fallbackSpeak(message, locale);
             return;
           }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
@@ -783,62 +688,6 @@
         try {
           rememberConversation("user", transcript);
           setUIState("thinking", copy(locale, "thinking"));
-          const local = localIntent(transcript, role, locale);
-          const hasLocalProductFields = local.isProductFlow && Object.values(local.productFields || {}).some(value => typeof value === "string" && value.trim());
-          const hasLocalFairInputs = Object.keys(local.fairPriceInputs || {}).length > 0;
-          const hasLocalCapitalNeed = Boolean(local.capitalNeed);
-          if (local.action !== "NONE" || hasLocalProductFields || hasLocalFairInputs || hasLocalCapitalNeed) {
-            let reply = local.reply;
-            let opened = false;
-            if (local.action !== "NONE") {
-              opened = runAction(local.action);
-              if (local.action === "ADD_PRODUCT" && opened) emitFlow({ step: "photos" });
-            }
-            if (hasLocalProductFields) {
-              const productApi = await ensureProductActions();
-              const before = productApi?.getDraft?.() || {};
-              const applied = Boolean(productApi?.applyFields?.(local.productFields));
-              if (applied) {
-                const filled = Object.keys(local.productFields).filter(key => typeof local.productFields[key] === "string" && local.productFields[key].trim());
-                const remaining = (before.missing || []).filter(item => {
-                  const key = item.includes("name") ? "title" : item.includes("category") ? "category" : item.includes("story") ? "story" : item.includes("price") ? "price" : null;
-                  return !key || !filled.includes(key);
-                });
-                const next = remaining[0];
-                const labels = String(locale).startsWith("en")
-                  ? { "a product name": "product name", "a product category": "category", "a product photo": "product photo", "the product story": "product story", "a valid price": "selling price", "making proof": "making-proof video" }
-                  : { "a product name": "प्रोडक्ट का नाम", "a product category": "प्रोडक्ट की कैटेगरी", "a product photo": "प्रोडक्ट की फोटो", "the product story": "प्रोडक्ट की कहानी", "a valid price": "बेचने की कीमत", "making proof": "बनाने का वीडियो" };
-                reply = next
-                  ? (String(locale).startsWith("en") ? `I filled the details you shared. Next, please add the ${labels[next] || next}.` : `आपकी बताई जानकारी भर दी है। अब कृपया ${labels[next] || next} बताइए या जोड़िए।`)
-                  : (String(locale).startsWith("en") ? "I filled the details you shared in Add Product." : "आपकी बताई जानकारी Add Product में भर दी है।");
-              }
-            }
-            if (hasLocalFairInputs || local.action === "FAIR_PRICE") {
-              await getArtisanModuleContext("price");
-              const priceApi = window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__;
-              const context = priceApi?.getContext?.("price") || {};
-              const inputs = Object.keys(local.fairPriceInputs || {}).length ? local.fairPriceInputs : (context.inputs?.productionCost ? { productionCost: String(context.inputs.productionCost) } : {});
-              if (Object.keys(inputs).length) {
-                const estimate = priceApi?.setFairPriceInputs?.(inputs);
-                if (estimate?.estimate != null) {
-                  const amountText = new Intl.NumberFormat(locale || "en-IN", { maximumFractionDigits: 0 }).format(estimate.estimate);
-                  reply = String(locale).startsWith("en") ? `Planning estimate: ₹${amountText}. I used the cost you provided.` : `योजना का अनुमान: ₹${amountText}। मैंने आपकी बताई लागत इस्तेमाल की है।`;
-                }
-              }
-            }
-            if (hasLocalCapitalNeed || local.action === "CRAFT_CAPITAL") {
-              await getArtisanModuleContext("capital");
-              if (local.capitalNeed) {
-                window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__?.setCapitalNeed?.(local.capitalNeed);
-                reply = String(locale).startsWith("en") ? "I filled that amount into Craft Capital." : "आपकी बताई राशि Craft Capital में भर दी है।";
-              }
-            }
-            if (opened) { fallbackListeningRef.current = false; setOpen(false); }
-            await fallbackSpeak(reply, locale);
-            rememberConversation("assistant", reply);
-            return;
-          }
-          if (LOCAL_VOICE_MODE) { await fallbackSpeak(local.reply, locale); rememberConversation("assistant", local.reply); return; }
           if (role === "artisan" && window.__KALASUTRA_SCREEN__ === ADD_PRODUCT_ROUTE) {
             const history = window.__KALASUTRA_V7_HISTORY__ || (window.__KALASUTRA_V7_HISTORY__ = []);
             const lastHistoryItem = history[history.length - 1];
@@ -945,7 +794,9 @@
             LOCAL_VOICE_MODE = true;
             fallbackListeningRef.current = false;
             setRealtimeUnavailable(true);
-            setUIState("idle", "Free voice mode is ready. Try saying ‘Open Orders’ or ‘Add Product’.");
+            const message = aiUnavailableCopy(locale);
+            setUIState("error", message);
+            await fallbackSpeak(message, locale);
             return;
           }
           if (error?.name === "NotAllowedError" || error?.name === "PermissionDeniedError") {
@@ -1226,7 +1077,7 @@
             React.createElement("div", { className: "ks-v72-helper" },
               realtimeUnavailable
                 ? (LOCAL_VOICE_MODE
-                  ? "Free voice mode: ask to open Orders, Reels, Profile, Home, or Add Product."
+                  ? aiUnavailableCopy(localeRef.current)
                   : navigator.mediaDevices?.getUserMedia && window.MediaRecorder
                   ? "Realtime is unavailable. Tap the mic for the audio fallback."
                   : (window.SpeechRecognition || window.webkitSpeechRecognition)
