@@ -120,7 +120,7 @@
     return ["credit_balance_exhausted", "insufficient_quota", "missing_api_key"].includes(error?.code);
   }
 
-  async function fallbackChat(transcript, locale) {
+  async function fallbackChat(transcript, locale, contextOverride = {}) {
     const history = (window.__KALASUTRA_V7_HISTORY__ || []).slice();
     const last = history[history.length - 1];
     if (last?.role === "user" && last?.content === transcript) history.pop();
@@ -134,15 +134,15 @@
       userId: window.__KALASUTRA_USER_ID__ || "",
       productDraft: (() => {
         try {
-          const draft = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || {};
+          const draft = window.__KALASUTRA_PRODUCT_ACTIONS__?.getDraft?.() || window.__KALASUTRA_ACTIVE_PRODUCT_DRAFT__ || {};
           return Object.fromEntries(["title", "story", "description", "price", "category", "material", "region", "size", "productionCost"].map(key => [key, typeof draft[key] === "string" ? draft[key].slice(0, key === "story" || key === "description" ? 1200 : 180) : ""]));
         } catch (_) { return {}; }
       })(),
-      activeModule: window.__KALASUTRA_CURRENT_ARTISAN_MODULE__ || "",
+      activeModule: contextOverride.activeModule || window.__KALASUTRA_CURRENT_ARTISAN_MODULE__ || "",
       moduleContext: (() => {
         try {
-          const module = window.__KALASUTRA_CURRENT_ARTISAN_MODULE__;
-          const context = module && window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__?.getContext?.(module);
+          const module = contextOverride.activeModule || window.__KALASUTRA_CURRENT_ARTISAN_MODULE__;
+          const context = contextOverride.moduleContext || (module && window.__KALASUTRA_ARTISAN_MODULE_ACTIONS__?.getContext?.(module));
           return context && JSON.stringify(context).length <= 6000 ? context : null;
         } catch (_) { return null; }
       })(),
@@ -736,11 +736,18 @@
             return;
           }
           rememberConversation("user", transcript);
-          const data = await fallbackChat(transcript, locale);
-          const replyLocale = data?.locale || locale;
+          let data = await fallbackChat(transcript, locale);
           const artisan = role === "artisan";
           const moduleForAction = { FAIR_PRICE: "price", CRAFT_CAPITAL: "capital", MATERIAL_HUB: "material", DESIGN_LAB: "design", CRAFT_PASSPORT: "passport", MARKET_MATCH: "market", CRAFT_GURUKUL: "gurukul" };
-          const actionModule = moduleForAction[data?.action];
+          let actionModule = moduleForAction[data?.action];
+          if (artisan && actionModule && data?.moduleContextRequired === true) {
+            const liveContext = await getArtisanModuleContext(actionModule);
+            if (liveContext?.available !== false) {
+              data = await fallbackChat(transcript, locale, { activeModule: actionModule, moduleContext: liveContext });
+              actionModule = moduleForAction[data?.action] || actionModule;
+            }
+          }
+          const replyLocale = data?.locale || locale;
           if (data?.action === "ADD_PRODUCT" && artisan) {
             runAction("ADD_PRODUCT");
             emitFlow({ step: "photos" });
